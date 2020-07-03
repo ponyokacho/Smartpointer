@@ -16,21 +16,33 @@ Tire::~Tire()
 {
 }
 
-float Tire::VerticalForceAtWheel(float pitch, float roll)
+float Tire::VerticalForceAtWheelPitch(float pitch)
 {
 	// ピッチ
 	float Np = 2 / WHEEL_BASE * pitch * HIGHT_OF_G;
 
+	return Np;
+}
+
+float Tire::VerticalForceAtWheelRoll(float roll)
+{
 	// ロール
 	float Nr = 2 / TREAD * roll * HIGHT_OF_G;
 
-	float N = Np + Nr;
+	return Nr;
+}
 
-	return N;
+float Tire::InertialForce(float engineTorque, int gearNum)
+{
+	// 慣性力(N)
+	float a = (engineTorque * (G_RATIO[gearNum] * FINAL) / (TIRE_DIAMETER / 2.0f)) / (LOAD * G_ACCELERATION);
+	return a;
 }
 
 float Tire::SlideRate(VECTOR2 v, float rv, float wheelAngle)
 {
+	// 滑り比を出すにはタイヤの角速度と車速を使用
+
 	// Fタイヤが曲がっているとき、v = Vzcosθ + Vxsinθ
 	// v:タイヤ進行速度
 	// rv:タイヤ角速度
@@ -80,17 +92,17 @@ VECTOR2 Tire::TireForce(float slideRate, float slideAngle)
 			cTheta = 0.0f;
 			sTheta = 0.0f;
 		}
-		float epsilon = 1 - (Ks / (3.0f * MU * (LOAD * G_ACCELERATION)) * lambda);
+		float epsilon = 1 - (Ks / (3.0f * MU * ONE_TIRE_LOAD) * lambda);
 
 		if (epsilon > 0)
 		{
-			f.y = Ks * slideRate * pow(epsilon, 2) - 6.0f * MU * (LOAD * G_ACCELERATION) * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
-			f.x = Ktheta * (1 - slideRate) * tan(slideAngle) * pow(epsilon, 2) + 6.0f * MU * (LOAD * G_ACCELERATION) * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+			f.y = Ks * slideRate * pow(epsilon, 2) - 6.0f * MU * ONE_TIRE_LOAD * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+			f.x = Ktheta * (1 - slideRate) * tan(slideAngle) * pow(epsilon, 2) + 6.0f * MU * ONE_TIRE_LOAD * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
 		}
 		else if (epsilon <= 0)
 		{
-			f.y = -MU * (LOAD * G_ACCELERATION) * cTheta;
-			f.x = MU * (LOAD * G_ACCELERATION) * sTheta;
+			f.y = -MU * ONE_TIRE_LOAD * cTheta;
+			f.x = MU * ONE_TIRE_LOAD * sTheta;
 		}
 	}
 	else
@@ -103,17 +115,17 @@ VECTOR2 Tire::TireForce(float slideRate, float slideAngle)
 			cTheta = 0.0f;
 			sTheta = 0.0f;
 		}
-		float epsilon = 1 - (Ks / (3.0f * MU * (LOAD * G_ACCELERATION)) * (lambda / (1 + slideRate)));
+		float epsilon = 1 - (Ks / (3.0f * MU * ONE_TIRE_LOAD) * (lambda / (1 + slideRate)));
 
 		if (epsilon > 0)
 		{
-			f.y = ((Ks * slideRate) / (1.0f + slideRate)) * pow(epsilon, 2) - 6.0f * MU * (LOAD * G_ACCELERATION) * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
-			f.x = ((Ktheta * tan(slideAngle)) / (1 + slideRate)) * pow(epsilon, 2) + 6.0f * MU * (LOAD * G_ACCELERATION) * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+			f.y = ((Ks * slideRate) / (1.0f + slideRate)) * pow(epsilon, 2) - 6.0f * MU * ONE_TIRE_LOAD * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+			f.x = ((Ktheta * tan(slideAngle)) / (1 + slideRate)) * pow(epsilon, 2) + 6.0f * MU * ONE_TIRE_LOAD * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
 		}
 		else if (epsilon <= 0)
 		{
-			f.y = -MU * (LOAD * G_ACCELERATION) * cTheta;
-			f.x = MU * (LOAD * G_ACCELERATION) * sTheta;
+			f.y = -MU * ONE_TIRE_LOAD * cTheta;
+			f.x = MU * ONE_TIRE_LOAD * sTheta;
 		}
 	}
 
@@ -131,10 +143,12 @@ VECTOR2 Tire::FrontWheelAngle(VECTOR2 v, float steering)
 
 void Tire::Draw()
 {
-	//DrawFormatString(SCREEN_SIZE_X / 2 - 150, 50, 0xffffff, "VFAW_FL = %.2f", LOAD_FL);
+	DrawFormatString(SCREEN_SIZE_X - 200, 460, 0xffffff, "VFAW_F = %.2f", LOAD_FL);
 	//DrawFormatString(SCREEN_SIZE_X / 2 + 300, 50, 0xffffff, "VFAW_FR = %.2f", LOAD_FR);
-	//DrawFormatString(SCREEN_SIZE_X / 2 - 150, SCREEN_SIZE_Y - 150 - 100, 0xffffff, "VFAW_RL = %.2f", LOAD_RL);
+	DrawFormatString(SCREEN_SIZE_X - 200, 480, 0xffffff, "VFAW_R = %.2f", LOAD_RL);
 	//DrawFormatString(SCREEN_SIZE_X / 2 + 300, SCREEN_SIZE_Y - 150 - 100, 0xffffff, "VFAW_RR = %.2f", LOAD_RR);
+
+
 
 	DrawRotaGraph(posCenter.x, posCenter.y, 0.10f, 0, IMAGE_ID("images/body.png"), true);
 	//DrawRotaGraph(posFl.x, posFl.y , 0.10f, wheelAngle, IMAGE_ID("images/tire.png"), true);
@@ -150,21 +164,32 @@ void Tire::Draw()
 	DrawLine(posCenter.x, posCenter.y, posCenter.x - yawVec.x, posCenter.y - yawVec.y, 0x00ff00, 1);
 	DrawLine(posCenter.x, posCenter.y, posCenter.x - treadDistanceVec.x, posCenter.y - treadDistanceVec.y, 0x0000ff, 1);
 	//DrawLine(outRearWheelPos.x, outRearWheelPos.y, outRearWheelPos.x + (treadDistanceVecNorm.x * turnRad), outRearWheelPos.y + (treadDistanceVecNorm.y * turnRad), 0xffff00, 1);
+
+
 }
 
-void Tire::Update(float engineTorque, float steering)
+void Tire::Update(float engineTorque, float steering, int gearNum, float accel)
 {
-	//if() 加速中なら
-	//else 減速中なら
+	VECTOR2 Vfaw = VECTOR2(0, InertialForce(engineTorque, gearNum));
+	float Np = VerticalForceAtWheelPitch(Vfaw.y);		// 符号は後で変更 タイヤ浮いてたら0
+	if (accel)
+	{
+		LOAD_FL = ONE_TIRE_LOAD + Np;		// 符号は後で変更 タイヤ浮いてたら0
+		LOAD_FR = ONE_TIRE_LOAD + Np;
+		LOAD_RL = ONE_TIRE_LOAD - Np;
+		LOAD_RR = ONE_TIRE_LOAD - Np;
+	}
+	else
+	{
+		LOAD_FL = ONE_TIRE_LOAD - Np;		// 符号は後で変更 タイヤ浮いてたら0
+		LOAD_FR = ONE_TIRE_LOAD - Np;
+		LOAD_RL = ONE_TIRE_LOAD + Np;
+		LOAD_RR = ONE_TIRE_LOAD + Np;
+	}
 
 	//if() 左旋回中なら
 	//else if()　右旋回中なら
 	//else　直進中なら
-
-	LOAD_FL = (LOAD * G_ACCELERATION / 4) + VerticalForceAtWheel(0, 0);		// 符号は後で変更 タイヤ浮いてたら0
-	LOAD_FR = (LOAD * G_ACCELERATION / 4) + VerticalForceAtWheel(0, 0);
-	LOAD_RL = (LOAD * G_ACCELERATION / 4) + VerticalForceAtWheel(0, 0);
-	LOAD_RR = (LOAD * G_ACCELERATION / 4) + VerticalForceAtWheel(0, 0);
 
 	dirVec = VECTOR2((posCenter.x - T_OFFSET_X) - (posCenter.x - T_OFFSET_X), (posCenter.y + T_OFFSET_Y) - (posCenter.y - T_OFFSET_Y));
 	rWheelVec = dirVec;
@@ -203,20 +228,6 @@ void Tire::Update(float engineTorque, float steering)
 	posFl.y -= tF.y * (engineTorque * 0.00000001f);
 	posFr.x -= tF.x * (engineTorque * 0.00000001f);
 	posFr.y -= tF.y * (engineTorque * 0.00000001f);
-
-	if (wheelAngle > 0)
-	{
-		outRearWheelPos = posRl;
-	}
-	else if(wheelAngle < 0)
-	{
-		outRearWheelPos = posRr;
-		turnRad *= -1;
-	}
-	else
-	{
-		outRearWheelPos = posCenter;
-	}
 }
 
 // 外積

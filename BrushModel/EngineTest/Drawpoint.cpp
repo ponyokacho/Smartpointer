@@ -16,6 +16,6 @@ Drawpoint::~Drawpoint()
 
 void Drawpoint::Draw()
 {
-	DrawCircle(SCREEN_SIZE_X / 2 + (slideRate * SCREEN_SIZE_X / 2), SCREEN_SIZE_Y / 2 - pos.y * 0.02f, 1, GetColor(255 * (1 - slideAngle),0,0),true);	// ‹ì“®—Í
-	DrawCircle(SCREEN_SIZE_X / 2 + (slideRate * SCREEN_SIZE_X / 2), SCREEN_SIZE_Y / 2 - pos.x * 0.02f, 1, GetColor(0,0,255 * (1 - slideAngle)), true); // ‰¡—Í
+	DrawCircle(SCREEN_SIZE_X / 2 + (slideRate * SCREEN_SIZE_X / 2), SCREEN_SIZE_Y / 2 - pos.y * 0.09f, 1, GetColor(255 * (1 - slideAngle),0,0),true);	// ‹ì“®—Í
+	DrawCircle(SCREEN_SIZE_X / 2 + (slideRate * SCREEN_SIZE_X / 2), SCREEN_SIZE_Y / 2 - pos.x * 0.09f, 1, GetColor(0,0,255 * (1 - slideAngle)), true); // ‰¡—Í
 }

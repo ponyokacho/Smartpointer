@@ -39,10 +39,13 @@ constexpr float T_OFFSET_X = TREAD * 5;
 constexpr float T_OFFSET_Y = WHEEL_BASE * 5;
 
 constexpr float G_ACCELERATION = 9.8; // m/s^2
+constexpr float ONE_TIRE_LOAD = (LOAD * G_ACCELERATION) / 4;
 
 constexpr float MU = 0.8f;
 
 constexpr float WHEEL_ANGLE_MAX = 33; // “x
+
+constexpr float G_RATIO[6] = { 3.626,2.188,1.541,1.213,1.000,0.767 };
 
 class GameTask
 {
@@ -82,5 +85,7 @@ private:
 
 	float steering = 0.0f;
 	float steeringPercent = 0.0f;
+
+	float onlyEngineVel = 0.0f;
 };
 

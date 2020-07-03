@@ -29,12 +29,12 @@ public:
 
 	float ChangeUnit(float kgf);	
 
-	tuple<float,float> Update(float accel);
+	tuple<float,float, float> Update(float accel);
 	void Draw(float accel, float rightTrigger);
 	void Sound();
 
 private:
-	array<float, 10>t = {0,140,170,200,180,200,210,180,0};
+	array<float, 10>t = {0,140,170,200,180,200,210,180,0}; // NÅEm
 
 	int thousand = 1;
 	float forwardTorque = 0.0f;

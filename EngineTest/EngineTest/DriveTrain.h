@@ -13,15 +13,29 @@ public:
 
 	float ReverseTorque(float brakePower);
 	float AirResistance(float v);
-	float TireAcceleration(float torque, float I);
+	float DriveTireAcceleration(float torque, float I);
 	float PropellerShaftVel(float wheelVel);
-	float engineVel(float ppVel);
+	float EngineVel(int gearNum, float ppVel);
+	float MainTorque(float engineTorque, int gearNum, float clutch);
+	tuple<float, float> EngineAndMission(float engineVel, float missionVel, float clutch);
 
-	void Update(float clutch, float engineTorque, float rpm, int gearNum);
+	float CarSpeed(float tirePerimeter, float engineRpm, int gearNum);
+
+	void Update(float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
 	void Draw(float clutch, int gearNum);
 private:
+	int gearNum = -1;
+	
+	float wheelTorque = 0.0f;
+	float reverseTorque = 0.0f;
+	float airResistance = 0.0f;
+	float driveTireAcceleration = 0.0f;
+	float driveTireVel = 0.0f;
+	float propellerVel = 0.0f;
+	float mainTorque = 0.0f;
+	float engineVel = 0.0f;
+	float missionVel = 0.0f;
 
-	vector<float>gRatio;
-	float gearNum = -1;
+	float speed = 0.0f;
 };
 

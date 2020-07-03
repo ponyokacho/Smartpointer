@@ -60,17 +60,17 @@ void GameTask::Update()
 				cTheta = 0.0f;
 				sTheta = 0.0f;
 			}
-			float epsilon = 1 - (Ks / (3.0f * MU * (LOAD * G_ACCELERATION)) * lambda);
+			float epsilon = 1 - (Ks / (3.0f * MU * ONE_TIRE_LOAD) * lambda);
 
 			if (epsilon > 0)
 			{
-				f.y = Ks * slideRate * pow(epsilon, 2) - 6.0f * MU * (LOAD * G_ACCELERATION) * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
-				f.x = Ktheta * (1 - slideRate) * tan(slideAngle) * pow(epsilon, 2) + 6.0f * MU * (LOAD * G_ACCELERATION) * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+				f.y = Ks * slideRate * pow(epsilon, 2) - 6.0f * MU * ONE_TIRE_LOAD * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+				f.x = Ktheta * (1 - slideRate) * tan(slideAngle) * pow(epsilon, 2) + 6.0f * MU * ONE_TIRE_LOAD * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
 			}
 			else if (epsilon <= 0)
 			{
-				f.y = -MU * (LOAD * G_ACCELERATION) * cTheta;
-				f.x = MU * (LOAD * G_ACCELERATION) * sTheta;
+				f.y = -MU * ONE_TIRE_LOAD * cTheta;
+				f.x = MU * ONE_TIRE_LOAD * sTheta;
 			}
 
 			if (slideRate < 1.0f)
@@ -94,17 +94,17 @@ void GameTask::Update()
 				cTheta = 0.0f;
 				sTheta = 0.0f;
 			}
-			float epsilon = 1 - (Ks / (3.0f * MU * (LOAD * G_ACCELERATION)) * (lambda / (1 + slideRate)));
+			float epsilon = 1 - (Ks / (3.0f * MU * ONE_TIRE_LOAD) * (lambda / (1 + slideRate)));
 
 			if (epsilon > 0)
 			{
-				f.y = ((Ks * slideRate) / (1.0f + slideRate)) * pow(epsilon, 2) - 6.0f * MU * (LOAD * G_ACCELERATION) * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
-				f.x = ((Ktheta * tan(slideAngle)) / (1 + slideRate)) * pow(epsilon,2) + 6.0f * MU * (LOAD * G_ACCELERATION) * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+				f.y = ((Ks * slideRate) / (1.0f + slideRate)) * pow(epsilon, 2) - 6.0f * MU * ONE_TIRE_LOAD * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+				f.x = ((Ktheta * tan(slideAngle)) / (1 + slideRate)) * pow(epsilon,2) + 6.0f * MU * ONE_TIRE_LOAD * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
 			}
 			else if (epsilon <= 0)
 			{
-				f.y = -MU * (LOAD * G_ACCELERATION) * cTheta;
-				f.x = MU * (LOAD * G_ACCELERATION) * sTheta/* - tmp*/;
+				f.y = -MU * ONE_TIRE_LOAD * cTheta;
+				f.x = MU * ONE_TIRE_LOAD * sTheta/* - tmp*/;
 			}
 
 			if (slideRate < 1.0f)

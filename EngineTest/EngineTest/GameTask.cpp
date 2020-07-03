@@ -43,17 +43,17 @@ void GameTask::GameUpdate()
 
 	for (auto i : e)
 	{
-		tie(engineTorque,rpm) = (*i).Update(accel);
+		tie(engineTorque,rpm,onlyEngineVel) = (*i).Update(accel);
 		(*i).Draw(accel, input.RightTrigger);
 	}
 	for (auto i : d)
 	{
-		(*i).Update(clutch,engineTorque,rpm,gearNum);
+		(*i).Update(clutch,engineTorque,rpm,gearNum,onlyEngineVel);
 		(*i).Draw(clutch, gearNum);
 	}
 	for (auto i : t)
 	{
-		(*i).Update(engineTorque, steering);
+		(*i).Update(engineTorque, steering, gearNum,accel);
 		(*i).Draw();
 	}
 

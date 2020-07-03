@@ -9,14 +9,16 @@ public:
 	Tire();
 	~Tire();
 
-	float VerticalForceAtWheel(float pitch,float roll);
+	float VerticalForceAtWheelPitch(float pitch);
+	float VerticalForceAtWheelRoll(float roll);
+	float InertialForce(float engineTorque, int gearNum);
 	float SlideRate(VECTOR2 v,float rv,float wheelAngle);
 	float SlideAngle(VECTOR2 dirVec, VECTOR2 yawVec);
 	VECTOR2 TireForce(float slideRate, float slideAngle);
 	VECTOR2 FrontWheelAngle(VECTOR2 v,float steering);
 
 	void Draw();
-	void Update(float engineTorque,float steering);
+	void Update(float engineTorque,float steering,int gearNum,float accel);
 
 	float Cross(VECTOR2 va, VECTOR2 vb);
 	float Dot(VECTOR2 va, VECTOR2 vb);
@@ -40,7 +42,6 @@ private:
 	VECTOR2 posFr;
 	VECTOR2 posRl;
 	VECTOR2 posRr;
-	VECTOR2 outRearWheelPos = { 0,0 };
 
 	VECTOR2 treadDistanceVec = { 0,0 };
 	VECTOR2 treadDistanceVecNorm = { 0,0 };

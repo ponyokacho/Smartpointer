@@ -15,6 +15,8 @@ constexpr float G_ACCELERATION = 9.8; // m/s^2
 constexpr float MU = 0.8f;
 constexpr float LOAD = 1250;		// kg
 
+constexpr float ONE_TIRE_LOAD = LOAD * G_ACCELERATION / 4;
+
 using namespace std;
 
 

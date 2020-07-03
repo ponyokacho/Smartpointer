@@ -6,7 +6,7 @@
 
 Engine::Engine()
 {
-	ChangeVolumeSoundMem(255 * 40 / 100, SOUND_ID("sounds/car_idoling.mp3"));
+	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/car_idoling.mp3"));
 	PlaySoundMem(SOUND_ID("sounds/car_idoling.mp3"), DX_PLAYTYPE_LOOP);
 }
 
@@ -56,7 +56,7 @@ float Engine::ChangeUnit(float kgf)
 	return 0.0f;
 }
 
-tuple<float, float> Engine::Update(float accel)
+tuple<float, float, float> Engine::Update(float accel)
 {
 	//if (thousand < MAX_THOUSAND)
 	{
@@ -85,7 +85,7 @@ tuple<float, float> Engine::Update(float accel)
 
 	Sound();
 
-	return forward_as_tuple(torque,rpm);
+	return forward_as_tuple(torque,rpm,angularAccel);
 }
 
 void Engine::Draw(float accel, float rightTrigger)

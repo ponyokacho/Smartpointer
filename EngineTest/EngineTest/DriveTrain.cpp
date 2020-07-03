@@ -2,11 +2,11 @@
 #include <cmath>
 #include "KeyMng.h"
 #include "GameTask.h"
+#include "Engine.h"
 
 DriveTrain::DriveTrain()
 {
 	gearNum = -1;
-	gRatio = { 3.626,2.188,1.541,1.213,1.000,0.767 };
 }
 
 DriveTrain::~DriveTrain()
@@ -15,39 +15,100 @@ DriveTrain::~DriveTrain()
 
 float DriveTrain::ReverseTorque(float brakePower)
 {
-	float rT = (brakePower * TIRE_DIAMETER) + (ROLLING_FRICTION * (LOAD * G_ACCELERATION) * TIRE_DIAMETER);
+	float rT = (brakePower * TIRE_DIAMETER) + (ROLLING_FRICTION * ONE_TIRE_LOAD * TIRE_DIAMETER);
 	return rT;
 }
 
 float DriveTrain::AirResistance(float v)
 {
-	float D = 1.0f / 2.0f * AIR_DENSITY * pow(v, 2) * FRONTAL_PROJECTED_AREA * CD;
+	float D = (1.0f / 2.0f) * AIR_DENSITY * pow(v, 2) * FRONTAL_PROJECTED_AREA * CD;
 	return D;
 }
 
-float DriveTrain::TireAcceleration(float torque, float I)
+float DriveTrain::DriveTireAcceleration(float torque, float I)
 {
-	float tA = (torque / I) * DT;
+	float tA = torque / I * DT;
 	return tA;
 }
 
 float DriveTrain::PropellerShaftVel(float wheelVel)
 {
-	float ppVel = FINAL * wheelVel;
+	float ppVel = FINAL * wheelVel / 2;
 	return ppVel;
 }
 
-float DriveTrain::engineVel(float ppVel)
+float DriveTrain::EngineVel(int gearNum,float ppVel)
 {
-	float eVel = gRatio[gearNum] * ppVel;
-	return 0.0f;
+	if (gearNum != -1)
+	{
+		float eVel = G_RATIO[gearNum] * ppVel;
+		return eVel;
+	}
+	return 0;
 }
 
 
-
-void DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum)
+float DriveTrain::MainTorque(float engineTorque, int gearNum, float clutch)
 {
+	if (gearNum != -1)
+	{
+		float mainTorque = (engineTorque / 2) * (G_RATIO[gearNum] * FINAL) * clutch;	// 片輪のみのトルク
+		return mainTorque;
+	}
+	return 0;
+}
+
+tuple<float, float> DriveTrain::EngineAndMission(float engineVel, float missionVel, float clutch)
+{
+	if (engineVel > missionVel)
+	{
+		missionVel += engineVel * 0.7f * clutch;
+		engineVel -= engineVel * 0.7f * clutch;
+	}
+	else if(engineVel < missionVel)
+	{
+		missionVel -= engineVel * 0.7f * clutch;
+		engineVel += engineVel * 0.7f * clutch;
+	}
+	return forward_as_tuple(engineVel, missionVel);
+}
+
+float DriveTrain::CarSpeed(float tireRad, float engineRpm, int gearNum)
+{
+	if (gearNum != -1)
+	{
+		float speed = (2 * PI * tireRad) * (60 * engineRpm) / (1000 * (G_RATIO[gearNum] * FINAL));
+		return speed;
+	}
+	return 0;
+}
+
+void DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
+{
+	wheelTorque = mainTorque - reverseTorque;
+	airResistance = AirResistance(((speed * 1000.0f) / (60.0f * 60.0f)));
+	reverseTorque = ReverseTorque(0)/* + airResistance*/;
+	driveTireAcceleration = DriveTireAcceleration(wheelTorque, 2.5f);		// これを車輪回転速度の変数に足していく
+	driveTireVel += driveTireAcceleration;							// 最高速に達したら加速度を足さない
+	propellerVel = PropellerShaftVel(driveTireVel);
+	mainTorque = MainTorque(engineTorque, gearNum, clutch);		// 片輪のみの場合のトルク
+
+	engineVel = EngineVel(gearNum, propellerVel);
 	
+	if (clutch == 0.0f)
+	{
+		engineVel = onlyEngineVel;
+	}
+	else if (clutch != 1.0f)
+	{
+		tie(engineVel, missionVel) = EngineAndMission(engineVel, missionVel, clutch);
+	}
+	else 
+	{
+		missionVel = engineVel;
+	}
+
+	speed = CarSpeed(TIRE_DIAMETER / 2.0f, rpm, gearNum);
 }
 
 void DriveTrain::Draw(float clutch, int gearNum)
@@ -56,25 +117,30 @@ void DriveTrain::Draw(float clutch, int gearNum)
 	DrawBox(250, 420, 300, rS, 0x00ff00, true);
 	DrawBox(250, 420, 300, 420 - 255, 0xffffff, false);
 
+	//// エンジン回転
+	//DrawBox(145, 420, 175, 420 - 255, 0xffffff, false);
+	//DrawBox(145, 420, 175, engineVel * 0.0005, 0xff0000, true);
+	//// ミッション回転
+	//DrawBox(175, 420, 205, 420 - 255, 0xffffff, false);
+
 	DrawString(210, 440, "DrivingForce", 0xff0000);
 
 	DrawFormatString(210, 460, 0xffffff, "RightStick:%.2f", clutch);
 
-	DrawFormatString(210, 480, 0xffffff, "torque:%.2f", mainTorque - reverseTorque);
+	DrawFormatString(360, 460, 0xffffff, "driveTireVel:%.2f", driveTireVel);
 
-	DrawFormatString(360, 460, 0xffffff, "wheelVel:%.2f", wheelReverseVel);
+	DrawFormatString(360, 480, 0xffffff, "driveTireAcceleration:%.2f", driveTireAcceleration);
 
-	DrawFormatString(360, 480, 0xffffff, "shaftVel:%.2f", shaftVel);
+	DrawFormatString(360, 500, 0xffffff, "spped:%.2fkm/h", speed);
 
-	DrawFormatString(510, 500, 0xffffff, "engineVel:%.2f", engineVel);
+	DrawFormatString(360, 520, 0xffffff, "airResistance:%.2f", airResistance);
 
-	DrawFormatString(510, 460, 0xffffff, "wheelRpm:%.2f", wheelRpm);
+	DrawFormatString(600, 460, 0xffffff, "engineVel:%.2f", engineVel);
+	DrawFormatString(600, 480, 0xffffff, "missionVel:%.2f", missionVel);
 
-	DrawFormatString(510, 480, 0xffffff, "shaftRpm:%.2f", shaftRpm);
+	DrawFormatString(600, 500, 0xffffff, "wheelTorque:%.2f", wheelTorque);
 
-	DrawFormatString(660, 460, 0xffffff, "speed:%.2f", carSpeed);
-
-	DrawFormatString(660, 500, 0xffffff, "missionVel:%.2f", missionVel);
+	
 
 	if (gearNum != -1)
 	{
