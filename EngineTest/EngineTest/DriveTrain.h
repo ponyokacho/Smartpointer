@@ -27,6 +27,7 @@ private:
 	int gearNum = -1;
 	
 	float wheelTorque = 0.0f;
+	float wheelTorqueDelta = 0.0f;
 	float reverseTorque = 0.0f;
 	float airResistance = 0.0f;
 	float driveTireAcceleration = 0.0f;
@@ -37,5 +38,6 @@ private:
 	float missionVel = 0.0f;
 
 	float speed = 0.0f;
+	float tmp = 0.0f;
 };
 

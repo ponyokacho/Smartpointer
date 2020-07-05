@@ -88,7 +88,9 @@ void DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum
 	wheelTorque = mainTorque - reverseTorque;
 	airResistance = AirResistance(((speed * 1000.0f) / (60.0f * 60.0f)));
 	reverseTorque = ReverseTorque(0)/* + airResistance*/;
-	driveTireAcceleration = DriveTireAcceleration(wheelTorque, 2.5f);		// これを車輪回転速度の変数に足していく
+	wheelTorqueDelta = wheelTorque - tmp;
+	tmp = wheelTorque;
+	driveTireAcceleration = DriveTireAcceleration(wheelTorqueDelta, 2.5f);		// これを車輪回転速度の変数に足していく
 	driveTireVel += driveTireAcceleration;							// 最高速に達したら加速度を足さない
 	propellerVel = PropellerShaftVel(driveTireVel);
 	mainTorque = MainTorque(engineTorque, gearNum, clutch);		// 片輪のみの場合のトルク
