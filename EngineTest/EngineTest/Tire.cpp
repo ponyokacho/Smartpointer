@@ -52,7 +52,7 @@ float Tire::SlideRate(VECTOR2 v, float rv, float wheelAngle)
 
 	if (wheelAngle != 0.0f)
 	{
-		tireSpeed = cos(v.y) + sin(v.x);
+		tireSpeed = v.y * cos(wheelAngle) + v.x * sin(wheelAngle);
 	}
 	else
 	{
@@ -165,10 +165,10 @@ void Tire::Draw()
 	DrawLine(posCenter.x, posCenter.y, posCenter.x - treadDistanceVec.x, posCenter.y - treadDistanceVec.y, 0x0000ff, 1);
 	//DrawLine(outRearWheelPos.x, outRearWheelPos.y, outRearWheelPos.x + (treadDistanceVecNorm.x * turnRad), outRearWheelPos.y + (treadDistanceVecNorm.y * turnRad), 0xffff00, 1);
 
-
+	DrawFormatString(600, 520, 0xffffff, "tF.x:%.2f,tF.y:%.2f", tireForce.x, tireForce.y);
 }
 
-void Tire::Update(float engineTorque, float steering, int gearNum, float accel)
+void Tire::Update(float engineTorque, float steering, int gearNum, float accel,float driveTireVel)
 {
 	VECTOR2 Vfaw = VECTOR2(0, InertialForce(engineTorque, gearNum));
 	float Np = VerticalForceAtWheelPitch(Vfaw.y);		// 符号は後で変更 タイヤ浮いてたら0
@@ -218,16 +218,9 @@ void Tire::Update(float engineTorque, float steering, int gearNum, float accel)
 		driveFlag = false;
 	}
 
-	VECTOR2 tF = TireForce(0, abs(SlideAngle(dirVec, yawVec)));
-
-	posRl.x -= tF.x * (engineTorque * 0.00000001f);
-	posRl.y -= tF.y * (engineTorque * 0.00000001f);
-	posRr.x -= tF.x * (engineTorque * 0.00000001f);
-	posRr.y -= tF.y * (engineTorque * 0.00000001f);
-	posFl.x -= tF.x * (engineTorque * 0.00000001f);
-	posFl.y -= tF.y * (engineTorque * 0.00000001f);
-	posFr.x -= tF.x * (engineTorque * 0.00000001f);
-	posFr.y -= tF.y * (engineTorque * 0.00000001f);
+	float sr = SlideRate(VECTOR2(0, 0), driveTireVel, wheelAngle);
+	float sa = abs(SlideAngle(dirVec, yawVec));
+	tireForce = TireForce(sr,sa);
 }
 
 // 外積

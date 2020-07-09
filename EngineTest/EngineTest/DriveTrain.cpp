@@ -3,10 +3,13 @@
 #include "KeyMng.h"
 #include "GameTask.h"
 #include "Engine.h"
+#include "ResourceMng.h"
 
 DriveTrain::DriveTrain()
 {
 	gearNum = -1;
+	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/car_idoling.mp3"));
+	PlaySoundMem(SOUND_ID("sounds/car_idoling.mp3"), DX_PLAYTYPE_LOOP);
 }
 
 DriveTrain::~DriveTrain()
@@ -31,9 +34,9 @@ float DriveTrain::DriveTireAcceleration(float torque, float I)
 	return tA;
 }
 
-float DriveTrain::PropellerShaftVel(float wheelVel)
+float DriveTrain::EngineToMinssionVel(float wheelVel)
 {
-	float ppVel = FINAL * wheelVel / 2;
+	float ppVel = FINAL * (wheelVel * 2) / 2;
 	return ppVel;
 }
 
@@ -62,44 +65,67 @@ tuple<float, float> DriveTrain::EngineAndMission(float engineVel, float missionV
 {
 	if (engineVel > missionVel)
 	{
-		missionVel += engineVel * 0.7f * clutch;
-		engineVel -= engineVel * 0.7f * clutch;
+		missionVel += engineVel * 0.005f * clutch;
+		engineVel -= engineVel * 0.005f * clutch;
 	}
 	else if(engineVel < missionVel)
 	{
-		missionVel -= engineVel * 0.7f * clutch;
-		engineVel += engineVel * 0.7f * clutch;
+		missionVel -= engineVel * 0.005f * clutch;
+		engineVel += engineVel * 0.005f * clutch;
 	}
 	return forward_as_tuple(engineVel, missionVel);
 }
 
-float DriveTrain::CarSpeed(float tireRad, float engineRpm, int gearNum)
+float DriveTrain::MaxCarSpeed(int gearNum)
 {
 	if (gearNum != -1)
 	{
-		float speed = (2 * PI * tireRad) * (60 * engineRpm) / (1000 * (G_RATIO[gearNum] * FINAL));
+		float speed = TIRE_PERIMETER * (60 * ACTUAL_MAX_RPM) / (1000 * (G_RATIO[gearNum] * FINAL));
 		return speed;
 	}
 	return 0;
 }
 
-void DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
+float DriveTrain::MaxTireVel(float speed)
 {
+	float oneMinDist = speed / 60.0f;		// km
+	oneMinDist *= 1000;						// m
+	float rpm = oneMinDist / TIRE_PERIMETER;
+	float radPerSec = rpm / 60 * 2 * PI;
+	return radPerSec;
+}
+
+tuple<float, float> DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
+{
+	Sound();
 	wheelTorque = mainTorque - reverseTorque;
+	if (wheelTorque < 0)
+	{
+		wheelTorque = 0;
+	}
 	airResistance = AirResistance(((speed * 1000.0f) / (60.0f * 60.0f)));
 	reverseTorque = ReverseTorque(0)/* + airResistance*/;
-	wheelTorqueDelta = wheelTorque - tmp;
-	tmp = wheelTorque;
-	driveTireAcceleration = DriveTireAcceleration(wheelTorqueDelta, 2.5f);		// これを車輪回転速度の変数に足していく
-	driveTireVel += driveTireAcceleration;							// 最高速に達したら加速度を足さない
-	propellerVel = PropellerShaftVel(driveTireVel);
+	if (MaxTireVel(MaxCarSpeed(gearNum)) > driveTireVel)
+	{
+		driveTireVel += DriveTireAcceleration(mainTorque, 20.0f);
+	}
+	if (driveTireVel > 0)
+	{
+		driveTireVel -= DriveTireAcceleration(reverseTorque, 10.0f);
+	}
+	else
+	{
+		driveTireVel = 0.0f;
+	}
+	engineToMinssionVel = EngineToMinssionVel(driveTireVel);
 	mainTorque = MainTorque(engineTorque, gearNum, clutch);		// 片輪のみの場合のトルク
-
-	engineVel = EngineVel(gearNum, propellerVel);
 	
+	engineVel = EngineVel(gearNum, engineToMinssionVel);
 	if (clutch == 0.0f)
 	{
 		engineVel = onlyEngineVel;
+		reverseMissionVel = missionVel * 0.001f;
+		missionVel -= reverseMissionVel;
 	}
 	else if (clutch != 1.0f)
 	{
@@ -109,8 +135,8 @@ void DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum
 	{
 		missionVel = engineVel;
 	}
-
-	speed = CarSpeed(TIRE_DIAMETER / 2.0f, rpm, gearNum);
+	
+	return forward_as_tuple(driveTireVel,wheelTorque);
 }
 
 void DriveTrain::Draw(float clutch, int gearNum)
@@ -131,10 +157,6 @@ void DriveTrain::Draw(float clutch, int gearNum)
 
 	DrawFormatString(360, 460, 0xffffff, "driveTireVel:%.2f", driveTireVel);
 
-	DrawFormatString(360, 480, 0xffffff, "driveTireAcceleration:%.2f", driveTireAcceleration);
-
-	DrawFormatString(360, 500, 0xffffff, "spped:%.2fkm/h", speed);
-
 	DrawFormatString(360, 520, 0xffffff, "airResistance:%.2f", airResistance);
 
 	DrawFormatString(600, 460, 0xffffff, "engineVel:%.2f", engineVel);
@@ -152,4 +174,9 @@ void DriveTrain::Draw(float clutch, int gearNum)
 	{
 		DrawString(210, 500, "Gear:N",0xffffff);
 	}
+}
+
+void DriveTrain::Sound()
+{
+	SetFrequencySoundMem(freq + (engineVel / (2 * PI) * 60) * 20, SOUND_ID("sounds/car_idoling.mp3"));
 }

@@ -31,7 +31,6 @@ public:
 
 	tuple<float,float, float> Update(float accel);
 	void Draw(float accel, float rightTrigger);
-	void Sound();
 
 private:
 	array<float, 10>t = {0,140,170,200,180,200,210,180,0}; // NÅEm
@@ -43,7 +42,5 @@ private:
 	float engineTorque = 0.0f;
 	float angularAccel = 0.0f;
 	float rpm = IDOL_RPM;
-
-	float freq = 50000;
 };
 

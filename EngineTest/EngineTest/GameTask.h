@@ -16,9 +16,11 @@ constexpr float PI = 3.14159265;
 constexpr float DT = 1.0f / 60.0f;
 
 constexpr int MAX_GEAR = 6;
+constexpr int ACTUAL_MAX_RPM = 7700;
 
 constexpr float BRAKE_POWER_MAX = 0;
 constexpr float TIRE_DIAMETER = 0.64; // m
+constexpr float TIRE_PERIMETER = TIRE_DIAMETER * PI;
 constexpr float ROLLING_FRICTION = 0.015;
 constexpr float LOAD = 1250;		// kg
 
@@ -87,5 +89,8 @@ private:
 	float steeringPercent = 0.0f;
 
 	float onlyEngineVel = 0.0f;
+
+	float driveTireVel = 0.0f;
+	float wheelTorque = 0.0f;
 };
 

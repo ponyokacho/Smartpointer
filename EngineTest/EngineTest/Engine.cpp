@@ -1,13 +1,10 @@
 #include "Engine.h"
 #include <string>
 #include "DxLib.h"
-#include "ResourceMng.h"
 #include "GameTask.h"
 
 Engine::Engine()
 {
-	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/car_idoling.mp3"));
-	PlaySoundMem(SOUND_ID("sounds/car_idoling.mp3"), DX_PLAYTYPE_LOOP);
 }
 
 Engine::~Engine()
@@ -83,8 +80,6 @@ tuple<float, float, float> Engine::Update(float accel)
 
 	thousand = rpm / 1000;
 
-	Sound();
-
 	return forward_as_tuple(torque,rpm,angularAccel);
 }
 
@@ -103,9 +98,4 @@ void Engine::Draw(float accel, float rightTrigger)
 	DrawFormatString(10, 500, 0xffffff, "rpm:%.2f", rpm);
 
 	DrawFormatString(10, 520, 0xffffff, "engineVel:%.2f", angularAccel);
-}
-
-void Engine::Sound()
-{
-	SetFrequencySoundMem(freq + rpm * 20, SOUND_ID("sounds/car_idoling.mp3"));
 }

@@ -18,7 +18,7 @@ public:
 	VECTOR2 FrontWheelAngle(VECTOR2 v,float steering);
 
 	void Draw();
-	void Update(float engineTorque,float steering,int gearNum,float accel);
+	void Update(float engineTorque,float steering,int gearNum,float accel,float driveTireVel);
 
 	float Cross(VECTOR2 va, VECTOR2 vb);
 	float Dot(VECTOR2 va, VECTOR2 vb);
@@ -52,5 +52,6 @@ private:
 	VECTOR2 yawVec = { 0,0 };
 	VECTOR2 fWheelVec = { 0,0 };
 	VECTOR2 rWheelVec = { 0,0 };
+	VECTOR2 tireForce = { 0,0 };
 };
  

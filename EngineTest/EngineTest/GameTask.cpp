@@ -48,12 +48,12 @@ void GameTask::GameUpdate()
 	}
 	for (auto i : d)
 	{
-		(*i).Update(clutch,engineTorque,rpm,gearNum,onlyEngineVel);
+		tie(driveTireVel, wheelTorque) = (*i).Update(clutch,engineTorque,rpm,gearNum,onlyEngineVel);
 		(*i).Draw(clutch, gearNum);
 	}
 	for (auto i : t)
 	{
-		(*i).Update(engineTorque, steering, gearNum,accel);
+		(*i).Update(engineTorque, steering, gearNum, accel, driveTireVel);
 		(*i).Draw();
 	}
 
@@ -73,6 +73,10 @@ void GameTask::Control()
 	clutchPercent = 1.0f / 32767;
 	clutch *= clutchPercent;
 	clutch = 1 - clutch;
+	if (clutch < 0.05f)
+	{
+		clutch = 0.0f;
+	}
 
 	steering = input.ThumbLX;
 	steeringPercent = 1.0f / 32767;
