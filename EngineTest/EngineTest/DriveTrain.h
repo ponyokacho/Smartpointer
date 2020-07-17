@@ -19,10 +19,10 @@ public:
 	float MainTorque(float engineTorque, int gearNum, float clutch);
 	tuple<float, float> EngineAndMission(float engineVel, float missionVel, float clutch);
 
-	float MaxCarSpeed(int gearNum);
+	float CarSpeed(float rpm,int gearNum);
 	float MaxTireVel(float speed);
 
-	tuple<float, float> Update(float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
+	tuple<float, float, float> Update(float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
 	void Draw(float clutch, int gearNum);
 	void Sound();
 

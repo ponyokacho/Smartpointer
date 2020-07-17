@@ -76,11 +76,11 @@ tuple<float, float> DriveTrain::EngineAndMission(float engineVel, float missionV
 	return forward_as_tuple(engineVel, missionVel);
 }
 
-float DriveTrain::MaxCarSpeed(int gearNum)
+float DriveTrain::CarSpeed(float rpm,int gearNum)
 {
 	if (gearNum != -1)
 	{
-		float speed = TIRE_PERIMETER * (60 * ACTUAL_MAX_RPM) / (1000 * (G_RATIO[gearNum] * FINAL));
+		float speed = TIRE_PERIMETER * (60 * rpm) / (1000 * (G_RATIO[gearNum] * FINAL));
 		return speed;
 	}
 	return 0;
@@ -95,7 +95,7 @@ float DriveTrain::MaxTireVel(float speed)
 	return radPerSec;
 }
 
-tuple<float, float> DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
+tuple<float, float, float> DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
 {
 	Sound();
 	wheelTorque = mainTorque - reverseTorque;
@@ -105,7 +105,7 @@ tuple<float, float> DriveTrain::Update(float clutch, float engineTorque, float r
 	}
 	airResistance = AirResistance(((speed * 1000.0f) / (60.0f * 60.0f)));
 	reverseTorque = ReverseTorque(0)/* + airResistance*/;
-	if (MaxTireVel(MaxCarSpeed(gearNum)) > driveTireVel)
+	if (MaxTireVel(CarSpeed(ACTUAL_MAX_RPM,gearNum)) > driveTireVel)
 	{
 		driveTireVel += DriveTireAcceleration(mainTorque, 20.0f);
 	}
@@ -135,8 +135,10 @@ tuple<float, float> DriveTrain::Update(float clutch, float engineTorque, float r
 	{
 		missionVel = engineVel;
 	}
+
+	speed = CarSpeed(rpm, gearNum);
 	
-	return forward_as_tuple(driveTireVel,wheelTorque);
+	return forward_as_tuple(driveTireVel,wheelTorque,speed);
 }
 
 void DriveTrain::Draw(float clutch, int gearNum)
@@ -157,14 +159,12 @@ void DriveTrain::Draw(float clutch, int gearNum)
 
 	DrawFormatString(360, 460, 0xffffff, "driveTireVel:%.2f", driveTireVel);
 
-	DrawFormatString(360, 520, 0xffffff, "airResistance:%.2f", airResistance);
+	//DrawFormatString(360, 520, 0xffffff, "airResistance:%.2f", airResistance);
 
-	DrawFormatString(600, 460, 0xffffff, "engineVel:%.2f", engineVel);
-	DrawFormatString(600, 480, 0xffffff, "missionVel:%.2f", missionVel);
+	//DrawFormatString(600, 460, 0xffffff, "engineVel:%.2f", engineVel);
+	//DrawFormatString(600, 480, 0xffffff, "missionVel:%.2f", missionVel);
 
-	DrawFormatString(600, 500, 0xffffff, "wheelTorque:%.2f", wheelTorque);
-
-	
+	//DrawFormatString(600, 500, 0xffffff, "wheelTorque:%.2f", wheelTorque);
 
 	if (gearNum != -1)
 	{

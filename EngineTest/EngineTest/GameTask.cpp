@@ -23,6 +23,7 @@ int GameTask::SystemInit()
 	SetDrawScreen(DX_SCREEN_BACK);
 
 	GameInit();
+	return 0;
 }
 
 void GameTask::GameInit()
@@ -48,12 +49,12 @@ void GameTask::GameUpdate()
 	}
 	for (auto i : d)
 	{
-		tie(driveTireVel, wheelTorque) = (*i).Update(clutch,engineTorque,rpm,gearNum,onlyEngineVel);
+		tie(driveTireVel, wheelTorque, speed) = (*i).Update(clutch,engineTorque,rpm,gearNum,onlyEngineVel);
 		(*i).Draw(clutch, gearNum);
 	}
 	for (auto i : t)
 	{
-		(*i).Update(engineTorque, steering, gearNum, accel, driveTireVel);
+		(*i).Update(engineTorque, steering, gearNum, accel, driveTireVel, speed);
 		(*i).Draw();
 	}
 
@@ -81,7 +82,7 @@ void GameTask::Control()
 	steering = input.ThumbLX;
 	steeringPercent = 1.0f / 32767;
 	steering *= clutchPercent;
-	if (steering < 0.1f && steering > -0.1f)
+	if (steering < 0.15f && steering > -0.15f)
 	{
 		steering = 0.0f;
 	}

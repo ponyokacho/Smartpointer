@@ -92,5 +92,7 @@ private:
 
 	float driveTireVel = 0.0f;
 	float wheelTorque = 0.0f;
+
+	float speed = 0.0f;
 };
 
