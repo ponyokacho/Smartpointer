@@ -45,15 +45,14 @@ private:
 	float treadDistance = 0.0f;
 	float wheelBaseDistance = 0.0f;
 
-	float kmPerSec = 0.0f;
-	float mPerSec = 0.0f;
-	float oneFrameSpeed = 0.0f;
 	float kph = 0.0f;
 	float fWheelRot = 0.0f;
+	float oneFrameSpeed = 0.0f;
+
+	float saveSlipRate = 0.0f;
 
 	VECTOR2 dirVec = { 0,0 };
 	VECTOR2 yawVec = { 0,0 };
-	VECTOR2 moveVec = { 0,0 };
 	VECTOR2 fWheelVec = { 0,0 };
 	VECTOR2 rWheelVec = { 0,0 };
 
@@ -105,7 +104,10 @@ private:
 	};
 	Rear rear;
 
-
+	int lr = 0;
 	float deg = 0.0f;
+
+	VECTOR2 allVector = { 0.0f,0.0f };
+	VECTOR2 moveVec = { 0.0f,0.0f };
 };
  

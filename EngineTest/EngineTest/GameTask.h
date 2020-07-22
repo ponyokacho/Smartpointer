@@ -46,6 +46,7 @@ constexpr float ONE_TIRE_LOAD = (LOAD * G_ACCELERATION) / 4;
 constexpr float MU = 0.8f;
 
 constexpr float WHEEL_ANGLE_MAX = 33; // “x
+constexpr float WHEEL_ANGLE_MAX_RAD = 33 * PI / 180;
 
 constexpr float G_RATIO[6] = { 3.626,2.188,1.541,1.213,1.000,0.767 };
 

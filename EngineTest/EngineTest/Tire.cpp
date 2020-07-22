@@ -63,6 +63,7 @@ float Tire::SlipRate(VECTOR2 v, float rv, float wheelAngle)
 	{
 		if (driveFlag)
 		{
+			// おかしい
 			s = (rv * TIRE_DIAMETER - moveSpeed) / (rv * TIRE_DIAMETER);
 		}
 		else
@@ -75,6 +76,7 @@ float Tire::SlipRate(VECTOR2 v, float rv, float wheelAngle)
 		return -1.0f;
 	}
 
+	//saveSlipRate = s;
 	return s;
 }
 
@@ -165,7 +167,7 @@ void Tire::Draw()
 	//DrawFormatString(SCREEN_SIZE_X - 200, 480, 0xffffff, "VFAW_R = %.2f", LOAD_RL);
 	//DrawFormatString(SCREEN_SIZE_X / 2 + 300, SCREEN_SIZE_Y - 150 - 100, 0xffffff, "VFAW_RR = %.2f", LOAD_RR);
 
-	DrawRotaGraph(posCenter.x, posCenter.y, 0.10f, deg + (90.0f * PI / 180), IMAGE_ID("images/body.png"), true);
+	DrawRotaGraph(posCenter.x, posCenter.y, 0.10f, deg, IMAGE_ID("images/body.png"), true);
 	//DrawCircle(front.left.pos.x, front.left.pos.y, 2, 0xffffff, true);
 	//DrawCircle(front.right.pos.x, front.right.pos.y, 2, 0xffffff, true);
 	//DrawCircle(rear.left.pos.x, rear.left.pos.y, 2, 0xffffff, true);
@@ -174,23 +176,20 @@ void Tire::Draw()
 	DrawLine(posCenter.x, posCenter.y, posCenter.x - dirVec.x * 30, posCenter.y - dirVec.y * 30, 0xff0000, 1);
 	DrawLine(posCenter.x, posCenter.y, posCenter.x - yawVec.x * 30, posCenter.y - yawVec.y * 30, 0x00ff00, 1);
 	DrawLine(front.centerPos.x,front.centerPos.y,rear.centerPos.x,rear.centerPos.y, 0x0000ff, 1);
-	DrawLine(posCenter.x, posCenter.y, posCenter.x - front.right.tireForce.x, posCenter.y - front.right.tireForce.y, 0xff00ff, 1);
-	//DrawLine(outRearWheelPos.x, outRearWheelPos.y, outRearWheelPos.x + (treadDistanceVecNorm.x * turnRad), outRearWheelPos.y + (treadDistanceVecNorm.y * turnRad), 0xffff00, 1);
+	DrawLine(posCenter.x, posCenter.y, posCenter.x - front.left.tireForce.x * 20 * lr, posCenter.y - front.left.tireForce.y * 40, 0xff00ff, 1);
+	DrawLine(posCenter.x,posCenter.y,moveVec.x,moveVec.y, 0xffffff, 1);
 
 	//DrawFormatString(600, 520, 0xffffff, "tF.RR.x:%.2f,tF.RR.y:%.2f", rear.right.tireForce.x, rear.right.tireForce.y);
+	DrawFormatString(450, 440, 0xffffff, "deg.x:%.2f", deg);
 
-	DrawFormatString(600, 440, 0xffffff, "deg:%.2f", deg * 180 / PI);
-	DrawFormatString(600, 460, 0xffffff, "speed.x:%.2f,speed.y:%.2f", front.right.vectorSpeed.x, front.right.vectorSpeed.y);
-	DrawFormatString(600, 480, 0xffffff, "tF.FR(tireForce.x):%.2f\ntF.FR(tireForce.y):%.2f", front.right.tireForce.x, front.right.tireForce.y);
-	DrawFormatString(600, 520, 0xffffff, "tF.FR(slipAngle):%.2f", front.right.slipAngle);
+	DrawFormatString(600, 440, 0xffffff, "moveVec.x:%.2f,moveVec.y:%.2f", moveVec.x,moveVec.y);
+	DrawFormatString(600, 460, 0xffffff, "allVector.x:%.2f,allVector.y:%.2f", allVector.x, allVector.y);
+	DrawFormatString(600, 480, 0xffffff, "tF.FL(tireForce.x):%.2f\ntF.FL(tireForce.y):%.2f", front.left.tireForce.x, front.left.tireForce.y);
+	DrawFormatString(600, 520, 0xffffff, "tF.FL(slipRate):%.2f", front.left.slipRate);
 }
 
 void Tire::Update(float engineTorque, float steering, int gearNum, float accel,float driveTireVel, float speed)
 {
-	kmPerSec = speed / (60 * 60);
-	mPerSec = kmPerSec * 1000;
-	oneFrameSpeed = mPerSec * DT;
-
 	VECTOR2 Vfaw = VECTOR2(0, InertialForce(engineTorque, gearNum));
 	float Np = VerticalForceAtWheelPitch(Vfaw.y);		// 符号は後で変更 タイヤ浮いてたら0
 	if (accel)
@@ -242,14 +241,13 @@ void Tire::Update(float engineTorque, float steering, int gearNum, float accel,f
 
 	// 非駆動輪のタイヤ角速度は車速から求める
 
-	int lr = 0;
 	if (signbit(steering))
 	{
-		lr = 1;
+		lr = -1;
 	}
 	else
 	{
-		lr = -1;
+		lr = 1;
 	}
 
 	////Front////
@@ -300,6 +298,8 @@ void Tire::Update(float engineTorque, float steering, int gearNum, float accel,f
 	// とりあえず車速はvectorSpeed.yの1.9倍
 	kph = rear.left.vectorSpeed.y * 2.0f;
 	fWheelRot = WheelRot(kph);
+	oneFrameSpeed = kph * 1000 / (60 * 60);
+	oneFrameSpeed *= DT;
 
 
 	// 左右輪の真ん中の座標をとる
@@ -309,7 +309,19 @@ void Tire::Update(float engineTorque, float steering, int gearNum, float accel,f
 	// ベクトルでつなげる
 	VECTOR2 centerVec = front.centerPos - rear.centerPos;
 
-	deg = atan2(centerVec.y,centerVec.x);
+	allVector = VECTOR2((front.left.tireForce.x + front.right.tireForce.x) / 2 * lr,oneFrameSpeed * 5);
+
+	// 最終的な角度(deg)に向かって少しずつ旋回させる。滑り比を使って強弱を決定(滑り比0で全く滑っていない状態)
+	allVector = allVector.Normalize();
+
+	deg += allVector.x * PI / 180;
+
+	// ベクトルをdeg分原点回転
+	VECTOR2 rotVec = { allVector.x * cos(deg) - allVector.y * sin(deg), allVector.x * sin(deg) + allVector.y * cos(deg)};
+
+	// 車を動かす
+	posCenter.x -= rotVec.x;
+	posCenter.y -= rotVec.y;
 }
 
 // 外積
