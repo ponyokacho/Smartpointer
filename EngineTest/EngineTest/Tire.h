@@ -12,13 +12,14 @@ public:
 	float VerticalForceAtWheelPitch(float pitch);
 	float VerticalForceAtWheelRoll(float roll);
 	float InertialForce(float engineTorque, int gearNum);
-	float SlideRate(VECTOR2 v,float rv,float wheelAngle);
-	float SlideAngle(VECTOR2 dirVec, VECTOR2 yawVec);
-	VECTOR2 TireForce(float slideRate, float slideAngle);
+	float SlipRate(VECTOR2 v,float rv,float wheelAngle);
+	float SlipAngle(VECTOR2 dirVec, VECTOR2 yawVec);
+	VECTOR2 TireForce(float slipRate, float slipAngle);
 	VECTOR2 FrontWheelAngle(VECTOR2 v,float steering);
+	float WheelRot(float kph);
 
 	void Draw();
-	void Update(float engineTorque,float steering,int gearNum,float accel);
+	void Update(float engineTorque,float steering,int gearNum,float accel,float driveTireVel,float speed);
 
 	float Cross(VECTOR2 va, VECTOR2 vb);
 	float Dot(VECTOR2 va, VECTOR2 vb);
@@ -38,19 +39,75 @@ private:
 	bool driveFlag = false;
 
 	VECTOR2 posCenter = {645,230};
-	VECTOR2 posFl;
-	VECTOR2 posFr;
-	VECTOR2 posRl;
-	VECTOR2 posRr;
 
 	VECTOR2 treadDistanceVec = { 0,0 };
 	VECTOR2 treadDistanceVecNorm = { 0,0 };
 	float treadDistance = 0.0f;
 	float wheelBaseDistance = 0.0f;
 
+	float kph = 0.0f;
+	float fWheelRot = 0.0f;
+	float oneFrameSpeed = 0.0f;
+
+	float saveSlipRate = 0.0f;
+
 	VECTOR2 dirVec = { 0,0 };
 	VECTOR2 yawVec = { 0,0 };
 	VECTOR2 fWheelVec = { 0,0 };
 	VECTOR2 rWheelVec = { 0,0 };
+
+	struct Front {
+		struct L {
+			VECTOR2 tireForce = { 0,0 };
+			VECTOR2 pos = { 0,0 };
+			VECTOR2 vectorSpeed = { 0.0f,1.0f };
+			VECTOR2 preYaw = { 0.0f,0.0f };
+			float slipAngle = 0.0f;
+			float slipRate = 0.0f;
+		};
+		struct R {
+			VECTOR2 tireForce = { 0,0 };
+			VECTOR2 pos = { 0,0 };
+			VECTOR2 vectorSpeed = { 0.0f,1.0f };
+			VECTOR2 preYaw = { 0.0f,0.0f };
+			float slipAngle = 0.0f;
+			float slipRate = 0.0f;
+		};
+		VECTOR2 centerPos = { 0.0f,0.0f };
+
+		L left;
+		R right;
+	};
+	Front front;
+
+	struct Rear {
+		struct L {
+			VECTOR2 tireForce = { 0,0 };
+			VECTOR2 pos = { 0,0 };
+			VECTOR2 vectorSpeed = { 0.0f,1.0f };
+			float slipAngle = 0.0f;
+			float preSlipAngle = 0.0f;
+			float slipRate = 0.0f;
+		};
+		struct R {
+			VECTOR2 tireForce = { 0,0 };
+			VECTOR2 pos = { 0,0 };
+			VECTOR2 vectorSpeed = { 0.0f,1.0f };
+			float slipAngle = 0.0f;
+			float preSlipAngle = 0.0f;
+			float slipRate = 0.0f;
+		};
+		VECTOR2 centerPos = {0.0f,0.0f};
+
+		L left;
+		R right;
+	};
+	Rear rear;
+
+	int lr = 0;
+	float deg = 0.0f;
+
+	VECTOR2 allVector = { 0.0f,0.0f };
+	VECTOR2 moveVec = { 0.0f,0.0f };
 };
  
