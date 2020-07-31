@@ -1,177 +1,133 @@
-#include "DxLib.h"
 #include "GameTask.h"
 #include "KeyMng.h"
-#include "Camera.h"
-#include "Field.h"
+#include "DxLib.h"
 #include "Player.h"
+#include "Field.h"
+#include "Camera.h"
 
-int GameTask::SCREEN_SIZE_X = 1024;
-int GameTask::SCREEN_SIZE_Y = 600;
+#include <vector>
+#include <memory>
 
+GameTask *GameTask::s_Instance = nullptr;
 
-void GameTask::addObjCnt()
+void GameTask::Create(void)
 {
-	ObjCnt++;
-}
-
-void GameTask::removeObjCnt()
-{
-	ObjCnt--;
+	if (!s_Instance)
+	{
+		s_Instance = new GameTask();
+	}
 }
 
 int GameTask::SystemInit()
 {
-	SetWindowText("RACE");
-	SetGraphMode(SCREEN_SIZE_X, SCREEN_SIZE_Y, 32);	// 1024~600ÄŞ¯Ä32bit‚Éİ’è
-	ChangeWindowMode(true);				// true:window@false:ÌÙ½¸Ø°İ
+	SetWindowText ("Template");
+	SetGraphMode(SCREEN_SIZE_X, SCREEN_SIZE_Y, 16);
+	ChangeWindowMode(true);
 	if (DxLib_Init() == -1) {
-		return false;					// DX×²ÌŞ×Ø‰Šú‰»ˆ—
+		return -1;
 	}
 	SetDrawScreen(DX_SCREEN_BACK);
 
-	SetUseZBuffer3D(true);	// ZÊŞ¯Ì§‚ğ—LŒø‚É‚·‚é
-	SetWriteZBuffer3D(true);// ZÊŞ¯Ì§‚Ö‚Ì‘‚«‚İ‚ğ—LŒø‚É‚·‚é
-
-	//SetUseLighting(false);	// ×²Ã¨İ¸Ş–³Œø
-	SetLightDirection(VGet(0.5f, -0.5f, 0.5f));		// •ÀsŒõ‚ÌŒü‚«
-	SetBackgroundColor(137,189,222);
-
-	// ¹Ş°ÑÙ°Ìß(ŠÖ”Îß²İÀ)‚ğGameInit‚É•ÏX
-	//gLoopPtr = &GameTask::GameInit;
-
-	// ----- Še²İ½Àİ½
-	//camera = new Camera();
-	//field = new Field();
-
-	gameMode = GAME_INIT;
+	GameInit();
 	return 0;
 }
 
-int GameTask::GameInit()
+void GameTask::GameInit()
 {
-	player = new Player();
- 	field = new Field();
-	camera = new Camera(player);
-	
-	return 0;
+	e.push_back(make_shared<Engine>());
+	d.push_back(make_shared<DriveTrain>());
+	t.push_back(make_shared<Tire>());
+
+	p.push_back(std::make_shared<Player>());
+	c.push_back(std::make_shared<Camera>(p.back()));
+	f.push_back(std::make_shared<Field>());
 }
 
-int GameTask::GameTitle(void)
+void GameTask::GameUpdate()
 {
-	//DrawString(0, 0, "TITLE", 0xffff00);
-	//DrawString(SCREEN_SIZE_X / 2 - 90, SCREEN_SIZE_Y / 2 + 100, "PRESS SPACE BUTTON", 0xffffff);
-	//DrawFormatString(915, 32, 0xffffff, "ObjCnt = %d", ObjCnt);
-	ChangeFont("Bauhaus 93");
-	SetFontSize(50);
-	// ‚±‚±‚ÉÀ²ÄÙ
-	//DrawString(SCREEN_SIZE_X / 2 - 310, SCREEN_SIZE_Y / 2 - 50, "RACINGE of MIKAN",0xff0000); 
-	ChangeFont("MSƒSƒVƒbƒN");
-	SetFontSize(10);
-	SetFontSize(16);
-	return 0;
+	Control();
+
+	if (clutch > 1.0f)
+	{
+		clutch = 1.0f;
+	}
+
+	for (auto i : p)
+	{
+		(*i).Update(pos,dirVec,rotVec,wheelAngle,deg);
+		(*i).Render();
+	}
+	for (auto i : c)
+	{
+		(*i).Update();
+	}
+	for (auto i : f)
+	{
+		(*i).Update();
+		(*i).Render();
+	}
+
+	for (auto i : e)
+	{
+		tie(engineTorque, rpm, onlyEngineVel) = (*i).Update(accel);
+		(*i).Draw(accel, input.RightTrigger);
+	}
+	for (auto i : d)
+	{
+		tie(driveTireVel, wheelTorque, speed) = (*i).Update(clutch, engineTorque, rpm, gearNum, onlyEngineVel);
+		(*i).Draw(clutch, gearNum);
+	}
+	for (auto i : t)
+	{
+		tie(pos, dirVec, rotVec,wheelAngle, deg) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel, speed);
+		(*i).Draw();
+	}
+
 }
 
-int GameTask::GameMain()
+void GameTask::Control()
 {
-	//DrawLine3D(VGet(500.0f, 0.0f, 0.0f), VGet(-500.0f, 0.0f, 0.0f), 0xff0000);// X(Ô)
-	////DrawLine3D(VGet(0.0f, 500.0f, 0.0f), VGet(0.0f, -500.0f, 0.0f), 0x00ff00);// Y(—Î)
-	//DrawLine3D(VGet(0.0f, 0.0f, 500.0f), VGet(0.0f, 0.0f, -500.0f), 0x0000ff);// Z(Â)
-
-	camera->Update();
-	field->Update();
-	field->Render();
-	player->Update();
-	player->Render();
-	
-
-	// ‡B•`‰æ‚Ég—p‚·‚é¼¬ÄŞ³Ï¯Ìß‚Ìİ’è‚ğ‰ğœ
-	SetUseShadowMap(0, -1);
-
-	//DrawString(0, 0, "MAIN", 0xffff00);
-	////DrawFormatString(900, 0, 0xff0000, "‚r‚b‚n‚q‚d = %d", score);
-	//DrawFormatString(915, 32, 0xffffff, "ObjCnt = %d", ObjCnt);
-	//DrawString(0, 30, "SPACE:‰æ–Ê‘JˆÚ", 0xffffff);
-
-	return 0;
-}
-
-int GameTask::GameOver()
-{
-	//DrawString(0, 0, "OVER", 0xffff00);
-	return 0;
-}
-
-int GameTask::GameClear()
-{
-	//DrawString(0, 0, "CLEAR", 0xffff00);
-	return 0;
-}
-int GameTask::Update()
-{
-	trgKey = 0;
-	newKey = 0;
-
-	//DrawFormatString(915, 32, 0xffffff, "ObjCnt = %d", ObjCnt);
-
 	KeyMng::GetInstance().Update();
-	//int rtnID = (this->*gLoopPtr)();	// ¹Ş°ÑÙ°Ìß(ŠÖ”Îß²İÀ°)
-	//return rtnID;
 
-	if (CheckHitKey(KEY_INPUT_SPACE))
+	GetJoypadXInputState(DX_INPUT_PAD1, &input);
+	accel = input.RightTrigger;
+	throttlePercent = 1.0f / 255.0f;
+	accel *= throttlePercent;
+
+	clutch = input.ThumbRY;
+	clutchPercent = 1.0f / 32767;
+	clutch *= clutchPercent;
+	clutch = 1 - clutch;
+	if (clutch < 0.05f)
 	{
-		newKey = 1;
+		clutch = 0.0f;
 	}
-	trgKey = ~oldKey & newKey;			// ÄØ¶Ş°·°
 
-	if ((oldKey == 0) && (newKey == 1))
+	steering = input.ThumbLX;
+	steeringPercent = 1.0f / 32767;
+	steering *= clutchPercent;
+	if (steering < 0.15f && steering > -0.15f)
 	{
-		trgKey = 1;
+		steering = 0.0f;
 	}
-	oldKey = newKey;
 
-	switch (gameMode) {
-	case GAME_INIT:
-		GameInit();
-		//gLoopPtr = &GameTask::GameMain;
-		gameMode = GAME_TITLE;
-		break;
-	case GAME_TITLE:
-		GameTitle();
-		if (trgKey)
+	//if (clutch < 0.5f)
+	{
+		if (KeyMng::GetInstance().trgKey[P1_LB])
 		{
-			//gLoopPtr = &GameTask::GameMain;
-			gameMode = GAME_MAIN;
+			gearNum--;
+			if (gearNum < -1)
+			{
+				gearNum = -1;
+			}
 		}
-		break;
-	case GAME_MAIN:
-		GameMain();
-		if (trgKey)
+		if (KeyMng::GetInstance().trgKey[P1_RB])
 		{
-			//gLoopPtr = &GameTask::GameMain;
-			gameMode = GAME_CLEAR;
+			gearNum++;
+			if (gearNum > MAX_GEAR - 1)
+			{
+				gearNum = MAX_GEAR - 1;
+			}
 		}
-		break;
-	case GAME_CLEAR:
-		GameClear();
-		if (trgKey)
-		{
-			//gLoopPtr = &GameTask::GameMain;
-			gameMode = GAME_OVER;
-		}
-		break;
-	case GAME_OVER:
-		GameOver();
-		if (trgKey)
-		{
-			//gLoopPtr = &GameTask::GameMain;
-			delete camera;
-			delete field;
-			delete player;
-			gameMode = GAME_INIT;
-		}
-		break;
-	default:
-		break;
-	};
-	return 0;
+	}
 }

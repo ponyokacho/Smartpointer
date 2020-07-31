@@ -3,9 +3,8 @@
 #include "Camera.h"
 #include "Player.h"
 
-Camera::Camera(Player* p)
+Camera::Camera(std::shared_ptr<Player> p) : player(*p)
 {
-	player = p;
 	Init();
 }
 
@@ -27,31 +26,16 @@ void Camera::Init()
 
 	// ----- 一人称ｶﾒﾗの初期値
 	//pos = VGet(0.0f, 0.0f, -700.0f);
-	pos = VGet(0.0f, 350.0f, -1500.0f);
+	pos = VGet(0.0f, 0.0f, 0.0f);
 	target = VGet(0.0f, 0.0f, 0.0f);
-
-
 }
 
 void Camera::Update()
 {
 	//player->Update();
-	pos = VGet(player->boxCamPos.x, player->boxCamPos.y, player->boxCamPos.z);
-	target = VGet(player->boxPos.x, player->boxPos.y + 200.0f, player->boxPos.z);
-
-	// test
-	//pos = VGet(0, player->boxCamPos.y, 0);
-	//target = VGet(player->boxPos.x, player->boxPos.y, player->boxPos.z);
-
-	// ----- SetCameraPositionAndTarget_UpVecY(pos, target)を使用する場合
+	pos = VGet(player.camPos.x, player.camPos.y, player.camPos.z);
+	target = VAdd(player.carPos,TARGET_OFFSET);
 
 	// ｶﾒﾗｾｯﾄ
 	SetCameraPositionAndTarget_UpVecY(pos, target);
-	//SetCameraPositionAndAngle(pos, 0.0f,player->front.x * player->front.z, 0.0f);
-
-	//DrawFormatString(0, 16 * 3, 0xffffff,
-		//	"camPos( %.1f, %.1f, %.1f )", pos.x, pos.y, pos.z, true);
-
-	//DrawFormatString(0, 16 * 4, 0xffffff,
-		//	"targetPos( %.1f, %.1f, %.1f )", target.x, target.y, target.z, true);
 }

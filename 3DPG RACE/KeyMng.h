@@ -1,58 +1,49 @@
 #pragma once
+#include"DxLib.h"
 
-enum KEY_MODE {
-	// ----- P1
-	P1_UP,
-	P1_RIGHT,
+enum KEY_CODE {
+	P1_UP = 0,
 	P1_DOWN,
+	P1_RIGHT ,
 	P1_LEFT,
-	P1_RA,
+	P1_SPACE,
+	P1_ENTER,
+	P1_LCtrl,
+	P1_Y,
+	P1_X,
+	P1_B,
+	P1_Z,
 	P1_RB,
-
-	P1_W,
-	P1_D,
-	P1_S,
-	P1_A,
-
-	P1_LA,
 	P1_LB,
 	P1_PAUSE,
+
 	KEY_MAX
 };
 
-// ----- ｼﾝｸﾞﾙﾄﾝのKeyCheckｸﾗｽを定義する
+#define lpKeyMng KeyMng::GetInstance()
+
 class KeyMng
 {
 private:
-	// ----- ｺﾝｽﾄﾗｸﾀ群
-	KeyMng();	// ﾃﾞﾌｫﾙﾄｺﾝｽﾄﾗｸﾀをprivateにして外部から生成できない様にする
-	KeyMng(const KeyMng&){}						// ----- ｺﾋﾟｰｺﾝｽﾄﾗｸﾀをprivate化
-	KeyMng& operator=(const KeyMng& g){}		// ----- 代入演算子のｵｰﾊﾞｰﾗｲﾄﾞをprivate化
-	~KeyMng(){}	// ﾃﾞｽﾄﾗｸﾀ
-	
-public:
-	// ----- KeyMngｵﾌﾞｼﾞｪｸﾄの実体を返す(ｼﾝｸﾞﾙﾄﾝ)
-	static KeyMng& GetInstance() {
-		static KeyMng keyInstance;	// KeyMngの実体を生成。keyInstanceに保持
-		return keyInstance;
+	KeyMng() { 
+		Init();
 	}
+	KeyMng(const KeyMng&) {}
+	KeyMng& operator=(const KeyMng& k) {}
+	~KeyMng() {}
 
+public:
+	static KeyMng& GetInstance() {
+		static KeyMng keyInst;
+		return keyInst;
+	}
 	void Init(void);
-	bool Update();	// ｷｰ状態更新(毎ﾙｰﾌﾟ更新)
+	bool Update();	//キー情報更新
 
-	bool newKey[KEY_MAX];
-	bool trgKey[KEY_MAX];
-	bool upKey[KEY_MAX];
-	bool oldKey[KEY_MAX];
+	int newKey[KEY_MAX] = { 0 };
+	int trgKey[KEY_MAX] = { 0 };
+	int oldKey[KEY_MAX] = { 0 };
+	int upKey[KEY_MAX] = { 0 };
 
-	// ----- ｷｰｺﾝﾌｨｸﾞ
-	// configKey[]のそれぞれの番号がそれぞれKEY_MODEの番号に対応している
-	// 例)configKey[0] ← P1_UP
-
-	// ｷｰﾁｪｯｸを行う場合は、所定のｷｰ入力があった場合newKey[configkey[～]]が押下された事にする
-	// 例)if(CheckHitKey(KEY_INPUT_RIGHT)) newKey[configKey[2]] = 1;
-	// ※右ｷｰが押されたら2:P1_DOWNが押された事にする
-
-	int configKey[KEY_MAX];	// ｷｰｺﾝﾌｨｸﾞ用のｷｰ配列
-	void SetKeyConfig(int, int);	// ｷｰｺﾝﾌｨｸﾞｾｯﾄ
+	XINPUT_STATE input;
 };

@@ -126,7 +126,7 @@ void GameTask::Update()
 void GameTask::Draw()
 {	
 	DrawLine(0, SCREEN_SIZE_Y / 2, SCREEN_SIZE_X, SCREEN_SIZE_Y / 2, 0xffffff, 1);
-	DrawString(SCREEN_SIZE_X / 2 + 5, 10, "‹ì“®—ÍE‰¡—Í", 0xffffff);
+	DrawString(SCREEN_SIZE_X / 2 + 5, 10, "‹ì“®—Í(Ô)E‰¡—Í(Â)", 0xffffff);
 	DrawString(SCREEN_SIZE_X - 50, SCREEN_SIZE_Y / 2 - 20, "ŠŠ‚è”ä", 0xffffff);
 	DrawLine(SCREEN_SIZE_X / 2, 0, SCREEN_SIZE_X / 2, SCREEN_SIZE_Y, 0xffffff, 1);
 
