@@ -54,7 +54,7 @@ void GameTask::GameUpdate()
 
 	for (auto i : p)
 	{
-		(*i).Update(pos,dirVec,rotVec,wheelAngle,deg);
+		tie(vectorSpeed) = (*i).Update(tireForce,speed);
 		(*i).Render();
 	}
 	for (auto i : c)
@@ -79,7 +79,7 @@ void GameTask::GameUpdate()
 	}
 	for (auto i : t)
 	{
-		tie(pos, dirVec, rotVec,wheelAngle, deg) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel, speed);
+		tie(tireForce) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel, speed, vectorSpeed);
 		(*i).Draw();
 	}
 

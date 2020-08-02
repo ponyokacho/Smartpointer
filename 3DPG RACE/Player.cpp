@@ -34,16 +34,27 @@ void Player::Init()
 	camPos = VGet(0.0f,0.0f,0.0f); 
 
 	// 車の座標を上にあげるための平行移動
-	moveMat = MGetTranslate(PLAYER_POS_OFFSET);
-	carPos = VTransform(carPos, moveMat);
+	offsetMat = MGetTranslate(PLAYER_POS_OFFSET);
+	carOffsetPos = VTransform(carPos, offsetMat);
+	carPos = carOffsetPos;
 }
 
 //---ﾎﾞﾃﾞｨにﾎｲｰﾙを追従させる
-void Player::Update(VECTOR2 pos, VECTOR2 dirVec,VECTOR2 yawVec,float wheelAngle,float deg)
+tuple<VECTOR> Player::Update(VECTOR2 tireForce,float speed)
 {
+	this->speed = speed;
+	// これでtireForce.x分回転
+	//MV1SetMatrix(carModel, MGetRotY(tireForce.x));
 
-	// これでdeg分回転
-	MV1SetMatrix(carModel, MGetRotY(deg));
+	if (speed == tireForce.y && tireForce.y != 0.0f)
+	{
+		this->speed = 1.0f;
+	}
+	// 車の移動
+	moveMat = MGetTranslate(VGet(tireForce.x * this->speed,0.0f,tireForce.y * this->speed));
+	carPos = VTransform(carPos, moveMat);
+
+	MV1SetMatrix(carModel, moveMat);
 
 	camPos = VAdd(carPos, CAMERA_OFFSET);
 
@@ -52,7 +63,18 @@ void Player::Update(VECTOR2 pos, VECTOR2 dirVec,VECTOR2 yawVec,float wheelAngle,
 	MV1SetMatrix(carModel, MGetIdent());
 
 	MV1SetPosition(carModel, carPos);
-	MV1SetRotationXYZ(carModel, VGet(0.0f, deg, 0.0f));
+	MV1SetRotationXYZ(carModel, VGet(0.0f, tireForce.x, 0.0f));
+
+	// 前フレからの移動量
+	vectorSpeed = VSub(beforeCarPos,carPos);
+	vectorSpeed.x *= -1;
+	vectorSpeed.z *= -1;
+	beforeCarPos = carPos;
+
+	DrawFormatString(0, 40, 0xffffff, "tireForce.x,y(%.2f,%.2f)", tireForce.x, tireForce.y);
+	DrawFormatString(0, 60, 0xffffff, "speed:%.2f", this->speed);
+
+	return forward_as_tuple(vectorSpeed);
 }
 
 void Player::Render()
@@ -66,6 +88,7 @@ void Player::Render()
 	MV1DrawModel(camModel);
 
 	DrawFormatString(0, 0, 0xffffff, "carPos.x,y,z(%.2f,%.2f,%.2f)", carPos.x, carPos.y, carPos.z);
+	DrawFormatString(0, 20, 0xffffff, "vectorSpeed.x,y,z(%.2f,%.2f,%.2f)", vectorSpeed.x, vectorSpeed.y, vectorSpeed.z);
 }
 
 // 外積

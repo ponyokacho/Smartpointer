@@ -1,5 +1,6 @@
 #pragma once
 #include "DxLib.h"
+#include "VECTOR2.h"
 
 constexpr VECTOR CAMERA_OFFSET = { 0.0f, 300.0f, -1000.0f };
 constexpr VECTOR PLAYER_POS_OFFSET = { 0.0f,100.0f,0.0f };
@@ -20,11 +21,12 @@ public:
 	~Player();
 
 	void Init();
-	void Update(VECTOR2 pos,VECTOR2 dirVec, VECTOR2 yawVec, float wheelAngle,float deg);
+	std::tuple<VECTOR> Update(VECTOR2 tireForce,float speed);
 	void Render();
 
 	float Cross(VECTOR va, VECTOR vb);
 	float Dot(VECTOR va, VECTOR vb);
+	float speed = 0.0f;
 
 	// ¶Ò×—pbox
 	MATRIX camMat;
@@ -40,6 +42,11 @@ public:
 	VECTOR boxPos;
 
 	VECTOR carPos;
+	VECTOR carOffsetPos;
 	MATRIX carMat;
+	MATRIX offsetMat;
 	MATRIX moveMat;
+
+	VECTOR vectorSpeed = { 0.0f,0.0f ,0.0f };
+	VECTOR beforeCarPos = { 0.0f,0.0f ,0.0f };
 };

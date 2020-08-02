@@ -108,7 +108,8 @@ private:
 	VECTOR2 pos = { 0.0f,0.0f };
 	VECTOR2 dirVec = { 0.0f,0.0f };
 	VECTOR2 rotVec = { 0.0f ,0.0f };
+	VECTOR2 tireForce = { 0.0f ,0.0f };
+	VECTOR vectorSpeed = { 0.0f,0.0f,0.0f };
 	float wheelAngle = 0.0f;
-	float deg = 0.0f;
 };
 
