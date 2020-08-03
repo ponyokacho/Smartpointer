@@ -26,7 +26,9 @@ public:
 
 	float Cross(VECTOR va, VECTOR vb);
 	float Dot(VECTOR va, VECTOR vb);
+
 	float speed = 0.0f;
+	float deg = 0.0f;
 
 	// ¶Ò×—pbox
 	MATRIX camMat;
@@ -49,4 +51,6 @@ public:
 
 	VECTOR vectorSpeed = { 0.0f,0.0f ,0.0f };
 	VECTOR beforeCarPos = { 0.0f,0.0f ,0.0f };
+
+	VECTOR tireForce = { 0.0f, 0.0f ,0.0f };
 };

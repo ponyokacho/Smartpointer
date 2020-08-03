@@ -5,13 +5,6 @@
 #include "KeyMng.h"
 #include <tuple>
 
-constexpr float CHANGE_TORQUE = 9.806652;
-
-constexpr int IDOL_RPM = 1000;
-constexpr int MAX_RPM = 7999;
-
-constexpr int MAX_THOUSAND = 7;
-
 using namespace std;
 
 class Engine
@@ -41,6 +34,6 @@ private:
 	float reverseTorque = 0.0f;
 	float engineTorque = 0.0f;
 	float angularAccel = 0.0f;
-	float rpm = IDOL_RPM;
+	float rpm = 0.0f;
 };
 

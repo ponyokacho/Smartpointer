@@ -186,7 +186,7 @@ void Tire::Draw()
 	DrawFormatString(600, 520, 0xffffff, "tF.RL(slipRate):%.2f", front.left.slipRate);
 }
 
-tuple<VECTOR2> Tire::Update(float engineTorque, float steering, int gearNum, float accel, float driveTireVel, float speed, VECTOR vectorSpeed)
+tuple<VECTOR2> Tire::Update(const float engineTorque, const float steering, const int gearNum, const float accel, const float driveTireVel, const float speed, const VECTOR vectorSpeed)
 {
 	this->vectorSpeed = VECTOR2(vectorSpeed.x, vectorSpeed.z);
 
@@ -287,22 +287,25 @@ tuple<VECTOR2> Tire::Update(float engineTorque, float steering, int gearNum, flo
 
 	allTireForce = { front.left.tireForce.x + front.right.tireForce.x ,rear.left.tireForce.y + rear.right.tireForce.y };
 
-	if (gearNum >= 0 && allTireForce.y < 0)
-	{
-		allTireForce.y = 0.0f;
-	}
-
-	if (allTireForce.y != 0.0f)
-	{
-		allTireForce = allTireForce.Normalize();
-	}
-	else
+	if (gearNum >= 0 && allTireForce.y <= 0.0f)
 	{
 		allTireForce.y = speed;
-		//allTireForce = allTireForce.Normalize();
 	}
 
-	return forward_as_tuple(allTireForce);
+	if (gearNum == -1)
+	{
+		if (speed != 0.0f)
+		{
+			allTireForce = VECTOR2(allTireForce.x, speed);
+			return forward_as_tuple(allTireForce.Normalize());
+		}
+		else
+		{
+			return forward_as_tuple(VECTOR2(0.0f,0.0f));
+		}
+	}
+
+	return forward_as_tuple(allTireForce.Normalize());
 }
 
 // ŠOÏ

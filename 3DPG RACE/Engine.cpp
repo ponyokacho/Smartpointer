@@ -5,6 +5,7 @@
 
 Engine::Engine()
 {
+	rpm = IDOL_RPM;
 }
 
 Engine::~Engine()

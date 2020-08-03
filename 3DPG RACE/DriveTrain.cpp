@@ -138,6 +138,12 @@ tuple<float, float, float> DriveTrain::Update(float clutch, float engineTorque, 
 
 	actualEngineRpm = (engineVel / (2 * PI) * 60);
 
+	// アイドリング
+	if (actualEngineRpm < IDOL_RPM)
+	{
+		actualEngineRpm = IDOL_RPM;
+	}
+
 	speed = CarSpeed(actualEngineRpm, gearNum);
 	
 	return forward_as_tuple(driveTireVel,wheelTorque,speed);
@@ -157,7 +163,7 @@ void DriveTrain::Draw(float clutch, int gearNum)
 
 	DrawString(210, 440, "DrivingForce", 0xff0000);
 
-	DrawFormatString(210, 460, 0xffffff, "RightStick:%.2f", clutch);
+	DrawFormatString(210, 460, 0xffffff, "aEngineRpm:%.2f", actualEngineRpm);
 
 	DrawFormatString(360, 460, 0xffffff, "driveTireVel:%.2f", driveTireVel);
 

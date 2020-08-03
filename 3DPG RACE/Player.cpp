@@ -40,18 +40,18 @@ void Player::Init()
 }
 
 //---ÎŞÃŞ¨‚ÉÎ²°Ù‚ğ’Ç]‚³‚¹‚é
-tuple<VECTOR> Player::Update(VECTOR2 tireForce,float speed)
+tuple<VECTOR> Player::Update(const VECTOR2 tireForce,const float speed)
 {
 	this->speed = speed;
-	// ‚±‚ê‚ÅtireForce.x•ª‰ñ“]
-	//MV1SetMatrix(carModel, MGetRotY(tireForce.x));
+	this->tireForce = VGet(tireForce.x, 0.0f, tireForce.y);
 
-	if (speed == tireForce.y && tireForce.y != 0.0f)
-	{
-		this->speed = 1.0f;
-	}
+	deg += (WHEEL_ANGLE_MAX * tireForce.x) * (PI / 180);
+
+	// ‚±‚ê‚ÅtireForce.x•ª‰ñ“]
+	//MV1SetMatrix(carModel, MGetRotY(deg));
+
 	// Ô‚ÌˆÚ“®
-	moveMat = MGetTranslate(VGet(tireForce.x * this->speed,0.0f,tireForce.y * this->speed));
+	moveMat = MGetTranslate(VGet(this->tireForce.x,0.0f, this->tireForce.z * this->speed));
 	carPos = VTransform(carPos, moveMat);
 
 	MV1SetMatrix(carModel, moveMat);
@@ -63,7 +63,7 @@ tuple<VECTOR> Player::Update(VECTOR2 tireForce,float speed)
 	MV1SetMatrix(carModel, MGetIdent());
 
 	MV1SetPosition(carModel, carPos);
-	MV1SetRotationXYZ(carModel, VGet(0.0f, tireForce.x, 0.0f));
+	//MV1SetRotationXYZ(carModel, VGet(0.0f, this->tireForce.x, 0.0f));
 
 	// ‘OƒtƒŒ‚©‚ç‚ÌˆÚ“®—Ê
 	vectorSpeed = VSub(beforeCarPos,carPos);
@@ -71,7 +71,7 @@ tuple<VECTOR> Player::Update(VECTOR2 tireForce,float speed)
 	vectorSpeed.z *= -1;
 	beforeCarPos = carPos;
 
-	DrawFormatString(0, 40, 0xffffff, "tireForce.x,y(%.2f,%.2f)", tireForce.x, tireForce.y);
+	DrawFormatString(0, 40, 0xffffff, "tireForce.x,y,z(%.2f,%.2f,%.2f)", this->tireForce.x, this->tireForce.y, this->tireForce.z);
 	DrawFormatString(0, 60, 0xffffff, "speed:%.2f", this->speed);
 
 	return forward_as_tuple(vectorSpeed);

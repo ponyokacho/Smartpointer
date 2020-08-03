@@ -21,7 +21,11 @@ constexpr float PI = 3.14159265;
 constexpr float DT = 1.0f / 60.0f;
 
 constexpr int MAX_GEAR = 6;
+constexpr int IDOL_RPM = 1000;
+constexpr int MAX_RPM = 7999;
 constexpr int ACTUAL_MAX_RPM = 7700;
+
+constexpr int MAX_THOUSAND = 7;
 
 constexpr float BRAKE_POWER_MAX = 0;
 constexpr float TIRE_DIAMETER = 0.64; // m
