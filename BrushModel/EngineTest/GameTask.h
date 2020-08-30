@@ -36,6 +36,7 @@ public:
 	void GameInit();
 	void Update();
 	void Draw();
+	VECTOR2 TireForce(float slipRate, float slipAngle);
 
 private:
 	static GameTask* s_Instance;
@@ -43,14 +44,23 @@ private:
 	float Ks = 83000;
 	float Ktheta = 54000;
 
-	float slideRate = -1.0f;
-	float slideAngle = 0.0f;
+	float slipRate = -1.0f;
+	float slipAngle = 0.0f;
+
+	int count = 0;
+
+	// Žw’è’l
+	float slipRate_a = 0.0f;
+	float slipAngle_a = 0.0f;
 
 	bool isDrive = true;
 	bool tmp = true;
 
 	vector<shared_ptr<Drawpoint>>dp;
+	vector<shared_ptr<Drawpoint>>dp_a;
 
-	VECTOR2 f = { 0,0 };
+	VECTOR2 tireForce = { 0.0f,0.0f };
+	VECTOR2 tireForce_a = { 0.0f,0.0f };
+	VECTOR2 tireForce_a_old = { 0.0f,0.0f };
 };
 

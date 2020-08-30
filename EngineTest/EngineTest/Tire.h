@@ -109,5 +109,8 @@ private:
 
 	VECTOR2 allVector = { 0.0f,0.0f };
 	VECTOR2 moveVec = { 0.0f,0.0f };
+
+	VECTOR2 beforeCenterPos = { 0.0f,0.0f };
+	VECTOR2 vectorSpeed = { 0.0f,0.0f };
 };
  

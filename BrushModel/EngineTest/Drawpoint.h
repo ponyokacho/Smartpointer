@@ -4,13 +4,14 @@ class Drawpoint
 {
 public:
 	Drawpoint() {};
-	Drawpoint(VECTOR2 pos,float slideRate,float slideAngle);
+	Drawpoint(VECTOR2 pos,float slipRate,float slipAngle,bool flag);
 	~Drawpoint();
 
 	void Draw();
 private:
 	VECTOR2 pos;
-	float slideRate;
-	float slideAngle;
+	float slipRate;
+	float slipAngle;
+	bool flag = false;
 };
 

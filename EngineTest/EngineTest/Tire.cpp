@@ -177,7 +177,7 @@ void Tire::Draw()
 	DrawLine(posCenter.x, posCenter.y, posCenter.x - yawVec.x * 30, posCenter.y - yawVec.y * 30, 0x00ff00, 1);
 	DrawLine(front.centerPos.x,front.centerPos.y,rear.centerPos.x,rear.centerPos.y, 0x0000ff, 1);
 	DrawLine(posCenter.x, posCenter.y, posCenter.x - front.left.tireForce.x * 20 * lr, posCenter.y - front.left.tireForce.y * 40, 0xff00ff, 1);
-	DrawLine(posCenter.x,posCenter.y,moveVec.x,moveVec.y, 0xffffff, 1);
+	DrawLine(posCenter.x, posCenter.y, vectorSpeed.x - posCenter.x, vectorSpeed.x - posCenter.y, 0xffffff, 1);
 
 	//DrawFormatString(600, 520, 0xffffff, "tF.RR.x:%.2f,tF.RR.y:%.2f", rear.right.tireForce.x, rear.right.tireForce.y);
 	DrawFormatString(450, 440, 0xffffff, "deg.x:%.2f", deg);
@@ -249,6 +249,10 @@ void Tire::Update(float engineTorque, float steering, int gearNum, float accel,f
 	{
 		lr = 1;
 	}
+
+	// ‘OƒtƒŒ‚©‚ç‚ÌˆÚ“®—Ê
+	vectorSpeed = (beforeCenterPos - posCenter) * -1;
+	beforeCenterPos = posCenter;
 
 	////Front////
 	// FL
