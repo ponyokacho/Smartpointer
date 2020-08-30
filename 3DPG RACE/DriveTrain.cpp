@@ -8,7 +8,15 @@
 DriveTrain::DriveTrain()
 {
 	gearNum = -1;
-	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/car_idoling.mp3"));
+	for (int i = 0; i < MAX_GEAR; i++)
+	{
+		gearMaxSpeed[i] = (int)CarSpeed(ACTUAL_MAX_RPM, i);
+		gearMinSpeed[i] = CarSpeed(IDOL_RPM, i);
+		float tmp = (gearMinSpeed[i] / 60) * 1000;
+		gearMinTireRpm[i] = tmp / TIRE_PERIMETER;
+		gearMinTireVel[i] = (gearMinTireRpm[i] / 60) * (2 * PI);
+	}
+	ChangeVolumeSoundMem(255 * 50 / 100, SOUND_ID("sounds/car_idoling.mp3"));
 	PlaySoundMem(SOUND_ID("sounds/car_idoling.mp3"), DX_PLAYTYPE_LOOP);
 }
 
@@ -95,19 +103,20 @@ float DriveTrain::MaxTireVel(float speed)
 	return radPerSec;
 }
 
-tuple<float, float, float> DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
+tuple<float, float, float> DriveTrain::Update(float brake, float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
 {
 	Sound();
+
 	wheelTorque = mainTorque - reverseTorque;
 	if (wheelTorque < 0)
 	{
 		wheelTorque = 0;
 	}
 	airResistance = AirResistance(((speed * 1000.0f) / (60.0f * 60.0f)));
-	reverseTorque = ReverseTorque(0)/* + airResistance*/;
+	reverseTorque = ReverseTorque(brake * 400)/* + airResistance*/;
 	if (MaxTireVel(CarSpeed(ACTUAL_MAX_RPM,gearNum)) > driveTireVel)
 	{
-		driveTireVel += DriveTireAcceleration(mainTorque, 20.0f);
+		driveTireVel += DriveTireAcceleration(mainTorque, 25.0f);
 	}
 	if (driveTireVel > 0)
 	{
@@ -117,6 +126,15 @@ tuple<float, float, float> DriveTrain::Update(float clutch, float engineTorque, 
 	{
 		driveTireVel = 0.0f;
 	}
+
+	if (gearNum != -1)
+	{
+		if (driveTireVel < gearMinTireVel[gearNum])
+		{
+			driveTireVel = gearMinTireVel[gearNum];
+		}
+	}
+
 	engineToMinssionVel = EngineToMinssionVel(driveTireVel);
 	mainTorque = MainTorque(engineTorque, gearNum, clutch);		// 片輪のみの場合のトルク
 	
@@ -145,6 +163,14 @@ tuple<float, float, float> DriveTrain::Update(float clutch, float engineTorque, 
 	}
 
 	speed = CarSpeed(actualEngineRpm, gearNum);
+
+	if (gearNum != -1)
+	{
+		if (gearMaxSpeed[gearNum] - 1 < speed)
+		{
+			speed = (float)gearMaxSpeed[gearNum];
+		}
+	}
 	
 	return forward_as_tuple(driveTireVel,wheelTorque,speed);
 }
@@ -152,20 +178,20 @@ tuple<float, float, float> DriveTrain::Update(float clutch, float engineTorque, 
 void DriveTrain::Draw(float clutch, int gearNum)
 {
 	int rS = 420 - clutch * 255;
-	DrawBox(250, 420, 300, rS, 0x00ff00, true);
-	DrawBox(250, 420, 300, 420 - 255, 0xffffff, false);
+	//DrawBox(250, 420, 300, rS, 0x00ff00, true);
+	//DrawBox(250, 420, 300, 420 - 255, 0xffffff, false);
 
 	//// エンジン回転
-	//DrawBox(145, 420, 175, 420 - 255, 0xffffff, false);
-	//DrawBox(145, 420, 175, engineVel * 0.0005, 0xff0000, true);
+	////DrawBox(145, 420, 175, 420 - 255, 0xffffff, false);
+	////DrawBox(145, 420, 175, engineVel * 0.0005, 0xff0000, true);
 	//// ミッション回転
-	//DrawBox(175, 420, 205, 420 - 255, 0xffffff, false);
+	////DrawBox(175, 420, 205, 420 - 255, 0xffffff, false);
 
 	DrawString(210, 440, "DrivingForce", 0xff0000);
 
-	DrawFormatString(210, 460, 0xffffff, "aEngineRpm:%.2f", actualEngineRpm);
+	//DrawFormatString(210, 460, 0xffffff, "aEngineRpm:%.2f", actualEngineRpm);
 
-	DrawFormatString(360, 460, 0xffffff, "driveTireVel:%.2f", driveTireVel);
+	//DrawFormatString(360, 460, 0xffffff, "driveTireVel:%.2f", driveTireVel);
 
 	//DrawFormatString(360, 520, 0xffffff, "airResistance:%.2f", airResistance);
 

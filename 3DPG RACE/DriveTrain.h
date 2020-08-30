@@ -22,7 +22,7 @@ public:
 	float CarSpeed(float rpm,int gearNum);
 	float MaxTireVel(float speed);
 
-	tuple<float, float, float> Update(float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
+	tuple<float, float, float> Update(float brake,float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
 	void Draw(float clutch, int gearNum);
 	void Sound();
 
@@ -41,6 +41,10 @@ private:
 	float reverseMissionVel = 0.0f;
 	float actualEngineRpm = 0.0f;
 	float speed = 0.0f;
+	array<float, 5>gearMinSpeed = { 0.0f };
+	array<int, 5>gearMaxSpeed = { 0 };
+	array<float, 5>gearMinTireRpm = { 0.0f };
+	array<float, 5>gearMinTireVel = { 0.0f };
 
 	float freq = 50000;
 };

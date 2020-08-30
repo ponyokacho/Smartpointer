@@ -52,9 +52,11 @@ void GameTask::GameUpdate()
 		clutch = 1.0f;
 	}
 
+	//DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x9DCCff, true);
+
 	for (auto i : p)
 	{
-		tie(vectorSpeed) = (*i).Update(tireForce,speed);
+		tie(vectorSpeed, dirVecRot, carPos, fWheelVecRot, acceleration) = (*i).Update(tireForce,dirVec,fWheelVec,speed,lr);
 		(*i).Render();
 	}
 	for (auto i : c)
@@ -64,7 +66,7 @@ void GameTask::GameUpdate()
 	for (auto i : f)
 	{
 		(*i).Update();
-		(*i).Render();
+		(*i).Render(carPos);
 	}
 
 	for (auto i : e)
@@ -74,12 +76,12 @@ void GameTask::GameUpdate()
 	}
 	for (auto i : d)
 	{
-		tie(driveTireVel, wheelTorque, speed) = (*i).Update(clutch, engineTorque, rpm, gearNum, onlyEngineVel);
+		tie(driveTireVel, wheelTorque, speed) = (*i).Update(brake,clutch, engineTorque, rpm, gearNum, onlyEngineVel);
 		(*i).Draw(clutch, gearNum);
 	}
 	for (auto i : t)
 	{
-		tie(tireForce) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel, speed, vectorSpeed);
+		tie(tireForce, dirVec, fWheelVec, lr) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel, speed, vectorSpeed, dirVecRot, fWheelVecRot,acceleration);
 		(*i).Draw();
 	}
 
@@ -93,6 +95,9 @@ void GameTask::Control()
 	accel = input.RightTrigger;
 	throttlePercent = 1.0f / 255.0f;
 	accel *= throttlePercent;
+
+	brake = input.LeftTrigger;
+	brake *= throttlePercent;
 
 	clutch = input.ThumbRY;
 	clutchPercent = 1.0f / 32767;

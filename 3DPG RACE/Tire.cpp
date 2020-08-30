@@ -39,7 +39,7 @@ float Tire::InertialForce(float engineTorque, int gearNum)
 	return a;
 }
 
-float Tire::SlipRate(VECTOR2 v, float rv, float wheelAngle)
+float Tire::SlipRatio(VECTOR2 v, float rv, float wheelAngle)
 {
 	// 滑り比を出すにはタイヤの角速度と車速を使用
 
@@ -50,33 +50,27 @@ float Tire::SlipRate(VECTOR2 v, float rv, float wheelAngle)
 	float moveSpeed = 0.0f;
 	float s = 0.0f;
 
-	if (wheelAngle != 0.0f)
-	{
-		moveSpeed = v.y * cos(wheelAngle) + v.x * sin(wheelAngle);
-	}
-	else
-	{
-		moveSpeed = v.y;
-	}
+	moveSpeed = v.y * cos(wheelAngle) + v.x * sin(wheelAngle);
 
+	// km/h→m/sに変換
+	moveSpeed = (moveSpeed / 3600) * 1000;
+
+	// 単位を合わせる
 	if (rv != 0.0f)
 	{
-		if (driveFlag)
+		// 周速度(m/s) = rv(rad/s) * (TIRE_DIAMETER(m) / 2)
+		float peripheralVel = rv * (TIRE_DIAMETER / 2);
+
+		//if (this->acceleration > 0.0f/*driveFlag*/) // 駆動
+		//{
+		//	s = (peripheralVel - moveSpeed) / peripheralVel;
+		//}
+		//else // 制動
 		{
-			// おかしい
-			s = (rv * TIRE_DIAMETER - moveSpeed) / (rv * TIRE_DIAMETER);
+			s = (moveSpeed - peripheralVel) / moveSpeed;
 		}
-		else
-		{
-			s = (rv * TIRE_DIAMETER - moveSpeed) / moveSpeed;
-		}
-	}
-	else
-	{
-		return -1.0f;
 	}
 
-	//saveSlipRate = s;
 	return s;
 }
 
@@ -86,18 +80,18 @@ float Tire::SlipAngle(VECTOR2 dirVec, VECTOR2 yawVec)
 	return theta;
 }
 
-VECTOR2 Tire::TireForce(float slipRate, float slipAngle)
+VECTOR2 Tire::TireForce(float slipRatio, float slipAngle)
 {
 	float Ks = 83000;
 	float Ktheta = 54000;
 	VECTOR2 f = { 0,0 };
 
-	if(driveFlag)
+	if(acceleration > 0.0f)
 	{
-		float lambda = sqrt(pow(slipRate, 2) + pow((Ktheta / Ks), 2) * pow((1 - slipRate), 2) * pow(tan(slipAngle), 2));
-		float cTheta = -slipRate / lambda;
-		float sTheta = (Ktheta * tan(slipAngle) * (1.0f - slipRate)) / (Ks * lambda);
-		if (slipRate == 0.0f && lambda == 0.0f)
+		float lambda = sqrt(pow(slipRatio, 2) + pow((Ktheta / Ks), 2) * pow((1 - slipRatio), 2) * pow(tan(slipAngle), 2));
+		float cTheta = -slipRatio / lambda;
+		float sTheta = (Ktheta * tan(slipAngle) * (1.0f - slipRatio)) / (Ks * lambda);
+		if (slipRatio == 0.0f && lambda == 0.0f)
 		{
 			cTheta = 0.0f;
 			sTheta = 0.0f;
@@ -106,8 +100,8 @@ VECTOR2 Tire::TireForce(float slipRate, float slipAngle)
 
 		if (epsilon > 0)
 		{
-			f.y = Ks * slipRate * pow(epsilon, 2) - 6.0f * MU * ONE_TIRE_LOAD * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
-			f.x = Ktheta * (1 - slipRate) * tan(slipAngle) * pow(epsilon, 2) + 6.0f * MU * ONE_TIRE_LOAD * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+			f.y = Ks * slipRatio * pow(epsilon, 2) - 6.0f * MU * ONE_TIRE_LOAD * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+			f.x = Ktheta * (1 - slipRatio) * tan(slipAngle) * pow(epsilon, 2) + 6.0f * MU * ONE_TIRE_LOAD * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
 		}
 		else if (epsilon <= 0)
 		{
@@ -117,20 +111,20 @@ VECTOR2 Tire::TireForce(float slipRate, float slipAngle)
 	}
 	else
 	{
-		float lambda = sqrt(pow(slipRate, 2) + pow((Ktheta / Ks), 2) * pow(tan(slipAngle), 2));
-		float cTheta = -slipRate / lambda;
+		float lambda = sqrt(pow(slipRatio, 2) + pow((Ktheta / Ks), 2) * pow(tan(slipAngle), 2));
+		float cTheta = -slipRatio / lambda;
 		float sTheta = (Ktheta * tan(slipAngle)) / (Ks * lambda);
-		if (slipRate == 0.0f && lambda == 0.0f)
+		if (slipRatio == 0.0f && lambda == 0.0f)
 		{
 			cTheta = 0.0f;
 			sTheta = 0.0f;
 		}
-		float epsilon = 1 - (Ks / (3.0f * MU * ONE_TIRE_LOAD) * (lambda / (1 + slipRate)));
+		float epsilon = 1 - (Ks / (3.0f * MU * ONE_TIRE_LOAD) * (lambda / (1 + slipRatio)));
 
 		if (epsilon > 0)
 		{
-			f.y = ((Ks * slipRate) / (1.0f + slipRate)) * pow(epsilon, 2) - 6.0f * MU * ONE_TIRE_LOAD * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
-			f.x = ((Ktheta * tan(slipAngle)) / (1 + slipRate)) * pow(epsilon, 2) + 6.0f * MU * ONE_TIRE_LOAD * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+			f.y = ((Ks * slipRatio) / (1.0f + slipRatio)) * pow(epsilon, 2) - 6.0f * MU * ONE_TIRE_LOAD * cTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
+			f.x = ((Ktheta * tan(slipAngle)) / (1 + slipRatio)) * pow(epsilon, 2) + 6.0f * MU * ONE_TIRE_LOAD * sTheta * (1.0f / 6.0f - 1.0f / 2.0f * pow(epsilon, 2) + 1.0f / 3.0f * pow(epsilon, 3));
 		}
 		else if (epsilon <= 0)
 		{
@@ -162,33 +156,36 @@ float Tire::WheelRot(float kph)
 
 void Tire::Draw()
 {
-	//DrawFormatString(SCREEN_SIZE_X - 200, 460, 0xffffff, "VFAW_F = %.2f", LOAD_FL);
-	//DrawFormatString(SCREEN_SIZE_X / 2 + 300, 50, 0xffffff, "VFAW_FR = %.2f", LOAD_FR);
-	//DrawFormatString(SCREEN_SIZE_X - 200, 480, 0xffffff, "VFAW_R = %.2f", LOAD_RL);
-	//DrawFormatString(SCREEN_SIZE_X / 2 + 300, SCREEN_SIZE_Y - 150 - 100, 0xffffff, "VFAW_RR = %.2f", LOAD_RR);
-
-	DrawRotaGraph(posCenter.x, posCenter.y, 0.10f, deg, IMAGE_ID("image/body.png"), true);
 	//DrawCircle(front.left.pos.x, front.left.pos.y, 2, 0xffffff, true);
 	//DrawCircle(front.right.pos.x, front.right.pos.y, 2, 0xffffff, true);
 	//DrawCircle(rear.left.pos.x, rear.left.pos.y, 2, 0xffffff, true);
 	//DrawCircle(rear.right.pos.x, rear.right.pos.y, 2, 0xffffff, true);
 
 	DrawLine(posCenter.x, posCenter.y, posCenter.x - dirVec.x * 30, posCenter.y - dirVec.y * 30, 0xff0000, 1);
-	DrawLine(posCenter.x, posCenter.y, posCenter.x - yawVec.x * 30, posCenter.y - yawVec.y * 30, 0x00ff00, 1);
+	DrawLine(posCenter.x, posCenter.y, posCenter.x - this->fWheelVecRot.x * 30, posCenter.y - this->fWheelVecRot.y * 30, 0x00ff00, 1);
 	DrawLine(front.centerPos.x,front.centerPos.y,rear.centerPos.x,rear.centerPos.y, 0x0000ff, 1);
 
-	//DrawFormatString(600, 520, 0xffffff, "tF.RR.x:%.2f,tF.RR.y:%.2f", rear.right.tireForce.x, rear.right.tireForce.y);
-	DrawFormatString(450, 440, 0xffffff, "deg.x:%.2f", deg);
-
-	DrawFormatString(600, 440, 0xffffff, "moveVec.x:%.2f,moveVec.y:%.2f", moveVec.x,moveVec.y);
-	//DrawFormatString(600, 460, 0xffffff, "allVector.x:%.2f,allVector.y:%.2f", allVector.x, allVector.y);
-	DrawFormatString(600, 480, 0xffffff, "tF.RL(tireForce.x):%.2f\ntF.RL(tireForce.y):%.2f", rear.left.tireForce.x, rear.left.tireForce.y);
-	DrawFormatString(600, 520, 0xffffff, "tF.RL(slipRate):%.2f", front.left.slipRate);
+	DrawFormatString(600, 380, 0xffffff, "speed:%.2f", speed);
+	DrawFormatString(600, 400, 0xffffff, "nonDriveTireVel:%.2f", nonDriveTireVel);
+	DrawFormatString(600, 420, 0xffffff, "driveTireVel:%.2f",driveTireVel);
+	DrawFormatString(600, 440, 0xffffff, "SlipRatioFR:%.2f,slipAngleFR:%.2f", front.right.slipRatio,front.right.slipAngle);
+	DrawFormatString(600, 460, 0xffffff, "SlipRatioRR:%.2f,slipAngleRR:%.2f", rear.right.slipRatio, rear.right.slipAngle);
+	DrawFormatString(600, 480, 0xffffff, "TireForceFR:(%.2f,%.2f)", front.right.tireForce.x, front.right.tireForce.y);
+	DrawFormatString(600, 500, 0xffffff, "TireForceRR:(%.2f,%.2f)", rear.right.tireForce.x, rear.right.tireForce.y);
+	DrawFormatString(600, 520, 0xffffff, "nonDriveTireVel:(%.2f)", nonDriveTireVel);
 }
 
-tuple<VECTOR2> Tire::Update(const float engineTorque, const float steering, const int gearNum, const float accel, const float driveTireVel, const float speed, const VECTOR vectorSpeed)
+tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(const float engineTorque, const float steering, const int gearNum, const float accel, const float driveTireVel, const float speed, const VECTOR vectorSpeed, VECTOR dirVecRot,VECTOR fWheelVecRot,float acceleration)
 {
 	this->vectorSpeed = VECTOR2(vectorSpeed.x, vectorSpeed.z);
+	this->deg = deg;
+	this->dirVecRotVec2 = VECTOR2(dirVecRot.x, dirVecRot.z);
+	this->driveTireVel = driveTireVel;
+	this->speed = speed;
+	this->acceleration = acceleration;
+
+	// vectorSpeedは速度なのでNormalize()しないこと
+	this->dirVecRotVec2 = this->dirVecRotVec2.Normalize();
 
 	VECTOR2 Vfaw = VECTOR2(0, InertialForce(engineTorque, gearNum));
 	float Np = VerticalForceAtWheelPitch(Vfaw.y);		// 符号は後で変更 タイヤ浮いてたら0
@@ -213,20 +210,14 @@ tuple<VECTOR2> Tire::Update(const float engineTorque, const float steering, cons
 
 	dirVec = VECTOR2((posCenter.x - T_OFFSET_X) - (posCenter.x - T_OFFSET_X), (posCenter.y + T_OFFSET_Y) - (posCenter.y - T_OFFSET_Y));
 	dirVec = dirVec.Normalize();
-	rWheelVec = dirVec;
+	rWheelVec = this->dirVecRotVec2;
 
-	wheelBaseDistance = dirVec.Magnitude();
-	treadDistanceVec = VECTOR2((posCenter.x + T_OFFSET_X) - (posCenter.x - T_OFFSET_X), (posCenter.y - T_OFFSET_Y) - (posCenter.y - T_OFFSET_Y));
-	treadDistanceVecNorm = treadDistanceVec.Normalize();
-
-	treadDistance = treadDistanceVec.Magnitude();
-
-	wheelAngle = steering * WHEEL_ANGLE_MAX;
+	wheelAngle = -steering * (WHEEL_ANGLE_MAX);
 	wheelAngle *= PI / 180;
 
-	yawVec = FrontWheelAngle(dirVec, wheelAngle);
-	yawVec = yawVec.Normalize();
-	fWheelVec = yawVec;
+	this->fWheelVecRot = dirVecRotVec2;
+	this->fWheelVecRot = FrontWheelAngle(this->fWheelVecRot, wheelAngle);
+	this->fWheelVecRot = this->fWheelVecRot.Normalize();
 
 	turnRad = TurningRadius(abs(wheelAngle)) * 10;
 
@@ -240,6 +231,8 @@ tuple<VECTOR2> Tire::Update(const float engineTorque, const float steering, cons
 	}
 
 	// 非駆動輪のタイヤ角速度は車速から求める
+	nonDriveTireVel = (this->speed / 60) * 1000 / TIRE_PERIMETER;
+	nonDriveTireVel = (nonDriveTireVel / 60) * 2 * PI;
 
 	if (signbit(steering))
 	{
@@ -250,33 +243,81 @@ tuple<VECTOR2> Tire::Update(const float engineTorque, const float steering, cons
 		lr = 1;
 	}
 
-	////Front////
-	// FL
-	front.left.slipRate = SlipRate(this->vectorSpeed, driveTireVel, wheelAngle);
-	front.left.slipAngle = abs(SlipAngle(dirVec,yawVec));
+	//// 前フレから何度回転したか
+	//float cosTheta = beforeVec.VectorDot(beforeVec,this->vectorSpeed) / (beforeVec.Magnitude() * this->vectorSpeed.Magnitude());
+	//deltaD = acos(cosTheta);
+	//beforeVec = this->vectorSpeed;
+	//// 回転させたvectorSpeedを作る？
+	//vectorSpeedRot.x = this->vectorSpeed.x * cos(deltaD) - this->vectorSpeed.y * sin(deltaD);
+	//vectorSpeedRot.y = this->vectorSpeed.x * sin(deltaD) + this->vectorSpeed.y * cos(deltaD);
 
-	front.left.tireForce = TireForce(front.left.slipRate, front.left.slipAngle);
+	// "this->vectorSpeed.y.Normalize() * this->speed"にする?
+
+	////Front////
+	if (steering == 0.0f || beforeLr != lr)
+	{
+		count = 0;
+	}
+	else
+	{
+		count++;
+	}
+	beforeLr = lr;
+
+	// FL
+	front.left.slipRatio = SlipRatio(VECTOR2(0.0f, this->speed), nonDriveTireVel, wheelAngle);
+	//if (count == 1)
+	{
+		front.left.slipAngle = abs(SlipAngle(this->dirVecRotVec2, this->fWheelVecRot));
+	}
+	//else
+	//{
+	//	front.left.slipAngle = abs(SlipAngle(this->dirVecRotVec2, this->vectorSpeed));
+	//}
+
+	front.left.tireForce = TireForce(front.left.slipRatio, front.left.slipAngle);
+	if (!(front.left.tireForce == VECTOR2(0.0f, 0.0f)))
+	{
+		front.left.tireForce = front.left.tireForce.Normalize();
+	}
 
 	// FR
-	front.right.slipRate = SlipRate(this->vectorSpeed, driveTireVel, wheelAngle);
-	front.right.slipAngle = abs(SlipAngle(dirVec, yawVec));
+	front.right.slipRatio = SlipRatio(VECTOR2(0.0f, this->speed), nonDriveTireVel, wheelAngle);
+	//if (count == 1)
+	{
+		front.right.slipAngle = abs(SlipAngle(this->dirVecRotVec2, this->fWheelVecRot));
+	}
+	//else
+	//{
+	//	front.right.slipAngle = abs(SlipAngle(this->dirVecRotVec2, this->vectorSpeed));
+	//}
 
-	front.right.tireForce = TireForce(front.right.slipRate, front.right.slipAngle);
-
+	front.right.tireForce = TireForce(front.right.slipRatio, front.right.slipAngle);
+	if (!(front.right.tireForce == VECTOR2(0.0f, 0.0f)))
+	{
+		front.right.tireForce = front.right.tireForce.Normalize();
+	}
 
 	////Rear////
 	// RL
-	rear.left.slipRate = SlipRate(this->vectorSpeed, driveTireVel, 0.0f);
-	rear.left.slipAngle = abs(SlipAngle(dirVec, this->vectorSpeed));
+	rear.left.slipRatio = SlipRatio(VECTOR2(0.0f, this->speed), driveTireVel, 0.0f);
+	rear.left.slipAngle = abs(SlipAngle(this->dirVecRotVec2, this->fWheelVecRot));
 
-	rear.left.tireForce = TireForce(rear.left.slipRate, rear.left.slipAngle);
+	rear.left.tireForce = TireForce(rear.left.slipRatio, rear.left.slipAngle);
+	if (!(rear.left.tireForce == VECTOR2(0.0f, 0.0f)))
+	{
+		rear.left.tireForce = rear.left.tireForce.Normalize();
+	}
 
 	// RR
-	rear.right.slipRate = SlipRate(this->vectorSpeed, driveTireVel, 0.0f);
-	rear.right.slipAngle = abs(SlipAngle(dirVec, this->vectorSpeed));
+	rear.right.slipRatio = SlipRatio(VECTOR2(0.0f, this->speed), driveTireVel, 0.0f);
+	rear.right.slipAngle = abs(SlipAngle(this->dirVecRotVec2 , this->fWheelVecRot));
 
-	rear.right.tireForce = TireForce(rear.right.slipRate, rear.right.slipAngle);
-
+	rear.right.tireForce = TireForce(rear.right.slipRatio, rear.right.slipAngle);
+	if (!(rear.right.tireForce == VECTOR2(0.0f, 0.0f)))
+	{
+		rear.right.tireForce = rear.right.tireForce.Normalize();
+	}
 
 	// 左右輪の真ん中の座標をとる
 	front.centerPos = VECTOR2((front.left.pos.x + front.right.pos.x) / 2, (front.left.pos.y + front.right.pos.y) / 2);
@@ -285,27 +326,33 @@ tuple<VECTOR2> Tire::Update(const float engineTorque, const float steering, cons
 	// ベクトルでつなげる
 	VECTOR2 centerVec = front.centerPos - rear.centerPos;
 
-	allTireForce = { front.left.tireForce.x + front.right.tireForce.x ,rear.left.tireForce.y + rear.right.tireForce.y };
+	allTireForce = { (front.left.tireForce.x + front.right.tireForce.x + rear.left.tireForce.x + rear.right.tireForce.x) 
+		,(front.left.tireForce.y + front.right.tireForce.y + rear.left.tireForce.y + rear.right.tireForce.y)};
+
+	if (steering == 0.0f)
+	{
+		allTireForce = VECTOR2(0.0f, 1.0f);
+	}
 
 	if (gearNum >= 0 && allTireForce.y <= 0.0f)
 	{
-		allTireForce.y = speed;
+		allTireForce.y = this->speed;
 	}
 
 	if (gearNum == -1)
 	{
-		if (speed != 0.0f)
+		if (this->speed != 0.0f)
 		{
-			allTireForce = VECTOR2(allTireForce.x, speed);
-			return forward_as_tuple(allTireForce.Normalize());
+			allTireForce = VECTOR2(allTireForce.x, this->speed);
+			return forward_as_tuple(allTireForce.Normalize(),dirVec, this->fWheelVecRot, lr);
 		}
 		else
 		{
-			return forward_as_tuple(VECTOR2(0.0f,0.0f));
+			return forward_as_tuple(VECTOR2(0.0f,0.0f), dirVec, this->fWheelVecRot,lr);
 		}
 	}
 
-	return forward_as_tuple(allTireForce.Normalize());
+	return forward_as_tuple(allTireForce.Normalize(),dirVec, this->fWheelVecRot, lr);
 }
 
 // 外積

@@ -1,6 +1,8 @@
 #pragma once
 #include "DxLib.h"
 #include "VECTOR2.h"
+#include <vector>
+#include <memory>
 
 constexpr VECTOR CAMERA_OFFSET = { 0.0f, 300.0f, -1000.0f };
 constexpr VECTOR PLAYER_POS_OFFSET = { 0.0f,100.0f,0.0f };
@@ -21,19 +23,21 @@ public:
 	~Player();
 
 	void Init();
-	std::tuple<VECTOR> Update(VECTOR2 tireForce,float speed);
+	std::tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Update(VECTOR2 tireForce, VECTOR2 dirVec, const VECTOR2 fWheelVec, float speed, const int lr);
 	void Render();
 
 	float Cross(VECTOR va, VECTOR vb);
 	float Dot(VECTOR va, VECTOR vb);
 
 	float speed = 0.0f;
+	float oldSpeed = 0.0f;
 	float deg = 0.0f;
 
 	// ¶Ò×—pbox
 	MATRIX camMat;
 	VECTOR camPos;
 	VECTOR camScl;
+	VECTOR camVec;
 
 	// wheelPos
 	VECTOR wheelFRPos;
@@ -44,8 +48,11 @@ public:
 	VECTOR boxPos;
 
 	VECTOR carPos;
+	VECTOR carVec = { 0.0f,0.0f,0.0f };
+	VECTOR carFrontPos = { 0.0f,0.0f,0.0f };
 	VECTOR carOffsetPos;
 	MATRIX carMat;
+	VECTOR carScl;
 	MATRIX offsetMat;
 	MATRIX moveMat;
 
@@ -53,4 +60,14 @@ public:
 	VECTOR beforeCarPos = { 0.0f,0.0f ,0.0f };
 
 	VECTOR tireForce = { 0.0f, 0.0f ,0.0f };
+	VECTOR tireForceRot = { 0.0f,0.0f,0.0f };
+	VECTOR addMoveVec = { 0.0f,0.0f,0.0f };
+	VECTOR dirVec = { 0.0f,0.0f,0.0f };
+	VECTOR dirVecRot = { 0.0f,0.0f,0.0f };
+	float acceleration = 0.0f;
+
+	VECTOR fWheelVec = { 0.0f,0.0f,0.0f };
+	VECTOR fWheelVecRot = { 0.0f,0.0f,0.0f };
+
+	int count = 0;
 };

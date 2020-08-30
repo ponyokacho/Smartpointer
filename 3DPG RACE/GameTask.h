@@ -20,7 +20,7 @@ constexpr int SCREEN_SIZE_Y(540);
 constexpr float PI = 3.14159265;
 constexpr float DT = 1.0f / 60.0f;
 
-constexpr int MAX_GEAR = 6;
+constexpr int MAX_GEAR = 5;
 constexpr int IDOL_RPM = 1000;
 constexpr int MAX_RPM = 7999;
 constexpr int ACTUAL_MAX_RPM = 7700;
@@ -55,7 +55,7 @@ constexpr float ONE_TIRE_LOAD = (LOAD * G_ACCELERATION) / 4;
 constexpr float MU = 0.8f;
 
 constexpr float WHEEL_ANGLE_MAX = 33; // “x
-constexpr float WHEEL_ANGLE_MAX_RAD = 33 * PI / 180;
+constexpr float WHEEL_ANGLE_MAX_RAD = WHEEL_ANGLE_MAX * PI / 180;
 
 constexpr float G_RATIO[6] = { 3.626,2.188,1.541,1.213,1.000,0.767 };
 
@@ -88,7 +88,8 @@ private:
 	std::vector<std::shared_ptr<Camera>>c;
 	std::vector<std::shared_ptr<Field>>f;
 
-	float accel = 0;
+	float accel = 0.0f;
+	float brake = 0.0f;
 	float throttlePercent = 0.0f;
 
 	float clutch = 0.0f;
@@ -111,9 +112,18 @@ private:
 
 	VECTOR2 pos = { 0.0f,0.0f };
 	VECTOR2 dirVec = { 0.0f,0.0f };
+	VECTOR dirVecRot = { 0.0f,0.0f,0.0f };
 	VECTOR2 rotVec = { 0.0f ,0.0f };
 	VECTOR2 tireForce = { 0.0f ,0.0f };
 	VECTOR vectorSpeed = { 0.0f,0.0f,0.0f };
+	VECTOR carPos = { 0.0f,0.0f,0.0f };
+
+	VECTOR2 fWheelVec = { 0.0f ,0.0f };
+	VECTOR fWheelVecRot = { 0.0f ,0.0f, 0.0f };
+
 	float wheelAngle = 0.0f;
+	int lr = 0;
+	float deg = 0.0f;
+	float acceleration = 0.0f;
 };
 

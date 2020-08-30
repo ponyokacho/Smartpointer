@@ -87,8 +87,8 @@ tuple<float, float, float> Engine::Update(float accel)
 void Engine::Draw(float accel, float rightTrigger)
 {
 	int rt = 420 - rightTrigger;
-	DrawBox(50, 420, 100, rt, 0x00ff00, true);
-	DrawBox(50, 420, 100, 420 - 255, 0xffffff, false);
+	//DrawBox(50, 420, 100, rt, 0x00ff00, true);
+	//DrawBox(50, 420, 100, 420 - 255, 0xffffff, false);
 
 	DrawString(10, 440, "Engine", 0xff0000);
 

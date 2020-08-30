@@ -44,10 +44,21 @@ void Field::Update()
 	blueTarget.y = hitPos.HitPosition.y;
 }
 
-void Field::Render()
+void Field::Render(VECTOR carPos)
 {
 	// ê¬∫∞›
 	//DrawCone3D(VGet(blueTarget.x, blueTarget.y + 200, blueTarget.z), blueTarget, 100, 4, 0x0000ff, 0xffffff, true);
 
 	MV1DrawModel(floorTestModel);
+
+	count++;
+	if (count % 30 == 0)
+	{
+		p.push_back(make_shared<Point>(carPos));
+	}
+
+	for (auto i : p)
+	{
+		DrawSphere3D(i->point, 50, 10, 0xff0000, 0xff0000, true);
+	}
 }
