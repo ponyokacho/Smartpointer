@@ -170,8 +170,7 @@ void Tire::Draw()
 	DrawFormatString(600, 420, 0xffffff, "driveTireVel:%.2f",driveTireVel);
 	DrawFormatString(600, 440, 0xffffff, "SlipRatioFR:%.2f,slipAngleFR:%.2f", front.right.slipRatio,front.right.slipAngle);
 	DrawFormatString(600, 460, 0xffffff, "SlipRatioRR:%.2f,slipAngleRR:%.2f", rear.right.slipRatio, rear.right.slipAngle);
-	DrawFormatString(600, 480, 0xffffff, "TireForceFR:(%.2f,%.2f)", front.right.tireForce.x, front.right.tireForce.y);
-	DrawFormatString(600, 500, 0xffffff, "TireForceRR:(%.2f,%.2f)", rear.right.tireForce.x, rear.right.tireForce.y);
+	DrawFormatString(600, 480, 0xffffff, "AllTireForce:(%.2f,%.2f)", allTireForce.Normalize().x, allTireForce.Normalize().y);
 	DrawFormatString(600, 520, 0xffffff, "nonDriveTireVel:(%.2f)", nonDriveTireVel);
 }
 

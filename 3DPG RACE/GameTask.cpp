@@ -56,7 +56,7 @@ void GameTask::GameUpdate()
 
 	for (auto i : p)
 	{
-		tie(vectorSpeed, dirVecRot, carPos, fWheelVecRot, acceleration) = (*i).Update(tireForce,dirVec,fWheelVec,speed,lr);
+		tie(vectorSpeed, dirVecRot, carPos, fWheelVecRot, acceleration) = (*i).Update(tireForce,dirVec,fWheelVec,speed,lr,steering);
 		(*i).Render();
 	}
 	for (auto i : c)

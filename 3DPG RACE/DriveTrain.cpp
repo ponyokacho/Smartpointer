@@ -16,7 +16,7 @@ DriveTrain::DriveTrain()
 		gearMinTireRpm[i] = tmp / TIRE_PERIMETER;
 		gearMinTireVel[i] = (gearMinTireRpm[i] / 60) * (2 * PI);
 	}
-	ChangeVolumeSoundMem(255 * 50 / 100, SOUND_ID("sounds/car_idoling.mp3"));
+	ChangeVolumeSoundMem(255 * 100 / 100, SOUND_ID("sounds/car_idoling.mp3"));
 	PlaySoundMem(SOUND_ID("sounds/car_idoling.mp3"), DX_PLAYTYPE_LOOP);
 }
 

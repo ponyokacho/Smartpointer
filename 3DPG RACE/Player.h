@@ -23,7 +23,7 @@ public:
 	~Player();
 
 	void Init();
-	std::tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Update(VECTOR2 tireForce, VECTOR2 dirVec, const VECTOR2 fWheelVec, float speed, const int lr);
+	std::tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Update(VECTOR2 tireForce, VECTOR2 dirVec, const VECTOR2 fWheelVec, float speed, const int lr,const float steering);
 	void Render();
 
 	float Cross(VECTOR va, VECTOR vb);
@@ -70,4 +70,6 @@ public:
 	VECTOR fWheelVecRot = { 0.0f,0.0f,0.0f };
 
 	int count = 0;
+
+	float steering = 0.0f;
 };

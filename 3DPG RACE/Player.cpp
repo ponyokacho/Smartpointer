@@ -45,19 +45,28 @@ void Player::Init()
 }
 
 //---ÎŞÃŞ¨‚ÉÎ²°Ù‚ğ’Ç]‚³‚¹‚é
-tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,const VECTOR2 dirVec,const VECTOR2 fWheelVec, const float speed, const int lr)
+tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,const VECTOR2 dirVec,const VECTOR2 fWheelVec, const float speed, const int lr,const float steering)
 {
+	this->steering = abs(steering);
 	this->speed = speed;
-	this->tireForce = VGet(tireForce.x * lr, 0.0f, tireForce.y);
+	this->tireForce = VGet(tireForce.x * this->steering * lr, 0.0f, tireForce.y);
 	this->dirVec = VGet(dirVec.x, 0.0f, dirVec.y);
 	this->fWheelVec = VGet(fWheelVec.x, 0.0f, fWheelVec.y);
 
 	//float tmp = (10.0f * (tanhf((1.0f / 100.0f) * pow(this->speed, 2.0f))));
 
-	// ¼¸ŞÓ²ÄŞŠÖ”
-	float tmp = (((tanhf(this->speed - 100.0f / 2.0f) + 1.0f) / 2.0f) * 20.0f);
-	//deg += (this->tireForce.x) * (DT * width * tanhf(this->speed / 2) + width / 2);
-	deg += (this->tireForce.x) * (DT * (tmp + 2.5f)) * lr;
+	float tmp = 0.0f;
+	if (this->speed < 50.0f)
+	{
+		// w”ŠÖ”
+		tmp = pow(1.058, this->speed) - 1.0f;
+	}
+	else
+	{
+		// ¼¸ŞÓ²ÄŞŠÖ”
+		tmp = ((tanhf(this->speed - 100.0f / 2.0f) + 1.0f) / 2.0f) * 15.0f;
+	}
+	deg += ((this->tireForce.x) * (DT * (tmp + 2.0f)));
 	dirVecRot = VTransform(this->dirVec, MMult(carMat, MGetRotY(deg)));
 	// vectorSpeed‚Í‰ñ“]‚³‚¹‚é•K—v‚È‚¢
 
