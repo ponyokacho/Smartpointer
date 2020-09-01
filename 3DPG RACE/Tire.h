@@ -2,6 +2,9 @@
 
 #include "VECTOR2.h"
 #include "DxLib.h"
+#include <tuple>
+
+using namespace std;
 
 class Tire
 {
@@ -9,9 +12,19 @@ public:
 	Tire();
 	~Tire();
 
+	float GetPitchLoad() 
+	{
+		return np;
+	}
+	float GetRollLoad()
+	{
+		return nr;
+	}
+
 	float VerticalForceAtWheelPitch(float pitch);
 	float VerticalForceAtWheelRoll(float roll);
 	float InertialForce(float engineTorque, int gearNum);
+	float CentrifugalForce(float v, float r, float m);
 	float SlipRatio(VECTOR2 v,float rv,float wheelAngle);
 	float SlipAngle(VECTOR2 dirVec, VECTOR2 yawVec);
 	VECTOR2 TireForce(float slipRatio, float slipAngle);
@@ -26,11 +39,6 @@ public:
 	float TurningRadius(float wheelAngle);
 
 private:
-	float LOAD_FL;
-	float LOAD_FR;
-	float LOAD_RL;
-	float LOAD_RR;
-
 	float wheelAngle = 0.0f;
 	float turnRad = 0.0f;
 
@@ -52,6 +60,7 @@ private:
 			VECTOR2 preYaw = { 0.0f,0.0f };
 			float slipAngle = 0.0f;
 			float slipRatio = 0.0f;
+			float load = 0.0f;
 		};
 		struct R {
 			VECTOR2 tireForce = { 0,0 };
@@ -59,6 +68,7 @@ private:
 			VECTOR2 preYaw = { 0.0f,0.0f };
 			float slipAngle = 0.0f;
 			float slipRatio = 0.0f;
+			float load = 0.0f;
 		};
 		VECTOR2 centerPos = { 0.0f,0.0f };
 
@@ -74,6 +84,7 @@ private:
 			float slipAngle = 0.0f;
 			float preSlipAngle = 0.0f;
 			float slipRatio = 0.0f;
+			float load = 0.0f;
 		};
 		struct R {
 			VECTOR2 tireForce = { 0,0 };
@@ -81,6 +92,7 @@ private:
 			float slipAngle = 0.0f;
 			float preSlipAngle = 0.0f;
 			float slipRatio = 0.0f;
+			float load = 0.0f;
 		};
 		VECTOR2 centerPos = {0.0f,0.0f};
 
@@ -106,8 +118,14 @@ private:
 	float speed = 0.0f;
 	float acceleration = 0.0f;
 
+	float np = 0.0f;
+	float nr = 0.0f;
+
 	float deltaD = 0.0f;
 	
 	int count = 0;
+
+	float wheelTorque = 0.0f;
+	int sign = 1;
 };
  

@@ -10,8 +10,8 @@ DriveTrain::DriveTrain()
 	gearNum = -1;
 	for (int i = 0; i < MAX_GEAR; i++)
 	{
-		gearMaxSpeed[i] = (int)CarSpeed(ACTUAL_MAX_RPM, i);
-		gearMinSpeed[i] = CarSpeed(IDOL_RPM, i);
+		gearMaxSpeed[i] = (int)CarSpeedEngine(ACTUAL_MAX_RPM, i);
+		gearMinSpeed[i] = CarSpeedEngine(IDOL_RPM, i);
 		float tmp = (gearMinSpeed[i] / 60) * 1000;
 		gearMinTireRpm[i] = tmp / TIRE_PERIMETER;
 		gearMinTireVel[i] = (gearMinTireRpm[i] / 60) * (2 * PI);
@@ -84,14 +84,22 @@ tuple<float, float> DriveTrain::EngineAndMission(float engineVel, float missionV
 	return forward_as_tuple(engineVel, missionVel);
 }
 
-float DriveTrain::CarSpeed(float rpm,int gearNum)
+float DriveTrain::CarSpeedTire(float radPerSecT)
+{
+	float rpmT = radPerSecT * (60.0f / 2.0f * PI);
+	speed = ((PI * TIRE_DIAMETER * rpmT) / 60.0f);
+	speed = (speed / 3600) * 1000;
+	return speed;
+}
+
+float DriveTrain::CarSpeedEngine(float rpmE, int gearNum)
 {
 	if (gearNum != -1)
 	{
-		float speed = TIRE_PERIMETER * (60 * rpm) / (1000 * (G_RATIO[gearNum] * FINAL));
+		float speed = TIRE_PERIMETER * (60 * rpmE) / (1000 * (G_RATIO[gearNum] * FINAL));
 		return speed;
 	}
-	return 0;
+	return 0.0f;
 }
 
 float DriveTrain::MaxTireVel(float speed)
@@ -114,7 +122,7 @@ tuple<float, float, float> DriveTrain::Update(float brake, float clutch, float e
 	}
 	airResistance = AirResistance(((speed * 1000.0f) / (60.0f * 60.0f)));
 	reverseTorque = ReverseTorque(brake * 400)/* + airResistance*/;
-	if (MaxTireVel(CarSpeed(ACTUAL_MAX_RPM,gearNum)) > driveTireVel)
+	if (MaxTireVel(CarSpeedEngine(ACTUAL_MAX_RPM,gearNum)) > driveTireVel)
 	{
 		driveTireVel += DriveTireAcceleration(mainTorque, 25.0f);
 	}
@@ -162,14 +170,18 @@ tuple<float, float, float> DriveTrain::Update(float brake, float clutch, float e
 		actualEngineRpm = IDOL_RPM;
 	}
 
-	speed = CarSpeed(actualEngineRpm, gearNum);
-
 	if (gearNum != -1)
 	{
-		if (gearMaxSpeed[gearNum] - 1 < speed)
-		{
-			speed = (float)gearMaxSpeed[gearNum];
-		}
+		speed = CarSpeedEngine(actualEngineRpm,gearNum);
+
+		//if (gearMaxSpeed[gearNum] - 1 < speed)
+		//{
+		//	speed = (float)gearMaxSpeed[gearNum];
+		//}
+	}
+	else
+	{
+		speed = CarSpeedTire(driveTireVel);
 	}
 	
 	return forward_as_tuple(driveTireVel,wheelTorque,speed);

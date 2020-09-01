@@ -1,6 +1,7 @@
 #include "math.h"
 #include "GameTask.h"
 #include "Player.h"
+#include "Tire.h"
 
 Player::Player()
 {
@@ -66,37 +67,41 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,
 		// ｼｸﾞﾓｲﾄﾞ関数
 		tmp = ((tanhf(this->speed - 100.0f / 2.0f) + 1.0f) / 2.0f) * 15.0f;
 	}
-	deg += ((this->tireForce.x) * (DT * (tmp + 2.0f)));
-	dirVecRot = VTransform(this->dirVec, MMult(carMat, MGetRotY(deg)));
+
+	deg.yaw += ((this->tireForce.x) * (DT * (tmp + 2.0f))); 
+	if (!(this->speed - oldSpeed > 1.0f))
+	{
+		deg.pitch = -lpGameTask.GetPitchLoad();
+	}
+	deg.roll = abs(lpGameTask.GetRollLoad());
+
+	if (deg.roll > 0.10f)
+	{
+		deg.roll = 0.10f;
+	}
+
+	MATRIX RotYMat = MMult(carMat, MGetRotY(deg.yaw));
+
+	dirVecRot = VTransform(this->dirVec, RotYMat);
 	// vectorSpeedは回転させる必要ない
 
-	// これでtireForce.x分回転
-	MV1SetMatrix(carModel, MGetRotY(deg));
+	// これで回転・移動
+	MV1SetMatrix(carModel, MMult(MMult(MMult(MGetRotX(deg.pitch), MGetRotZ(deg.roll * lr)), MGetRotY(deg.yaw)), carPosMat));
 
 	//addMoveVec = VAdd(VGet((this->tireForce.x * lr) * DT, 0.0f, (this->tireForce.z * this->speed) * DT),addMoveVec);
 
 	// 車の移動
-	tireForceRot = VTransform(this->tireForce, MMult(carMat, MGetRotY(deg)));
-	moveMat = MGetTranslate(VGet(tireForceRot.x * this->speed, this->tireForce.y, tireForceRot.z * this->speed));
+	tireForceRot = VTransform(this->tireForce, MMult(carMat, MGetRotY(deg.yaw)));
+	moveMat = MGetTranslate(VGet((tireForceRot.x * this->speed), this->tireForce.y, tireForceRot.z * this->speed));
 	carPos = VTransform(carPos, moveMat);
+	carPosMat = MGetTranslate(carPos);
 
-	MV1SetMatrix(carModel, moveMat);
-
-	VECTOR playerFrontPosOffset = VTransform(VGet(0.0f, 0.0f, 500.0f),MMult(carMat,MGetRotY(deg)));
+	VECTOR playerFrontPosOffset = VTransform(VGet(0.0f, 0.0f, 500.0f),MMult(carMat,MGetRotY(deg.yaw)));
 	carFrontPos = VAdd(carPos, playerFrontPosOffset);
 
 	// カメラ移動・回転
-	VECTOR camPosOffset = VTransform(CAMERA_OFFSET, MMult(camMat, MGetRotY(deg)));
+	VECTOR camPosOffset = VTransform(CAMERA_OFFSET, MMult(camMat, MGetRotY(deg.yaw)));
 	camPos = VAdd(carPos, camPosOffset);
-
-	// MV1SetMatrix()を使用中はMV1SetPosition()が使えないため、
-	// 単位行列を適用して、MV1SetPosition()を使用できるようにする。
-	MV1SetMatrix(carModel, MGetIdent());
-
-	MV1SetPosition(carModel, carPos);
-	MV1SetRotationXYZ(carModel, VGet(0.0f, deg, 0.0f));
-
-	MV1SetPosition(boxModel, carFrontPos);
 
 	// 前フレからの移動量
 	vectorSpeed = VGet(dirVecRot.x * this->speed,dirVecRot.y,dirVecRot.z * this->speed);
@@ -110,7 +115,7 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,
 
 	DrawFormatString(0, 40, 0xffffff, "tireForce.x,y,z(%.2f,%.2f,%.2f)", this->tireForce.x, this->tireForce.y, this->tireForce.z);
 	DrawFormatString(0, 80, 0xffffff, "speed:%.2f", this->speed);
-	DrawFormatString(0, 100, 0xffffff, "deg:%.3f", deg);
+	DrawFormatString(0, 100, 0xffffff, "deg:p(%.3f),y(%.3f),r(%.3f)", deg.pitch,deg.yaw,deg.roll);
 	DrawFormatString(0, 120, 0xffffff, "acceleration:(%.5f)", acceleration);
 
 	return forward_as_tuple(vectorSpeed,dirVecRot,beforeCarPos,this->fWheelVec,acceleration);

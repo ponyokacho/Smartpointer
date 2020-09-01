@@ -52,12 +52,17 @@ void GameTask::GameUpdate()
 		clutch = 1.0f;
 	}
 
+	
+
 	//DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x9DCCff, true);
 
 	for (auto i : p)
 	{
-		tie(vectorSpeed, dirVecRot, carPos, fWheelVecRot, acceleration) = (*i).Update(tireForce,dirVec,fWheelVec,speed,lr,steering);
-		(*i).Render();
+		if (!t.empty())
+		{
+			tie(vectorSpeed, dirVecRot, carPos, fWheelVecRot, acceleration) = (*i).Update(tireForce,dirVec,fWheelVec,speed,lr,steering);
+			(*i).Render();
+		}
 	}
 	for (auto i : c)
 	{
@@ -83,6 +88,9 @@ void GameTask::GameUpdate()
 	{
 		tie(tireForce, dirVec, fWheelVec, lr) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel, speed, vectorSpeed, dirVecRot, fWheelVecRot,acceleration);
 		(*i).Draw();
+
+		np = (*i).GetPitchLoad();
+		nr = (*i).GetRollLoad();
 	}
 
 }
@@ -99,18 +107,18 @@ void GameTask::Control()
 	brake = input.LeftTrigger;
 	brake *= throttlePercent;
 
-	clutch = input.ThumbRY;
-	clutchPercent = 1.0f / 32767;
-	clutch *= clutchPercent;
-	clutch = 1 - clutch;
-	if (clutch < 0.05f)
+	if (gearNum == -1)
 	{
 		clutch = 0.0f;
+	}
+	else
+	{
+		clutch = 1.0f;
 	}
 
 	steering = input.ThumbLX;
 	steeringPercent = 1.0f / 32767;
-	steering *= clutchPercent;
+	steering *= steeringPercent;
 	if (steering < 0.15f && steering > -0.15f)
 	{
 		steering = 0.0f;

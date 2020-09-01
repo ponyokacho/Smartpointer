@@ -19,7 +19,8 @@ public:
 	float MainTorque(float engineTorque, int gearNum, float clutch);
 	tuple<float, float> EngineAndMission(float engineVel, float missionVel, float clutch);
 
-	float CarSpeed(float rpm,int gearNum);
+	float CarSpeedTire(float radPerSecT);
+	float CarSpeedEngine(float rpmE,int gearNum);
 	float MaxTireVel(float speed);
 
 	tuple<float, float, float> Update(float brake,float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
@@ -47,5 +48,6 @@ private:
 	array<float, 5>gearMinTireVel = { 0.0f };
 
 	float freq = 50000;
+	int count = 0;
 };
 

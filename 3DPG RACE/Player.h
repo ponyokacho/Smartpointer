@@ -31,7 +31,6 @@ public:
 
 	float speed = 0.0f;
 	float oldSpeed = 0.0f;
-	float deg = 0.0f;
 
 	// ¶Ò×—pbox
 	MATRIX camMat;
@@ -55,6 +54,7 @@ public:
 	VECTOR carScl;
 	MATRIX offsetMat;
 	MATRIX moveMat;
+	MATRIX carPosMat;
 
 	VECTOR vectorSpeed = { 0.0f,0.0f ,0.0f };
 	VECTOR beforeCarPos = { 0.0f,0.0f ,0.0f };
@@ -72,4 +72,11 @@ public:
 	int count = 0;
 
 	float steering = 0.0f;
+
+	struct Deg{
+		float yaw = 0.0f;
+		float pitch = 0.0f;
+		float roll = 0.0f;
+	};
+	Deg deg;
 };

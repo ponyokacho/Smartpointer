@@ -74,6 +74,20 @@ public:
 	void GameInit();
 	void GameUpdate();
 	void Control();
+
+	float GetPitchLoad()
+	{
+		return np;
+	}
+	float GetRollLoad()
+	{
+		return nr;
+	}
+
+	float GetWheelTorque()
+	{
+		return wheelTorque;
+	}
 	
 private:
 	static GameTask *s_Instance;
@@ -93,7 +107,6 @@ private:
 	float throttlePercent = 0.0f;
 
 	float clutch = 0.0f;
-	float clutchPercent = 0.0f;
 
 	float engineTorque = 0.0f;
 	float rpm = 0.0f;
@@ -125,5 +138,8 @@ private:
 	int lr = 0;
 	float deg = 0.0f;
 	float acceleration = 0.0f;
+
+	float np = 0.0f;
+	float nr = 0.0f;
 };
 

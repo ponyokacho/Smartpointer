@@ -35,8 +35,14 @@ float Tire::VerticalForceAtWheelRoll(float roll)
 float Tire::InertialForce(float engineTorque, int gearNum)
 {
 	// 慣性力(N)
-	float a = (engineTorque * (G_RATIO[gearNum] * FINAL) / (TIRE_DIAMETER / 2.0f)) / (LOAD * G_ACCELERATION);
-	return a;
+	float f = (engineTorque * (G_RATIO[gearNum] * FINAL) / (TIRE_DIAMETER / 2.0f)) / (LOAD * G_ACCELERATION);
+	return f;
+}
+
+float Tire::CentrifugalForce(float v, float r, float m)
+{
+	float f = m * (pow(v, 2) / r);
+	return f;
 }
 
 float Tire::SlipRatio(VECTOR2 v, float rv, float wheelAngle)
@@ -168,7 +174,7 @@ void Tire::Draw()
 	DrawFormatString(600, 380, 0xffffff, "speed:%.2f", speed);
 	DrawFormatString(600, 400, 0xffffff, "nonDriveTireVel:%.2f", nonDriveTireVel);
 	DrawFormatString(600, 420, 0xffffff, "driveTireVel:%.2f",driveTireVel);
-	DrawFormatString(600, 440, 0xffffff, "SlipRatioFR:%.2f,slipAngleFR:%.2f", front.right.slipRatio,front.right.slipAngle);
+	DrawFormatString(600, 440, 0xffffff, "loadFR:%.2f,loadRR:%.2f", front.right.load,rear.right.load);
 	DrawFormatString(600, 460, 0xffffff, "SlipRatioRR:%.2f,slipAngleRR:%.2f", rear.right.slipRatio, rear.right.slipAngle);
 	DrawFormatString(600, 480, 0xffffff, "AllTireForce:(%.2f,%.2f)", allTireForce.Normalize().x, allTireForce.Normalize().y);
 	DrawFormatString(600, 520, 0xffffff, "nonDriveTireVel:(%.2f)", nonDriveTireVel);
@@ -183,24 +189,29 @@ tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(const float engineTorque, const 
 	this->speed = speed;
 	this->acceleration = acceleration;
 
+	wheelTorque = lpGameTask.GetWheelTorque();
+
 	// vectorSpeedは速度なのでNormalize()しないこと
 	this->dirVecRotVec2 = this->dirVecRotVec2.Normalize();
 
-	VECTOR2 Vfaw = VECTOR2(0, InertialForce(engineTorque, gearNum));
-	float Np = VerticalForceAtWheelPitch(Vfaw.y);		// 符号は後で変更 タイヤ浮いてたら0
+	// 旋回半径求まらないので仮
+	VECTOR2 Vfaw = VECTOR2(steering, InertialForce(acceleration * 3000, gearNum));
+	nr = VerticalForceAtWheelRoll((Vfaw.x * this->speed)* 0.0015f);
+	np = VerticalForceAtWheelPitch(Vfaw.y);		// 符号は後で変更 タイヤ浮いてたら0
+
 	if (accel)
 	{
-		LOAD_FL = ONE_TIRE_LOAD + Np;		// 符号は後で変更 タイヤ浮いてたら0
-		LOAD_FR = ONE_TIRE_LOAD + Np;
-		LOAD_RL = ONE_TIRE_LOAD - Np;
-		LOAD_RR = ONE_TIRE_LOAD - Np;
+		front.left.load = ONE_TIRE_LOAD + np;		// 符号は後で変更 タイヤ浮いてたら0
+		front.right.load = ONE_TIRE_LOAD + np;
+		rear.left.load = ONE_TIRE_LOAD - np;
+		rear.right.load = ONE_TIRE_LOAD - np;
 	}
 	else
 	{
-		LOAD_FL = ONE_TIRE_LOAD - Np;		// 符号は後で変更 タイヤ浮いてたら0
-		LOAD_FR = ONE_TIRE_LOAD - Np;
-		LOAD_RL = ONE_TIRE_LOAD + Np;
-		LOAD_RR = ONE_TIRE_LOAD + Np;
+		front.left.load = ONE_TIRE_LOAD - np;		// 符号は後で変更 タイヤ浮いてたら0
+		front.right.load = ONE_TIRE_LOAD - np;
+		rear.left.load = ONE_TIRE_LOAD + np;
+		rear.right.load = ONE_TIRE_LOAD + np;
 	}
 
 	//if() 左旋回中なら
