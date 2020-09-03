@@ -77,6 +77,29 @@ float Tire::SlipRatio(VECTOR2 v, float rv, float wheelAngle)
 		}
 	}
 
+	if (lpGameTask.GetBrake())
+	{
+		if (!_abs.flag)
+		{
+			s = -1.0f;
+		}
+		else
+		{
+			if (_abs.power == 0)
+			{
+				s = -0.4f;
+			}
+			else if(_abs.power == 1)
+			{
+				s = -0.3f;
+			}
+			else
+			{
+				s = -0.2f;
+			}
+		}
+	}
+
 	return s;
 }
 
@@ -175,14 +198,16 @@ void Tire::Draw()
 	DrawFormatString(600, 400, 0xffffff, "nonDriveTireVel:%.2f", nonDriveTireVel);
 	DrawFormatString(600, 420, 0xffffff, "driveTireVel:%.2f",driveTireVel);
 	DrawFormatString(600, 440, 0xffffff, "loadFR:%.2f,loadRR:%.2f", front.right.load,rear.right.load);
-	DrawFormatString(600, 460, 0xffffff, "SlipRatioRR:%.2f,slipAngleRR:%.2f", rear.right.slipRatio, rear.right.slipAngle);
-	DrawFormatString(600, 480, 0xffffff, "AllTireForce:(%.2f,%.2f)", allTireForce.Normalize().x, allTireForce.Normalize().y);
+	DrawFormatString(600, 460, 0xffffff, "SlipRatioRR:(%.2f),slipAngleRR:(%.2f)", rear.right.slipRatio, rear.right.slipAngle);
+	DrawFormatString(600, 480, 0xffffff, "SlipRatioFR:(%.2f),slipAngleFR:(%.2f)", front.right.slipRatio, front.right.slipAngle);
+	DrawFormatString(600, 500, 0xffffff, "allTireForce:(%.2f,%.2f)", allTireForce.x, allTireForce.y);
 	DrawFormatString(600, 520, 0xffffff, "nonDriveTireVel:(%.2f)", nonDriveTireVel);
 }
 
-tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(const float engineTorque, const float steering, const int gearNum, const float accel, const float driveTireVel, const float speed, const VECTOR vectorSpeed, VECTOR dirVecRot,VECTOR fWheelVecRot,float acceleration)
+tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(float engineTorque, float steering, int gearNum, float accel, float driveTireVel, float speed, VECTOR vectorSpeed, VECTOR vectorSpeedRot, VECTOR dirVecRot, VECTOR fWheelVecRot, float acceleration)
 {
-	this->vectorSpeed = VECTOR2(vectorSpeed.x, vectorSpeed.z);
+	//this->vectorSpeed = VECTOR2(vectorSpeed.x, vectorSpeed.z);;
+	this->vectorSpeedRot = VECTOR2(vectorSpeedRot.x, vectorSpeedRot.z);
 	this->deg = deg;
 	this->dirVecRotVec2 = VECTOR2(dirVecRot.x, dirVecRot.z);
 	this->driveTireVel = driveTireVel;
@@ -275,7 +300,7 @@ tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(const float engineTorque, const 
 	beforeLr = lr;
 
 	// FL
-	front.left.slipRatio = SlipRatio(VECTOR2(0.0f, this->speed), nonDriveTireVel, wheelAngle);
+	front.left.slipRatio = SlipRatio(VECTOR2(this->vectorSpeedRot.x,this->vectorSpeedRot.y), nonDriveTireVel, wheelAngle);
 	//if (count == 1)
 	{
 		front.left.slipAngle = abs(SlipAngle(this->dirVecRotVec2, this->fWheelVecRot));
@@ -292,7 +317,7 @@ tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(const float engineTorque, const 
 	}
 
 	// FR
-	front.right.slipRatio = SlipRatio(VECTOR2(0.0f, this->speed), nonDriveTireVel, wheelAngle);
+	front.right.slipRatio = SlipRatio(VECTOR2(this->vectorSpeedRot.x, this->vectorSpeedRot.y), nonDriveTireVel, wheelAngle);
 	//if (count == 1)
 	{
 		front.right.slipAngle = abs(SlipAngle(this->dirVecRotVec2, this->fWheelVecRot));
@@ -310,7 +335,7 @@ tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(const float engineTorque, const 
 
 	////Rear////
 	// RL
-	rear.left.slipRatio = SlipRatio(VECTOR2(0.0f, this->speed), driveTireVel, 0.0f);
+	rear.left.slipRatio = SlipRatio(VECTOR2(this->vectorSpeedRot.x, this->vectorSpeedRot.y), driveTireVel, 0.0f);
 	rear.left.slipAngle = abs(SlipAngle(this->dirVecRotVec2, this->fWheelVecRot));
 
 	rear.left.tireForce = TireForce(rear.left.slipRatio, rear.left.slipAngle);
@@ -320,7 +345,7 @@ tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(const float engineTorque, const 
 	}
 
 	// RR
-	rear.right.slipRatio = SlipRatio(VECTOR2(0.0f, this->speed), driveTireVel, 0.0f);
+	rear.right.slipRatio = SlipRatio(VECTOR2(this->vectorSpeedRot.x, this->vectorSpeedRot.y), driveTireVel, 0.0f);
 	rear.right.slipAngle = abs(SlipAngle(this->dirVecRotVec2 , this->fWheelVecRot));
 
 	rear.right.tireForce = TireForce(rear.right.slipRatio, rear.right.slipAngle);

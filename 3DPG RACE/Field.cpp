@@ -22,6 +22,8 @@ void Field::Init()
 	MV1SetupCollInfo(floorTestModel, -1, 8, 8, 8);
 
 	blueTarget = VGet(0.0f, 0.0f, 0.0f);
+
+	ChangeLightTypeDir(VGet(0.0f, -1.0f, 0.0f));
 }
 
 void Field::Update()

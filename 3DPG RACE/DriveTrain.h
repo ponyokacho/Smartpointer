@@ -11,6 +11,9 @@ public:
 	DriveTrain();
 	~DriveTrain();
 
+	int GetSoundVol() { return volume; }
+	void SetSoundVol(int vol) { volume = vol; }
+
 	float ReverseTorque(float brakePower);
 	float AirResistance(float v);
 	float DriveTireAcceleration(float torque, float I);
@@ -23,7 +26,7 @@ public:
 	float CarSpeedEngine(float rpmE,int gearNum);
 	float MaxTireVel(float speed);
 
-	tuple<float, float, float> Update(float brake,float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
+	tuple<float, float, float> Update(float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
 	void Draw(float clutch, int gearNum);
 	void Sound();
 
@@ -34,6 +37,7 @@ private:
 	float wheelTorqueDelta = 0.0f;
 	float reverseTorque = 0.0f;
 	float airResistance = 0.0f;
+	float brakePower = 0.0f;
 	float driveTireVel = 0.0f;
 	float engineToMinssionVel = 0.0f;
 	float mainTorque = 0.0f;
@@ -43,11 +47,12 @@ private:
 	float actualEngineRpm = 0.0f;
 	float speed = 0.0f;
 	array<float, 5>gearMinSpeed = { 0.0f };
-	array<int, 5>gearMaxSpeed = { 0 };
+	array<float, 5>gearMaxSpeed = { 0.0f };
 	array<float, 5>gearMinTireRpm = { 0.0f };
 	array<float, 5>gearMinTireVel = { 0.0f };
 
 	float freq = 50000;
+	int volume = 100;
 	int count = 0;
 };
 

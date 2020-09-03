@@ -27,7 +27,7 @@ constexpr int ACTUAL_MAX_RPM = 7700;
 
 constexpr int MAX_THOUSAND = 7;
 
-constexpr float BRAKE_POWER_MAX = 0;
+constexpr float BRAKE_POWER_MAX = 400.0f;
 constexpr float TIRE_DIAMETER = 0.64; // m
 constexpr float TIRE_PERIMETER = TIRE_DIAMETER * PI;
 constexpr float ROLLING_FRICTION = 0.015;
@@ -88,6 +88,26 @@ public:
 	{
 		return wheelTorque;
 	}
+
+	float GetBrake()
+	{
+		return brake * BRAKE_POWER_MAX;
+	}
+
+	void SetActualRpm(float rpm)
+	{
+		actualRpm = rpm;
+	}
+
+	void SetGearMaxSpeed(float speed,int i)
+	{
+		gearMaxSpeed[i] = speed;
+	}
+
+	void SetGearMinSpeed(float speed, int i)
+	{
+		gearMinSpeed[i] = speed;
+	}
 	
 private:
 	static GameTask *s_Instance;
@@ -111,7 +131,9 @@ private:
 	float engineTorque = 0.0f;
 	float rpm = 0.0f;
 
-	int gearNum = -1;  // -1 = N
+	int gearNum = 0;  // -1 = N
+	array<float, 5>gearMinSpeed = { 0.0f };
+	array<float, 5>gearMaxSpeed = { 0 };
 
 	float steering = 0.0f;
 	float steeringPercent = 0.0f;
@@ -129,6 +151,7 @@ private:
 	VECTOR2 rotVec = { 0.0f ,0.0f };
 	VECTOR2 tireForce = { 0.0f ,0.0f };
 	VECTOR vectorSpeed = { 0.0f,0.0f,0.0f };
+	VECTOR vectorSpeedRot = { 0.0f,0.0f,0.0f };
 	VECTOR carPos = { 0.0f,0.0f,0.0f };
 
 	VECTOR2 fWheelVec = { 0.0f ,0.0f };
@@ -141,5 +164,15 @@ private:
 
 	float np = 0.0f;
 	float nr = 0.0f;
+
+	bool shiftUp = false;
+	int shiftUpCnt = 0;
+	int shiftDownTiming = 0.0f;
+
+	int volume = 0;
+
+	bool transmission = true; // false:mt, true:at
+	float actualRpm = 0.0f;
+	int saveGearNum = 0;
 };
 

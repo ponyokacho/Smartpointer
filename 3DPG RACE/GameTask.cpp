@@ -52,45 +52,44 @@ void GameTask::GameUpdate()
 		clutch = 1.0f;
 	}
 
-	
-
-	//DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x9DCCff, true);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x9DCCff, true);
 
 	for (auto i : p)
 	{
 		if (!t.empty())
 		{
-			tie(vectorSpeed, dirVecRot, carPos, fWheelVecRot, acceleration) = (*i).Update(tireForce,dirVec,fWheelVec,speed,lr,steering);
-			(*i).Render();
+			tie(vectorSpeed,vectorSpeedRot, dirVecRot, carPos, fWheelVecRot, acceleration) = (*i).Update(tireForce,dirVec,fWheelVec,speed,lr,steering);
+			i->Render();
 		}
 	}
 	for (auto i : c)
 	{
-		(*i).Update();
+		i->Update();
 	}
 	for (auto i : f)
 	{
-		(*i).Update();
-		(*i).Render(carPos);
+		i->Update();
+		i->Render(carPos);
 	}
 
 	for (auto i : e)
 	{
 		tie(engineTorque, rpm, onlyEngineVel) = (*i).Update(accel);
-		(*i).Draw(accel, input.RightTrigger);
+		i->Draw(accel, input.RightTrigger);
 	}
 	for (auto i : d)
 	{
-		tie(driveTireVel, wheelTorque, speed) = (*i).Update(brake,clutch, engineTorque, rpm, gearNum, onlyEngineVel);
-		(*i).Draw(clutch, gearNum);
+		i->SetSoundVol(volume);
+		tie(driveTireVel, wheelTorque, speed) = (*i).Update(clutch, engineTorque, rpm, gearNum, onlyEngineVel);
+		i->Draw(clutch, gearNum);
 	}
 	for (auto i : t)
 	{
-		tie(tireForce, dirVec, fWheelVec, lr) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel, speed, vectorSpeed, dirVecRot, fWheelVecRot,acceleration);
-		(*i).Draw();
+		tie(tireForce, dirVec, fWheelVec, lr) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel, speed, vectorSpeed, vectorSpeedRot, dirVecRot, fWheelVecRot,acceleration);
+		i->Draw();
 
-		np = (*i).GetPitchLoad();
-		nr = (*i).GetRollLoad();
+		np = i->GetPitchLoad();
+		nr = i->GetRollLoad();
 	}
 
 }
@@ -100,9 +99,27 @@ void GameTask::Control()
 	KeyMng::GetInstance().Update();
 
 	GetJoypadXInputState(DX_INPUT_PAD1, &input);
-	accel = input.RightTrigger;
-	throttlePercent = 1.0f / 255.0f;
-	accel *= throttlePercent;
+
+	if (shiftUp)
+	{
+		accel = 0.0f;
+		gearNum = -1;
+		shiftUpCnt++;
+		if (shiftUpCnt == 30)
+		{
+			shiftUpCnt = 0;
+			gearNum = saveGearNum;
+			shiftUp = false;
+		}
+	}
+	else
+	{
+		accel = input.RightTrigger;
+		throttlePercent = 1.0f / 255.0f;
+		accel *= throttlePercent;
+	}
+
+	volume = pow(1.025f, (accel * 100)) + 90;
 
 	brake = input.LeftTrigger;
 	brake *= throttlePercent;
@@ -124,7 +141,7 @@ void GameTask::Control()
 		steering = 0.0f;
 	}
 
-	//if (clutch < 0.5f)
+	if (!transmission)
 	{
 		if (KeyMng::GetInstance().trgKey[P1_LB])
 		{
@@ -140,6 +157,44 @@ void GameTask::Control()
 			if (gearNum > MAX_GEAR - 1)
 			{
 				gearNum = MAX_GEAR - 1;
+			}
+			shiftUp = true;
+			saveGearNum = gearNum;
+		}
+	}
+	else
+	{
+		if (gearNum != -1)
+		{
+			if (gearMaxSpeed[gearNum] - 10.0f < speed)
+			{
+				if (gearNum != MAX_GEAR - 1)
+				{
+					gearNum++;
+					shiftUp = true;
+					saveGearNum = gearNum;
+				}
+			}
+
+			if (gearNum == 1)
+			{
+				shiftDownTiming = 10.0f;
+			}
+			else
+			{
+				shiftDownTiming = 50.0f;
+			}
+
+			if (gearMinSpeed[gearNum] + shiftDownTiming > speed)
+			{
+				if (gearNum != 0)
+				{
+					gearNum--;
+					if (gearNum < -1)
+					{
+						gearNum = -1;
+					}
+				}
 			}
 		}
 	}

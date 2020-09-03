@@ -43,14 +43,16 @@ void Player::Init()
 	carMat = MGetScale(carScl);
 
 	beforeCarPos = carPos;
+
+	ChangeLightTypeDir(VGet(0.1f, 0.9f, 0.0f));
 }
 
 //---ﾎﾞﾃﾞｨにﾎｲｰﾙを追従させる
-tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,const VECTOR2 dirVec,const VECTOR2 fWheelVec, const float speed, const int lr,const float steering)
+tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,const VECTOR2 dirVec,const VECTOR2 fWheelVec, const float speed, const int lr,const float steering)
 {
-	this->steering = abs(steering);
+	this->steering = steering;
 	this->speed = speed;
-	this->tireForce = VGet(tireForce.x * this->steering * lr, 0.0f, tireForce.y);
+	this->tireForce = VGet(tireForce.x * this->steering, 0.0f, tireForce.y);
 	this->dirVec = VGet(dirVec.x, 0.0f, dirVec.y);
 	this->fWheelVec = VGet(fWheelVec.x, 0.0f, fWheelVec.y);
 
@@ -69,9 +71,10 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,
 	}
 
 	deg.yaw += ((this->tireForce.x) * (DT * (tmp + 2.0f))); 
-	if (!(this->speed - oldSpeed > 1.0f))
+	deg.pitch = -lpGameTask.GetPitchLoad();
+	if (deg.pitch < -0.5f || deg.pitch > 0.5f)
 	{
-		deg.pitch = -lpGameTask.GetPitchLoad();
+		deg.pitch = 0.0f;
 	}
 	deg.roll = abs(lpGameTask.GetRollLoad());
 
@@ -84,6 +87,7 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,
 
 	dirVecRot = VTransform(this->dirVec, RotYMat);
 	// vectorSpeedは回転させる必要ない
+	vectorSpeedRot = VTransform(vectorSpeed, MGetRotY(-deg.yaw));
 
 	// これで回転・移動
 	MV1SetMatrix(carModel, MMult(MMult(MMult(MGetRotX(deg.pitch), MGetRotZ(deg.roll * lr)), MGetRotY(deg.yaw)), carPosMat));
@@ -95,6 +99,12 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,
 	moveMat = MGetTranslate(VGet((tireForceRot.x * this->speed), this->tireForce.y, tireForceRot.z * this->speed));
 	carPos = VTransform(carPos, moveMat);
 	carPosMat = MGetTranslate(carPos);
+
+	// バグったとき用
+	if (KeyMng::GetInstance().trgKey[P1_SPACE])
+	{
+		carPos = VGet(0.0f, 0.0f, 0.0f);
+	}
 
 	VECTOR playerFrontPosOffset = VTransform(VGet(0.0f, 0.0f, 500.0f),MMult(carMat,MGetRotY(deg.yaw)));
 	carFrontPos = VAdd(carPos, playerFrontPosOffset);
@@ -117,8 +127,9 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,
 	DrawFormatString(0, 80, 0xffffff, "speed:%.2f", this->speed);
 	DrawFormatString(0, 100, 0xffffff, "deg:p(%.3f),y(%.3f),r(%.3f)", deg.pitch,deg.yaw,deg.roll);
 	DrawFormatString(0, 120, 0xffffff, "acceleration:(%.5f)", acceleration);
+	DrawFormatString(0, 140, 0xffffff, "vectorSpeedRot:x(%.2f),y(%.2f),z(%.2f)", vectorSpeedRot.x,vectorSpeedRot.y,vectorSpeedRot.z);
 
-	return forward_as_tuple(vectorSpeed,dirVecRot,beforeCarPos,this->fWheelVec,acceleration);
+	return forward_as_tuple(vectorSpeed,vectorSpeedRot,dirVecRot,beforeCarPos,this->fWheelVec,acceleration);
 }
 
 void Player::Render()

@@ -23,7 +23,7 @@ public:
 	~Player();
 
 	void Init();
-	std::tuple<VECTOR,VECTOR,VECTOR,VECTOR,float> Update(VECTOR2 tireForce, VECTOR2 dirVec, const VECTOR2 fWheelVec, float speed, const int lr,const float steering);
+	std::tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Update(VECTOR2 tireForce, VECTOR2 dirVec, const VECTOR2 fWheelVec, float speed, const int lr,const float steering);
 	void Render();
 
 	float Cross(VECTOR va, VECTOR vb);
@@ -57,6 +57,8 @@ public:
 	MATRIX carPosMat;
 
 	VECTOR vectorSpeed = { 0.0f,0.0f ,0.0f };
+	VECTOR vectorSpeedRot = { 0.0f,0.0f,0.0f };
+	VECTOR oldVectorSpeedRot = { 0.0f,0.0f,0.0f };
 	VECTOR beforeCarPos = { 0.0f,0.0f ,0.0f };
 
 	VECTOR tireForce = { 0.0f, 0.0f ,0.0f };

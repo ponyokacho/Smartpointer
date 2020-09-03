@@ -12,11 +12,12 @@ DriveTrain::DriveTrain()
 	{
 		gearMaxSpeed[i] = (int)CarSpeedEngine(ACTUAL_MAX_RPM, i);
 		gearMinSpeed[i] = CarSpeedEngine(IDOL_RPM, i);
+		lpGameTask.SetGearMaxSpeed(gearMaxSpeed[i], i);
+		lpGameTask.SetGearMinSpeed(gearMinSpeed[i], i);
 		float tmp = (gearMinSpeed[i] / 60) * 1000;
 		gearMinTireRpm[i] = tmp / TIRE_PERIMETER;
 		gearMinTireVel[i] = (gearMinTireRpm[i] / 60) * (2 * PI);
 	}
-	ChangeVolumeSoundMem(255 * 100 / 100, SOUND_ID("sounds/car_idoling.mp3"));
 	PlaySoundMem(SOUND_ID("sounds/car_idoling.mp3"), DX_PLAYTYPE_LOOP);
 }
 
@@ -111,9 +112,11 @@ float DriveTrain::MaxTireVel(float speed)
 	return radPerSec;
 }
 
-tuple<float, float, float> DriveTrain::Update(float brake, float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
+tuple<float, float, float> DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
 {
 	Sound();
+
+	brakePower = lpGameTask.GetBrake();
 
 	wheelTorque = mainTorque - reverseTorque;
 	if (wheelTorque < 0)
@@ -121,8 +124,9 @@ tuple<float, float, float> DriveTrain::Update(float brake, float clutch, float e
 		wheelTorque = 0;
 	}
 	airResistance = AirResistance(((speed * 1000.0f) / (60.0f * 60.0f)));
-	reverseTorque = ReverseTorque(brake * 400)/* + airResistance*/;
-	if (MaxTireVel(CarSpeedEngine(ACTUAL_MAX_RPM,gearNum)) > driveTireVel)
+	reverseTorque = ReverseTorque(brakePower)/* + airResistance*/;
+	float maxTireVel = MaxTireVel(CarSpeedEngine(ACTUAL_MAX_RPM, gearNum));
+	if (maxTireVel > driveTireVel)
 	{
 		driveTireVel += DriveTireAcceleration(mainTorque, 25.0f);
 	}
@@ -140,6 +144,11 @@ tuple<float, float, float> DriveTrain::Update(float brake, float clutch, float e
 		if (driveTireVel < gearMinTireVel[gearNum])
 		{
 			driveTireVel = gearMinTireVel[gearNum];
+		}
+
+		if (driveTireVel > maxTireVel)
+		{
+			driveTireVel = maxTireVel;
 		}
 	}
 
@@ -163,6 +172,7 @@ tuple<float, float, float> DriveTrain::Update(float brake, float clutch, float e
 	}
 
 	actualEngineRpm = (engineVel / (2 * PI) * 60);
+	lpGameTask.SetActualRpm(actualEngineRpm);
 
 	// アイドリング
 	if (actualEngineRpm < IDOL_RPM)
@@ -173,11 +183,6 @@ tuple<float, float, float> DriveTrain::Update(float brake, float clutch, float e
 	if (gearNum != -1)
 	{
 		speed = CarSpeedEngine(actualEngineRpm,gearNum);
-
-		//if (gearMaxSpeed[gearNum] - 1 < speed)
-		//{
-		//	speed = (float)gearMaxSpeed[gearNum];
-		//}
 	}
 	else
 	{
@@ -200,6 +205,8 @@ void DriveTrain::Draw(float clutch, int gearNum)
 	////DrawBox(175, 420, 205, 420 - 255, 0xffffff, false);
 
 	DrawString(210, 440, "DrivingForce", 0xff0000);
+
+	DrawFormatString(210, 460, 0xffffff, "brake:%.2f", brakePower);
 
 	//DrawFormatString(210, 460, 0xffffff, "aEngineRpm:%.2f", actualEngineRpm);
 
@@ -224,5 +231,6 @@ void DriveTrain::Draw(float clutch, int gearNum)
 
 void DriveTrain::Sound()
 {
+	ChangeVolumeSoundMem(255 * volume / 100, SOUND_ID("sounds/car_idoling.mp3"));
 	SetFrequencySoundMem(freq + (engineVel / (2 * PI) * 60) * 20, SOUND_ID("sounds/car_idoling.mp3"));
 }
