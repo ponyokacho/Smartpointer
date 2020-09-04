@@ -32,9 +32,9 @@ void Player::Init()
 	wheelRRPos = VGet(0.0f, 0.0f, 0.0f);
 	wheelRLPos = VGet(0.0f, 0.0f, 0.0f);
 
-	camScl = VGet(1.0f,1.0f,1.0f);
-	camMat = MGetScale(camScl);
-	camPos = VGet(0.0f,0.0f,0.0f); 
+	cam.scl = VGet(1.0f,1.0f,1.0f);
+	cam.mat = MGetScale(cam.scl);
+	cam.pos = VGet(0.0f,0.0f,0.0f); 
 
 	// 車の座標を上にあげるための平行移動
 	offsetMat = MGetTranslate(PLAYER_POS_OFFSET);
@@ -106,12 +106,30 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tir
 		carPos = VGet(0.0f, 0.0f, 0.0f);
 	}
 
-	VECTOR playerFrontPosOffset = VTransform(VGet(0.0f, 0.0f, 500.0f),MMult(carMat,MGetRotY(deg.yaw)));
+	VECTOR playerFrontPosOffset = VTransform(VGet(0.0f, 100.0f, 500.0f),MMult(carMat,MGetRotY(deg.yaw)));
 	carFrontPos = VAdd(carPos, playerFrontPosOffset);
 
 	// カメラ移動・回転
-	VECTOR camPosOffset = VTransform(CAMERA_OFFSET, MMult(camMat, MGetRotY(deg.yaw)));
-	camPos = VAdd(carPos, camPosOffset);
+	if (KeyMng::GetInstance().trgKey[P1_Y])
+	{
+		cam.view = !cam.view;
+	}
+
+	VECTOR camPosOffset = { 0.0f,0.0f,0.0f };
+	if (cam.view)
+	{
+		cam.offset = { 0.0f, 100.0f, 150.0f };
+		MATRIX tmp;
+		tmp = MMult(cam.mat, MGetRotY(deg.yaw));
+		camPosOffset = VTransform(cam.offset, tmp);
+	}
+	else
+	{
+		cam.offset = { 0.0f, 300.0f, -1000.0f };
+		camPosOffset = VTransform(cam.offset, MMult(cam.mat, MGetRotY(deg.yaw)));
+	}
+
+	cam.pos = VAdd(carPos, camPosOffset);
 
 	// 前フレからの移動量
 	vectorSpeed = VGet(dirVecRot.x * this->speed,dirVecRot.y,dirVecRot.z * this->speed);

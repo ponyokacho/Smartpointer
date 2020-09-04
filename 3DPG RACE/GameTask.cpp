@@ -141,7 +141,7 @@ void GameTask::Control()
 		steering = 0.0f;
 	}
 
-	if (!transmission)
+	if (!transmission && !shiftUp)
 	{
 		if (KeyMng::GetInstance().trgKey[P1_LB])
 		{

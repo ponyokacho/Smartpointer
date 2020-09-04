@@ -33,8 +33,16 @@ void Camera::Init()
 void Camera::Update()
 {
 	//player->Update();
-	pos = VGet(player.camPos.x, player.camPos.y, player.camPos.z);
-	target = VAdd(player.carPos,TARGET_OFFSET);
+	pos = VGet(player.cam.pos.x, player.cam.pos.y, player.cam.pos.z);
+	if (!player.cam.view)
+	{
+		target = VAdd(player.carPos, TARGET_OFFSET);
+	}
+	else
+	{
+		target = VAdd(player.carFrontPos,VGet(0.0f,player.deg.pitch * -200.0f,player.deg.roll * 200.0f));
+	}
+
 
 	// ¶Ò×¾¯Ä
 	SetCameraPositionAndTarget_UpVecY(pos, target);

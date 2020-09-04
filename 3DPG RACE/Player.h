@@ -3,8 +3,7 @@
 #include "VECTOR2.h"
 #include <vector>
 #include <memory>
-
-constexpr VECTOR CAMERA_OFFSET = { 0.0f, 300.0f, -1000.0f };
+;
 constexpr VECTOR PLAYER_POS_OFFSET = { 0.0f,100.0f,0.0f };
 
 class Player {
@@ -33,10 +32,15 @@ public:
 	float oldSpeed = 0.0f;
 
 	// ｶﾒﾗ用box
-	MATRIX camMat;
-	VECTOR camPos;
-	VECTOR camScl;
-	VECTOR camVec;
+	struct Camera {
+		bool view = false;	// false:三人称,ture:一人称
+		VECTOR pos = VGet(0.0f, 0.0f, 0.0f);
+		MATRIX mat;
+		VECTOR scl;
+		VECTOR vec;
+		VECTOR offset = { 0.0f, 300.0f, -1000.0f };
+	};
+	Camera cam;
 
 	// wheelPos
 	VECTOR wheelFRPos;
