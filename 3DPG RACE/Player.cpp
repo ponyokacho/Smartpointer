@@ -48,10 +48,10 @@ void Player::Init()
 }
 
 //---Œﬁ√ﬁ®Ç…Œ≤∞ŸÇí«è]Ç≥ÇπÇÈ
-tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,const VECTOR2 dirVec,const VECTOR2 fWheelVec, const float speed, const int lr,const float steering)
+tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,const VECTOR2 dirVec,const VECTOR2 fWheelVec, const int lr,const float steering)
 {
 	this->steering = steering;
-	this->speed = speed;
+	speed = lpGameTask.GetSpeed();
 	this->tireForce = VGet(tireForce.x * this->steering, 0.0f, tireForce.y);
 	this->dirVec = VGet(dirVec.x, 0.0f, dirVec.y);
 	this->fWheelVec = VGet(fWheelVec.x, 0.0f, fWheelVec.y);
@@ -72,10 +72,20 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tir
 
 	deg.yaw += ((this->tireForce.x) * (DT * (tmp + 2.0f))); 
 	deg.pitch = -lpGameTask.GetPitchLoad();
-	if (deg.pitch < -0.5f || deg.pitch > 0.5f)
+	if (deg.pitch < -0.5f)
+	{
+		deg.pitch = -0.5f;
+	}
+	if (deg.pitch > 0.5f)
+	{
+		deg.pitch = 0.5f;
+	}
+
+	if (deg.oldPitch - deg.pitch > 0.3f || deg.oldPitch - deg.pitch < -0.3f)
 	{
 		deg.pitch = 0.0f;
 	}
+	deg.oldPitch = deg.pitch;
 	deg.roll = abs(lpGameTask.GetRollLoad());
 
 	if (deg.roll > 0.10f)
@@ -100,12 +110,6 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tir
 	carPos = VTransform(carPos, moveMat);
 	carPosMat = MGetTranslate(carPos);
 
-	// ÉoÉOÇ¡ÇΩÇ∆Ç´óp
-	if (KeyMng::GetInstance().trgKey[P1_SPACE])
-	{
-		carPos = VGet(0.0f, 0.0f, 0.0f);
-	}
-
 	VECTOR playerFrontPosOffset = VTransform(VGet(0.0f, 100.0f, 500.0f),MMult(carMat,MGetRotY(deg.yaw)));
 	carFrontPos = VAdd(carPos, playerFrontPosOffset);
 
@@ -125,7 +129,7 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tir
 	}
 	else
 	{
-		cam.offset = { 0.0f, 300.0f, -1000.0f };
+		cam.offset = { 0.0f, 300.0f, -900.0f };
 		camPosOffset = VTransform(cam.offset, MMult(cam.mat, MGetRotY(deg.yaw)));
 	}
 

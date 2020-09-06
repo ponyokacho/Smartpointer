@@ -17,7 +17,7 @@ void Camera::Init()
 	SetCameraNearFar(c_near, c_far);	// 初期ｾｯﾄ
 
 	// ----- ｶﾒﾗの視野を変更する
-	fov = (DX_PI_F/180) * 60;	// 視野(60度)
+	fov = (DX_PI_F/180) * 70;	// 視野(60度)
 	SetupCamera_Perspective(fov);	// 初期ｾｯﾄ
 
 	// ----- 遠近法ｶﾒﾗ(奥行情報のないｶﾒﾗ)

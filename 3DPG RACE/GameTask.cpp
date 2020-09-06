@@ -4,6 +4,7 @@
 #include "Player.h"
 #include "Field.h"
 #include "Camera.h"
+#include "ResourceMng.h"
 
 #include <vector>
 #include <memory>
@@ -41,6 +42,8 @@ void GameTask::GameInit()
 	p.push_back(std::make_shared<Player>());
 	c.push_back(std::make_shared<Camera>(p.back()));
 	f.push_back(std::make_shared<Field>());
+
+	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/shift_change.wav"));
 }
 
 void GameTask::GameUpdate()
@@ -58,7 +61,7 @@ void GameTask::GameUpdate()
 	{
 		if (!t.empty())
 		{
-			tie(vectorSpeed,vectorSpeedRot, dirVecRot, carPos, fWheelVecRot, acceleration) = (*i).Update(tireForce,dirVec,fWheelVec,speed,lr,steering);
+			tie(vectorSpeed,vectorSpeedRot, dirVecRot, carPos, fWheelVecRot, acceleration) = (*i).Update(tireForce,dirVec,fWheelVec,lr,steering);
 			i->Render();
 		}
 	}
@@ -80,12 +83,12 @@ void GameTask::GameUpdate()
 	for (auto i : d)
 	{
 		i->SetSoundVol(volume);
-		tie(driveTireVel, wheelTorque, speed) = (*i).Update(clutch, engineTorque, rpm, gearNum, onlyEngineVel);
+		tie(driveTireVel, wheelTorque) = (*i).Update(clutch, engineTorque, rpm, gearNum, onlyEngineVel);
 		i->Draw(clutch, gearNum);
 	}
 	for (auto i : t)
 	{
-		tie(tireForce, dirVec, fWheelVec, lr) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel, speed, vectorSpeed, vectorSpeedRot, dirVecRot, fWheelVecRot,acceleration);
+		tie(tireForce, dirVec, fWheelVec, lr) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel,vectorSpeed, vectorSpeedRot, dirVecRot, fWheelVecRot,acceleration);
 		i->Draw();
 
 		np = i->GetPitchLoad();
@@ -100,16 +103,38 @@ void GameTask::Control()
 
 	GetJoypadXInputState(DX_INPUT_PAD1, &input);
 
-	if (shiftUp)
+	shift = (shiftUp || shiftDown);
+
+	if (shift)
 	{
 		accel = 0.0f;
 		gearNum = -1;
-		shiftUpCnt++;
-		if (shiftUpCnt == 30)
+
+		int tmp = 0.0f;
+		if (shiftUp)
 		{
-			shiftUpCnt = 0;
+			tmp = 30;
+		}
+		else
+		{
+			tmp = 10;
+		}
+
+		shiftCnt++;
+		if (shiftCnt == tmp)
+		{
+			shiftCnt = 0;
 			gearNum = saveGearNum;
 			shiftUp = false;
+			shiftDown = false;
+		}
+
+		if (shiftCnt == 1)
+		{
+			if (!CheckSoundMem(SOUND_ID("sounds/shift_change.wav"))) 
+			{
+				PlaySoundMem(SOUND_ID("sounds/shift_change.wav"), DX_PLAYTYPE_BACK);
+			}
 		}
 	}
 	else
@@ -141,7 +166,7 @@ void GameTask::Control()
 		steering = 0.0f;
 	}
 
-	if (!transmission && !shiftUp)
+	if (!transmission && (!shiftUp || !shiftDown))
 	{
 		if (KeyMng::GetInstance().trgKey[P1_LB])
 		{
@@ -150,6 +175,8 @@ void GameTask::Control()
 			{
 				gearNum = -1;
 			}
+			shiftDown = true;
+			saveGearNum = gearNum;
 		}
 		if (KeyMng::GetInstance().trgKey[P1_RB])
 		{
@@ -176,20 +203,15 @@ void GameTask::Control()
 				}
 			}
 
-			if (gearNum == 1)
-			{
-				shiftDownTiming = 10.0f;
-			}
-			else
-			{
-				shiftDownTiming = 50.0f;
-			}
+			shiftDownTiming = 20.0f * gearNum;
 
 			if (gearMinSpeed[gearNum] + shiftDownTiming > speed)
 			{
 				if (gearNum != 0)
 				{
 					gearNum--;
+					shiftDown = true;
+					saveGearNum = gearNum;
 					if (gearNum < -1)
 					{
 						gearNum = -1;

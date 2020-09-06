@@ -32,7 +32,7 @@ public:
 	float WheelRot(float kph);
 
 	void Draw();
-	std::tuple<VECTOR2,VECTOR2, VECTOR2, int> Update(float engineTorque,float steering,int gearNum,float accel,float driveTireVel,float speed, VECTOR vectorSpeed,VECTOR vectorSpeedRot,VECTOR dirVecRot, VECTOR fWheelVecRot,float acceleration);
+	std::tuple<VECTOR2,VECTOR2, VECTOR2, int> Update(float engineTorque,float steering,int gearNum,float accel,float driveTireVel,VECTOR vectorSpeed,VECTOR vectorSpeedRot,VECTOR dirVecRot, VECTOR fWheelVecRot,float acceleration);
 
 	float Cross(VECTOR2 va, VECTOR2 vb);
 	float Dot(VECTOR2 va, VECTOR2 vb);
@@ -104,7 +104,7 @@ private:
 	struct ABS
 	{
 		bool flag;
-		int power = 0;
+		int power = 0; // 0,1,2
 	};
 	ABS _abs;
 
@@ -134,5 +134,8 @@ private:
 
 	float wheelTorque = 0.0f;
 	int sign = 1;
+
+	int volCount = 0;
+	int volume = 0;
 };
  

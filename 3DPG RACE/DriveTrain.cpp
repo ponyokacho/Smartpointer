@@ -18,7 +18,7 @@ DriveTrain::DriveTrain()
 		gearMinTireRpm[i] = tmp / TIRE_PERIMETER;
 		gearMinTireVel[i] = (gearMinTireRpm[i] / 60) * (2 * PI);
 	}
-	PlaySoundMem(SOUND_ID("sounds/car_idoling.mp3"), DX_PLAYTYPE_LOOP);
+	PlaySoundMem(SOUND_ID("sounds/car_idoling.wav"), DX_PLAYTYPE_LOOP);
 }
 
 DriveTrain::~DriveTrain()
@@ -112,7 +112,7 @@ float DriveTrain::MaxTireVel(float speed)
 	return radPerSec;
 }
 
-tuple<float, float, float> DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
+tuple<float, float> DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
 {
 	Sound();
 
@@ -188,8 +188,9 @@ tuple<float, float, float> DriveTrain::Update(float clutch, float engineTorque, 
 	{
 		speed = CarSpeedTire(driveTireVel);
 	}
+	lpGameTask.SetSpeed(speed);
 	
-	return forward_as_tuple(driveTireVel,wheelTorque,speed);
+	return forward_as_tuple(driveTireVel,wheelTorque);
 }
 
 void DriveTrain::Draw(float clutch, int gearNum)
@@ -231,6 +232,6 @@ void DriveTrain::Draw(float clutch, int gearNum)
 
 void DriveTrain::Sound()
 {
-	ChangeVolumeSoundMem(255 * volume / 100, SOUND_ID("sounds/car_idoling.mp3"));
-	SetFrequencySoundMem(freq + (engineVel / (2 * PI) * 60) * 20, SOUND_ID("sounds/car_idoling.mp3"));
+	ChangeVolumeSoundMem(255 * volume / 100, SOUND_ID("sounds/car_idoling.wav"));
+	SetFrequencySoundMem(freq + (engineVel / (2 * PI) * 60) * 20, SOUND_ID("sounds/car_idoling.wav"));
 }

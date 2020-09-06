@@ -26,7 +26,7 @@ public:
 	float CarSpeedEngine(float rpmE,int gearNum);
 	float MaxTireVel(float speed);
 
-	tuple<float, float, float> Update(float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
+	tuple<float, float> Update(float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
 	void Draw(float clutch, int gearNum);
 	void Sound();
 

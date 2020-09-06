@@ -22,7 +22,7 @@ public:
 	~Player();
 
 	void Init();
-	std::tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Update(VECTOR2 tireForce, VECTOR2 dirVec, const VECTOR2 fWheelVec, float speed, const int lr,const float steering);
+	std::tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Update(VECTOR2 tireForce, VECTOR2 dirVec, const VECTOR2 fWheelVec,const int lr,const float steering);
 	void Render();
 
 	float Cross(VECTOR va, VECTOR vb);
@@ -38,7 +38,7 @@ public:
 		MATRIX mat;
 		VECTOR scl;
 		VECTOR vec;
-		VECTOR offset = { 0.0f, 300.0f, -1000.0f };
+		VECTOR offset = { 0.0f, 00.0f, 0.0f };
 	};
 	Camera cam;
 
@@ -51,8 +51,8 @@ public:
 	VECTOR boxPos;
 
 	VECTOR carPos;
-	VECTOR carVec = { 0.0f,0.0f,0.0f };
-	VECTOR carFrontPos = { 0.0f,0.0f,0.0f };
+	VECTOR carVec = { 0.0f,0.0f,1.0f };
+	VECTOR carFrontPos = { 0.0f,0.0f,1.0f };
 	VECTOR carOffsetPos;
 	MATRIX carMat;
 	VECTOR carScl;
@@ -60,20 +60,20 @@ public:
 	MATRIX moveMat;
 	MATRIX carPosMat;
 
-	VECTOR vectorSpeed = { 0.0f,0.0f ,0.0f };
-	VECTOR vectorSpeedRot = { 0.0f,0.0f,0.0f };
-	VECTOR oldVectorSpeedRot = { 0.0f,0.0f,0.0f };
-	VECTOR beforeCarPos = { 0.0f,0.0f ,0.0f };
+	VECTOR vectorSpeed = { 0.0f,0.0f ,1.0f };
+	VECTOR vectorSpeedRot = { 0.0f,0.0f,1.0f };
+	VECTOR oldVectorSpeedRot = { 0.0f,0.0f,1.0f };
+	VECTOR beforeCarPos = { 0.0f,0.0f ,1.0f };
 
-	VECTOR tireForce = { 0.0f, 0.0f ,0.0f };
-	VECTOR tireForceRot = { 0.0f,0.0f,0.0f };
-	VECTOR addMoveVec = { 0.0f,0.0f,0.0f };
-	VECTOR dirVec = { 0.0f,0.0f,0.0f };
-	VECTOR dirVecRot = { 0.0f,0.0f,0.0f };
+	VECTOR tireForce = { 0.0f, 0.0f ,1.0f };
+	VECTOR tireForceRot = { 0.0f,0.0f,1.0f };
+	VECTOR addMoveVec = { 0.0f,0.0f,1.0f };
+	VECTOR dirVec = { 0.0f,0.0f,1.0f };
+	VECTOR dirVecRot = { 0.0f,0.0f,1.0f };
 	float acceleration = 0.0f;
 
-	VECTOR fWheelVec = { 0.0f,0.0f,0.0f };
-	VECTOR fWheelVecRot = { 0.0f,0.0f,0.0f };
+	VECTOR fWheelVec = { 0.0f,0.0f,1.0f };
+	VECTOR fWheelVecRot = { 0.0f,0.0f,1.0f };
 
 	int count = 0;
 
@@ -82,6 +82,7 @@ public:
 	struct Deg{
 		float yaw = 0.0f;
 		float pitch = 0.0f;
+		float oldPitch = 0.0f;
 		float roll = 0.0f;
 	};
 	Deg deg;

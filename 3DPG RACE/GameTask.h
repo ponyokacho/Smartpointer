@@ -108,6 +108,20 @@ public:
 	{
 		gearMinSpeed[i] = speed;
 	}
+
+	void SetSpeed(float sp)
+	{
+		speed = sp;
+	}
+	float GetSpeed()
+	{
+		return speed;
+	}
+
+	bool GetShift()
+	{
+		return shift;
+	}
 	
 private:
 	static GameTask *s_Instance;
@@ -165,8 +179,10 @@ private:
 	float np = 0.0f;
 	float nr = 0.0f;
 
+	bool shift = false;
 	bool shiftUp = false;
-	int shiftUpCnt = 0;
+	bool shiftDown = false;
+	int shiftCnt = 0;
 	int shiftDownTiming = 0.0f;
 
 	int volume = 0;

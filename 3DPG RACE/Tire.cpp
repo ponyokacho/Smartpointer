@@ -204,14 +204,14 @@ void Tire::Draw()
 	DrawFormatString(600, 520, 0xffffff, "nonDriveTireVel:(%.2f)", nonDriveTireVel);
 }
 
-tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(float engineTorque, float steering, int gearNum, float accel, float driveTireVel, float speed, VECTOR vectorSpeed, VECTOR vectorSpeedRot, VECTOR dirVecRot, VECTOR fWheelVecRot, float acceleration)
+tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(float engineTorque, float steering, int gearNum, float accel, float driveTireVel, VECTOR vectorSpeed, VECTOR vectorSpeedRot, VECTOR dirVecRot, VECTOR fWheelVecRot, float acceleration)
 {
 	//this->vectorSpeed = VECTOR2(vectorSpeed.x, vectorSpeed.z);;
 	this->vectorSpeedRot = VECTOR2(vectorSpeedRot.x, vectorSpeedRot.z);
 	this->deg = deg;
 	this->dirVecRotVec2 = VECTOR2(dirVecRot.x, dirVecRot.z);
 	this->driveTireVel = driveTireVel;
-	this->speed = speed;
+	speed = lpGameTask.GetSpeed();
 	this->acceleration = acceleration;
 
 	wheelTorque = lpGameTask.GetWheelTorque();
@@ -352,6 +352,21 @@ tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(float engineTorque, float steeri
 	if (!(rear.right.tireForce == VECTOR2(0.0f, 0.0f)))
 	{
 		rear.right.tireForce = rear.right.tireForce.Normalize();
+	}
+
+	volume = 255 * (65 * (abs(front.left.slipRatio) * 5)) / 100;
+	if (volume > 255 * 65 / 100)
+	{
+		volume = 255 * 65 / 100;
+	}
+	ChangeVolumeSoundMem(volume, SOUND_ID("sounds/slip2.wav"));
+
+	if (speed > 50.0f)
+	{
+		if (!CheckSoundMem(SOUND_ID("sounds/slip2.wav")))
+		{
+			PlaySoundMem(SOUND_ID("sounds/slip2.wav"), DX_PLAYTYPE_LOOP);
+		}
 	}
 
 	// ç∂âEó÷ÇÃê^ÇÒíÜÇÃç¿ïWÇÇ∆ÇÈ
