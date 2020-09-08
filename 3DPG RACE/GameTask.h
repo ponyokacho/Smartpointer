@@ -1,18 +1,22 @@
 #pragma once
 
 #include <vector>
+#include <array>
 #include <memory>
 #include "DxLib.h"
+#include "VECTOR2.h"
 
-#include "Engine.h"
-#include "DriveTrain.h"
-#include "Tire.h"
-
+class Engine;
+class DriveTrain;
+class Tire;
 class Player;
 class Camera;
 class Field;
+class UI;
 
 #define  lpGameTask GameTask::GetInstance()
+
+using namespace std;
 
 constexpr int SCREEN_SIZE_X(960);
 constexpr int SCREEN_SIZE_Y(540);
@@ -98,10 +102,18 @@ public:
 	{
 		actualRpm = rpm;
 	}
+	float GetActualRpm()
+	{
+		return actualRpm;
+	}
 
 	void SetGearMaxSpeed(float speed,int i)
 	{
 		gearMaxSpeed[i] = speed;
+	}
+	float GetMaxSpeed()
+	{
+		return gearMaxSpeed[MAX_GEAR - 1];
 	}
 
 	void SetGearMinSpeed(float speed, int i)
@@ -122,7 +134,44 @@ public:
 	{
 		return shift;
 	}
-	
+
+	void SetView(bool v)
+	{
+		view = v;
+	}
+	bool GetView()
+	{
+		return view;
+	}
+
+	int GetGearNum()
+	{
+		return gearNum;
+	}
+
+	float GetRT()
+	{
+		return accel;
+	}
+	float GetLT()
+	{
+		return brake;
+	}
+
+	bool GetTransmission()
+	{
+		return transmission;
+	}
+
+	void SetAbsFlag(bool flag)
+	{
+		absFlag = flag;
+	}
+	bool GetAbsFlag()
+	{
+		return absFlag;
+	}
+
 private:
 	static GameTask *s_Instance;
 
@@ -132,9 +181,11 @@ private:
 	vector<shared_ptr<DriveTrain>>d;
 	vector<shared_ptr<Tire>>t;
 
-	std::vector<std::shared_ptr<Player>>p;
-	std::vector<std::shared_ptr<Camera>>c;
-	std::vector<std::shared_ptr<Field>>f;
+	vector<shared_ptr<Player>>p;
+	vector<shared_ptr<Camera>>c;
+	vector<shared_ptr<Field>>f;
+
+	vector<shared_ptr<UI>>u;
 
 	float accel = 0.0f;
 	float brake = 0.0f;
@@ -190,5 +241,9 @@ private:
 	bool transmission = true; // false:mt, true:at
 	float actualRpm = 0.0f;
 	int saveGearNum = 0;
+
+	bool view = false;
+
+	bool absFlag = false;
 };
 

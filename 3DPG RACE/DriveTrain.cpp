@@ -199,15 +199,15 @@ void DriveTrain::Draw(float clutch, int gearNum)
 	//DrawBox(250, 420, 300, rS, 0x00ff00, true);
 	//DrawBox(250, 420, 300, 420 - 255, 0xffffff, false);
 
-	//// エンジン回転
-	////DrawBox(145, 420, 175, 420 - 255, 0xffffff, false);
-	////DrawBox(145, 420, 175, engineVel * 0.0005, 0xff0000, true);
-	//// ミッション回転
-	////DrawBox(175, 420, 205, 420 - 255, 0xffffff, false);
+	// エンジン回転
+	//DrawBox(145, 420, 175, 420 - 255, 0xffffff, false);
+	//DrawBox(145, 420, 175, engineVel * 0.0005, 0xff0000, true);
+	// ミッション回転
+	//DrawBox(175, 420, 205, 420 - 255, 0xffffff, false);
 
-	DrawString(210, 440, "DrivingForce", 0xff0000);
+	//DrawString(210, 440, "DrivingForce", 0xff0000);
 
-	DrawFormatString(210, 460, 0xffffff, "brake:%.2f", brakePower);
+	//DrawFormatString(210, 460, 0xffffff, "brake:%.2f", brakePower);
 
 	//DrawFormatString(210, 460, 0xffffff, "aEngineRpm:%.2f", actualEngineRpm);
 
@@ -222,11 +222,11 @@ void DriveTrain::Draw(float clutch, int gearNum)
 
 	if (gearNum != -1)
 	{
-		DrawFormatString(210, 500, 0xffffff, "Gear:%d", gearNum + 1);
+		//DrawFormatString(210, 500, 0xffffff, "Gear:%d", gearNum + 1);
 	}
 	else
 	{
-		DrawString(210, 500, "Gear:N",0xffffff);
+		//DrawString(210, 500, "Gear:N",0xffffff);
 	}
 }
 

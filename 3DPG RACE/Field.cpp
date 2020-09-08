@@ -61,6 +61,6 @@ void Field::Render(VECTOR carPos)
 
 	for (auto i : p)
 	{
-		DrawSphere3D(i->point, 50, 10, 0xff0000, 0xff0000, true);
+		//DrawSphere3D(i->point, 50, 10, 0xff0000, 0xff0000, true);
 	}
 }

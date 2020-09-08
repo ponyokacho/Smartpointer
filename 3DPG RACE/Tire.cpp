@@ -81,7 +81,15 @@ float Tire::SlipRatio(VECTOR2 v, float rv, float wheelAngle)
 	{
 		if (!_abs.flag)
 		{
-			s = -1.0f;
+			if (lpGameTask.GetLT() > 0.8f)
+			{
+				s = -1.0f;
+			}
+			else
+			{
+				s = -1.0f * lpGameTask.GetLT();
+			}
+			
 		}
 		else
 		{
@@ -190,18 +198,18 @@ void Tire::Draw()
 	//DrawCircle(rear.left.pos.x, rear.left.pos.y, 2, 0xffffff, true);
 	//DrawCircle(rear.right.pos.x, rear.right.pos.y, 2, 0xffffff, true);
 
-	DrawLine(posCenter.x, posCenter.y, posCenter.x - dirVec.x * 30, posCenter.y - dirVec.y * 30, 0xff0000, 1);
-	DrawLine(posCenter.x, posCenter.y, posCenter.x - this->fWheelVecRot.x * 30, posCenter.y - this->fWheelVecRot.y * 30, 0x00ff00, 1);
-	DrawLine(front.centerPos.x,front.centerPos.y,rear.centerPos.x,rear.centerPos.y, 0x0000ff, 1);
+	//DrawLine(posCenter.x, posCenter.y, posCenter.x - dirVec.x * 30, posCenter.y - dirVec.y * 30, 0xff0000, 1);
+	//DrawLine(posCenter.x, posCenter.y, posCenter.x - this->fWheelVecRot.x * 30, posCenter.y - this->fWheelVecRot.y * 30, 0x00ff00, 1);
+	//DrawLine(front.centerPos.x,front.centerPos.y,rear.centerPos.x,rear.centerPos.y, 0x0000ff, 1);
 
-	DrawFormatString(600, 380, 0xffffff, "speed:%.2f", speed);
-	DrawFormatString(600, 400, 0xffffff, "nonDriveTireVel:%.2f", nonDriveTireVel);
-	DrawFormatString(600, 420, 0xffffff, "driveTireVel:%.2f",driveTireVel);
-	DrawFormatString(600, 440, 0xffffff, "loadFR:%.2f,loadRR:%.2f", front.right.load,rear.right.load);
-	DrawFormatString(600, 460, 0xffffff, "SlipRatioRR:(%.2f),slipAngleRR:(%.2f)", rear.right.slipRatio, rear.right.slipAngle);
-	DrawFormatString(600, 480, 0xffffff, "SlipRatioFR:(%.2f),slipAngleFR:(%.2f)", front.right.slipRatio, front.right.slipAngle);
-	DrawFormatString(600, 500, 0xffffff, "allTireForce:(%.2f,%.2f)", allTireForce.x, allTireForce.y);
-	DrawFormatString(600, 520, 0xffffff, "nonDriveTireVel:(%.2f)", nonDriveTireVel);
+	//DrawFormatString(600, 380, 0xffffff, "speed:%.2f", speed);
+	//DrawFormatString(600, 400, 0xffffff, "nonDriveTireVel:%.2f", nonDriveTireVel);
+	//DrawFormatString(600, 420, 0xffffff, "driveTireVel:%.2f",driveTireVel);
+	//DrawFormatString(600, 440, 0xffffff, "loadFR:%.2f,loadRR:%.2f", front.right.load,rear.right.load);
+	//DrawFormatString(600, 460, 0xffffff, "SlipRatioRR:(%.2f),slipAngleRR:(%.2f)", rear.right.slipRatio, rear.right.slipAngle);
+	//DrawFormatString(600, 480, 0xffffff, "SlipRatioFR:(%.2f),slipAngleFR:(%.2f)", front.right.slipRatio, front.right.slipAngle);
+	//DrawFormatString(600, 500, 0xffffff, "allTireForce:(%.2f,%.2f)", allTireForce.x, allTireForce.y);
+	//DrawFormatString(600, 520, 0xffffff, "nonDriveTireVel:(%.2f)", nonDriveTireVel);
 }
 
 tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(float engineTorque, float steering, int gearNum, float accel, float driveTireVel, VECTOR vectorSpeed, VECTOR vectorSpeedRot, VECTOR dirVecRot, VECTOR fWheelVecRot, float acceleration)
@@ -213,6 +221,8 @@ tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(float engineTorque, float steeri
 	this->driveTireVel = driveTireVel;
 	speed = lpGameTask.GetSpeed();
 	this->acceleration = acceleration;
+
+	lpGameTask.SetAbsFlag(_abs.flag);
 
 	wheelTorque = lpGameTask.GetWheelTorque();
 
@@ -367,6 +377,10 @@ tuple<VECTOR2,VECTOR2,VECTOR2,int> Tire::Update(float engineTorque, float steeri
 		{
 			PlaySoundMem(SOUND_ID("sounds/slip2.wav"), DX_PLAYTYPE_LOOP);
 		}
+	}
+	else
+	{
+		StopSoundMem(SOUND_ID("sounds/slip2.wav"));
 	}
 
 	// ç∂âEó÷ÇÃê^ÇÒíÜÇÃç¿ïWÇÇ∆ÇÈ

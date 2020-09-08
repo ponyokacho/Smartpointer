@@ -2,6 +2,7 @@
 #include "GameTask.h"
 #include "Player.h"
 #include "Tire.h"
+#include "KeyMng.h"
 
 Player::Player()
 {
@@ -110,13 +111,14 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tir
 	carPos = VTransform(carPos, moveMat);
 	carPosMat = MGetTranslate(carPos);
 
-	VECTOR playerFrontPosOffset = VTransform(VGet(0.0f, 100.0f, 500.0f),MMult(carMat,MGetRotY(deg.yaw)));
+	VECTOR playerFrontPosOffset = VTransform(VGet(0.0f, 80.0f, 500.0f),MMult(carMat,MGetRotY(deg.yaw)));
 	carFrontPos = VAdd(carPos, playerFrontPosOffset);
 
 	// ÉJÉÅÉâà⁄ìÆÅEâÒì]
 	if (KeyMng::GetInstance().trgKey[P1_Y])
 	{
 		cam.view = !cam.view;
+		lpGameTask.SetView(cam.view);
 	}
 
 	VECTOR camPosOffset = { 0.0f,0.0f,0.0f };
@@ -129,7 +131,7 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tir
 	}
 	else
 	{
-		cam.offset = { 0.0f, 300.0f, -900.0f };
+		cam.offset = { 0.0f, 250.0f, -900.0f };
 		camPosOffset = VTransform(cam.offset, MMult(cam.mat, MGetRotY(deg.yaw)));
 	}
 
@@ -145,11 +147,11 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tir
 	acceleration = -(oldSpeed - this->speed) * DT;
 	oldSpeed = this->speed;
 
-	DrawFormatString(0, 40, 0xffffff, "tireForce.x,y,z(%.2f,%.2f,%.2f)", this->tireForce.x, this->tireForce.y, this->tireForce.z);
-	DrawFormatString(0, 80, 0xffffff, "speed:%.2f", this->speed);
-	DrawFormatString(0, 100, 0xffffff, "deg:p(%.3f),y(%.3f),r(%.3f)", deg.pitch,deg.yaw,deg.roll);
-	DrawFormatString(0, 120, 0xffffff, "acceleration:(%.5f)", acceleration);
-	DrawFormatString(0, 140, 0xffffff, "vectorSpeedRot:x(%.2f),y(%.2f),z(%.2f)", vectorSpeedRot.x,vectorSpeedRot.y,vectorSpeedRot.z);
+	//DrawFormatString(0, 40, 0xffffff, "tireForce.x,y,z(%.2f,%.2f,%.2f)", this->tireForce.x, this->tireForce.y, this->tireForce.z);
+	//DrawFormatString(0, 80, 0xffffff, "speed:%.2f", this->speed);
+	//DrawFormatString(0, 100, 0xffffff, "deg:p(%.3f),y(%.3f),r(%.3f)", deg.pitch,deg.yaw,deg.roll);
+	//DrawFormatString(0, 120, 0xffffff, "acceleration:(%.5f)", acceleration);
+	//DrawFormatString(0, 140, 0xffffff, "vectorSpeedRot:x(%.2f),y(%.2f),z(%.2f)", vectorSpeedRot.x,vectorSpeedRot.y,vectorSpeedRot.z);
 
 	return forward_as_tuple(vectorSpeed,vectorSpeedRot,dirVecRot,beforeCarPos,this->fWheelVec,acceleration);
 }
@@ -158,22 +160,22 @@ void Player::Render()
 {
 	//MV1DrawModel(boxModel);
 	MV1DrawModel(carModel);
-	MV1DrawModel(wheelFRModel);
-	MV1DrawModel(wheelFLModel);
-	MV1DrawModel(wheelRRModel);
-	MV1DrawModel(wheelRLModel);
-	MV1DrawModel(camModel);
+	//MV1DrawModel(wheelFRModel);
+	//MV1DrawModel(wheelFLModel);
+	//MV1DrawModel(wheelRRModel);
+	//MV1DrawModel(wheelRLModel);
+	//MV1DrawModel(camModel);
 
 	VECTOR tmp = { vectorSpeed.x * 500.0f ,vectorSpeed.y * 500.0f ,vectorSpeed.z * 500.0f };
 	VECTOR tmp1 = { dirVecRot.x * 500.0f ,0.0f ,dirVecRot.z * 500.0f };
 	VECTOR tmp2 = { fWheelVec.x * 500.0f ,0.0f ,fWheelVec.z * 500.0f };
 
-	DrawLine3D(carPos, VAdd(carPos, tmp), 0xffffff);
-	DrawLine3D(carPos, VAdd(carPos, tmp1), 0xff0000);
-	DrawLine3D(carPos, VAdd(carPos, tmp2), 0xffff00);
+	//DrawLine3D(carPos, VAdd(carPos, tmp), 0xffffff);
+	//DrawLine3D(carPos, VAdd(carPos, tmp1), 0xff0000);
+	//DrawLine3D(carPos, VAdd(carPos, tmp2), 0xffff00);
 
-	DrawFormatString(0, 0, 0xffffff, "carPos.x,y,z(%.2f,%.2f,%.2f)", carPos.x * DT, carPos.y * DT, carPos.z * DT);
-	DrawFormatString(0, 20, 0xffffff, "vectorSpeed.x,y,z(%.2f,%.2f,%.2f)", vectorSpeed.x, vectorSpeed.y, vectorSpeed.z);
+	//DrawFormatString(0, 0, 0xffffff, "carPos.x,y,z(%.2f,%.2f,%.2f)", carPos.x * DT, carPos.y * DT, carPos.z * DT);
+	//DrawFormatString(0, 20, 0xffffff, "vectorSpeed.x,y,z(%.2f,%.2f,%.2f)", vectorSpeed.x, vectorSpeed.y, vectorSpeed.z);
 }
 
 // äOêœ

@@ -38,7 +38,7 @@ public:
 		MATRIX mat;
 		VECTOR scl;
 		VECTOR vec;
-		VECTOR offset = { 0.0f, 00.0f, 0.0f };
+		VECTOR offset = { 0.0f, 0.0f, 0.0f };
 	};
 	Camera cam;
 

@@ -90,13 +90,13 @@ void Engine::Draw(float accel, float rightTrigger)
 	//DrawBox(50, 420, 100, rt, 0x00ff00, true);
 	//DrawBox(50, 420, 100, 420 - 255, 0xffffff, false);
 
-	DrawString(10, 440, "Engine", 0xff0000);
+	//DrawString(10, 440, "Engine", 0xff0000);
 
-	DrawFormatString(10, 460, 0xffffff, "RightTrigger:%.2f", accel);
+	//DrawFormatString(10, 460, 0xffffff, "RightTrigger:%.2f", accel);
 
-	DrawFormatString(10, 480, 0xffffff, "Torque:%.2f", torque);
+	//DrawFormatString(10, 480, 0xffffff, "Torque:%.2f", torque);
 
-	DrawFormatString(10, 500, 0xffffff, "rpm:%.2f", rpm);
+	//DrawFormatString(10, 500, 0xffffff, "rpm:%.2f", rpm);
 
-	DrawFormatString(10, 520, 0xffffff, "engineVel:%.2f", angularAccel);
+	//DrawFormatString(10, 520, 0xffffff, "engineVel:%.2f", angularAccel);
 }

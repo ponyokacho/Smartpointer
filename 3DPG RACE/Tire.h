@@ -103,8 +103,8 @@ private:
 
 	struct ABS
 	{
-		bool flag;
-		int power = 0; // 0,1,2
+		bool flag = true;
+		int power = 1; // 0,1,2
 	};
 	ABS _abs;
 

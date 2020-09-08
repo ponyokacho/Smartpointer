@@ -5,6 +5,10 @@
 #include "Field.h"
 #include "Camera.h"
 #include "ResourceMng.h"
+#include "Engine.h"
+#include "DriveTrain.h"
+#include "Tire.h"
+#include "UI.h"
 
 #include <vector>
 #include <memory>
@@ -39,9 +43,11 @@ void GameTask::GameInit()
 	d.push_back(make_shared<DriveTrain>());
 	t.push_back(make_shared<Tire>());
 
-	p.push_back(std::make_shared<Player>());
-	c.push_back(std::make_shared<Camera>(p.back()));
-	f.push_back(std::make_shared<Field>());
+	p.push_back(make_shared<Player>());
+	c.push_back(make_shared<Camera>(p.back()));
+	f.push_back(make_shared<Field>());
+	
+	u.push_back(make_shared<UI>());
 
 	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/shift_change.wav"));
 }
@@ -93,6 +99,12 @@ void GameTask::GameUpdate()
 
 		np = i->GetPitchLoad();
 		nr = i->GetRollLoad();
+	}
+
+	for (auto i : u)
+	{
+		i->Update();
+		i->Draw();
 	}
 
 }
@@ -166,55 +178,61 @@ void GameTask::Control()
 		steering = 0.0f;
 	}
 
-	if (!transmission && (!shiftUp || !shiftDown))
+	if (!transmission)
 	{
-		if (KeyMng::GetInstance().trgKey[P1_LB])
+		if (!shift)
 		{
-			gearNum--;
-			if (gearNum < -1)
+			if (KeyMng::GetInstance().trgKey[P1_LB])
 			{
-				gearNum = -1;
+				gearNum--;
+				if (gearNum < -1)
+				{
+					gearNum = -1;
+				}
+				shiftDown = true;
+				saveGearNum = gearNum;
 			}
-			shiftDown = true;
-			saveGearNum = gearNum;
-		}
-		if (KeyMng::GetInstance().trgKey[P1_RB])
-		{
-			gearNum++;
-			if (gearNum > MAX_GEAR - 1)
+			if (KeyMng::GetInstance().trgKey[P1_RB])
 			{
-				gearNum = MAX_GEAR - 1;
+				gearNum++;
+				if (gearNum > MAX_GEAR - 1)
+				{
+					gearNum = MAX_GEAR - 1;
+				}
+				shiftUp = true;
+				saveGearNum = gearNum;
 			}
-			shiftUp = true;
-			saveGearNum = gearNum;
 		}
 	}
 	else
 	{
-		if (gearNum != -1)
+		if (!shift)
 		{
-			if (gearMaxSpeed[gearNum] - 10.0f < speed)
+			if (gearNum != -1)
 			{
-				if (gearNum != MAX_GEAR - 1)
+				if (gearMaxSpeed[gearNum] - 10.0f < speed)
 				{
-					gearNum++;
-					shiftUp = true;
-					saveGearNum = gearNum;
-				}
-			}
-
-			shiftDownTiming = 20.0f * gearNum;
-
-			if (gearMinSpeed[gearNum] + shiftDownTiming > speed)
-			{
-				if (gearNum != 0)
-				{
-					gearNum--;
-					shiftDown = true;
-					saveGearNum = gearNum;
-					if (gearNum < -1)
+					if (gearNum != MAX_GEAR - 1)
 					{
-						gearNum = -1;
+						gearNum++;
+						shiftUp = true;
+						saveGearNum = gearNum;
+					}
+				}
+
+				shiftDownTiming = 20.0f * gearNum;
+
+				if (gearMinSpeed[gearNum] + shiftDownTiming > speed)
+				{
+					if (gearNum != 0)
+					{
+						gearNum--;
+						shiftDown = true;
+						saveGearNum = gearNum;
+						if (gearNum < -1)
+						{
+							gearNum = -1;
+						}
 					}
 				}
 			}

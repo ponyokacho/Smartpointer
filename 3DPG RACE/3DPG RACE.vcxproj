@@ -137,6 +137,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="ResourceMng.cpp" />
     <ClCompile Include="Tire.cpp" />
+    <ClCompile Include="UI.cpp" />
     <ClCompile Include="VECTOR2.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -149,6 +150,7 @@
     <ClInclude Include="Player.h" />
     <ClInclude Include="ResourceMng.h" />
     <ClInclude Include="Tire.h" />
+    <ClInclude Include="UI.h" />
     <ClInclude Include="VECTOR2.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
