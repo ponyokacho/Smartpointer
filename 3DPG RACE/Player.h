@@ -22,7 +22,7 @@ public:
 	~Player();
 
 	void Init();
-	std::tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Update(VECTOR2 tireForce, VECTOR2 dirVec, const VECTOR2 fWheelVec,const int lr,const float steering);
+	void Update();
 	void Render();
 
 	float Cross(VECTOR va, VECTOR vb);
@@ -34,11 +34,11 @@ public:
 	// ｶﾒﾗ用box
 	struct Camera {
 		bool view = false;	// false:三人称,ture:一人称
-		VECTOR pos = VGet(0.0f, 0.0f, 0.0f);
+		VECTOR pos = VGet(0.0f, 0.0f, 1.0f);
 		MATRIX mat;
 		VECTOR scl;
 		VECTOR vec;
-		VECTOR offset = { 0.0f, 0.0f, 0.0f };
+		VECTOR offset = { 0.0f, 0.0f, 1.0f };
 	};
 	Camera cam;
 
@@ -78,6 +78,8 @@ public:
 	int count = 0;
 
 	float steering = 0.0f;
+
+	int lr = 0;
 
 	struct Deg{
 		float yaw = 0.0f;

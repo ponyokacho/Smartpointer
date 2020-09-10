@@ -2,7 +2,7 @@
 
 #include <memory>
 
-constexpr VECTOR TARGET_OFFSET = { 0.0f,150.0f,0.0f };
+constexpr VECTOR TARGET_OFFSET = { 0.0f,110.0f,0.0f };
 
 class Player;
 

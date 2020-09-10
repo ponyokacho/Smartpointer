@@ -49,29 +49,30 @@ void Player::Init()
 }
 
 //---Œﬁ√ﬁ®Ç…Œ≤∞ŸÇí«è]Ç≥ÇπÇÈ
-tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tireForce,const VECTOR2 dirVec,const VECTOR2 fWheelVec, const int lr,const float steering)
+void Player::Update()
 {
-	this->steering = steering;
+	steering = lpGameTask.GetSteering();
 	speed = lpGameTask.GetSpeed();
-	this->tireForce = VGet(tireForce.x * this->steering, 0.0f, tireForce.y);
-	this->dirVec = VGet(dirVec.x, 0.0f, dirVec.y);
-	this->fWheelVec = VGet(fWheelVec.x, 0.0f, fWheelVec.y);
+	tireForce = VGet(lpGameTask.GetTireForce().x * steering, 0.0f, lpGameTask.GetTireForce().y);
+	dirVec = VGet(lpGameTask.GetDirVec().x, 0.0f, lpGameTask.GetDirVec().y);
+	fWheelVec = VGet(lpGameTask.GetFrontWheelVec().x, 0.0f, lpGameTask.GetFrontWheelVec().y);
+	lr = lpGameTask.GetLRFlag();
 
-	//float tmp = (10.0f * (tanhf((1.0f / 100.0f) * pow(this->speed, 2.0f))));
+	//float tmp = (10.0f * (tanhf((1.0f / 100.0f) * pow(speed, 2.0f))));
 
 	float tmp = 0.0f;
-	if (this->speed < 50.0f)
+	if (speed < 50.0f)
 	{
 		// éwêîä÷êî
-		tmp = pow(1.058, this->speed) - 1.0f;
+		tmp = pow(1.058, speed) - 1.0f;
 	}
 	else
 	{
 		// º∏ﬁ”≤ƒﬁä÷êî
-		tmp = ((tanhf(this->speed - 100.0f / 2.0f) + 1.0f) / 2.0f) * 15.0f;
+		tmp = ((tanhf(speed - 100.0f / 2.0f) + 1.0f) / 2.0f) * 15.0f;
 	}
 
-	deg.yaw += ((this->tireForce.x) * (DT * (tmp + 2.0f))); 
+	deg.yaw += ((tireForce.x) * (DT * (tmp + 2.0f))); 
 	deg.pitch = -lpGameTask.GetPitchLoad();
 	if (deg.pitch < -0.5f)
 	{
@@ -96,18 +97,18 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tir
 
 	MATRIX RotYMat = MMult(carMat, MGetRotY(deg.yaw));
 
-	dirVecRot = VTransform(this->dirVec, RotYMat);
+	dirVecRot = VTransform(dirVec, RotYMat);
 	// vectorSpeedÇÕâÒì]Ç≥ÇπÇÈïKóvÇ»Ç¢
 	vectorSpeedRot = VTransform(vectorSpeed, MGetRotY(-deg.yaw));
 
 	// Ç±ÇÍÇ≈âÒì]ÅEà⁄ìÆ
 	MV1SetMatrix(carModel, MMult(MMult(MMult(MGetRotX(deg.pitch), MGetRotZ(deg.roll * lr)), MGetRotY(deg.yaw)), carPosMat));
 
-	//addMoveVec = VAdd(VGet((this->tireForce.x * lr) * DT, 0.0f, (this->tireForce.z * this->speed) * DT),addMoveVec);
+	//addMoveVec = VAdd(VGet((tireForce.x * lr) * DT, 0.0f, (tireForce.z * speed) * DT),addMoveVec);
 
 	// é‘ÇÃà⁄ìÆ
-	tireForceRot = VTransform(this->tireForce, MMult(carMat, MGetRotY(deg.yaw)));
-	moveMat = MGetTranslate(VGet((tireForceRot.x * this->speed), this->tireForce.y, tireForceRot.z * this->speed));
+	tireForceRot = VTransform(tireForce, MMult(carMat, MGetRotY(deg.yaw)));
+	moveMat = MGetTranslate(VGet((tireForceRot.x * speed), tireForce.y, tireForceRot.z * speed));
 	carPos = VTransform(carPos, moveMat);
 	carPosMat = MGetTranslate(carPos);
 
@@ -124,7 +125,7 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tir
 	VECTOR camPosOffset = { 0.0f,0.0f,0.0f };
 	if (cam.view)
 	{
-		cam.offset = { 0.0f, 100.0f, 150.0f };
+		cam.offset = { 0.0f, 110.0f, 150.0f };
 		MATRIX tmp;
 		tmp = MMult(cam.mat, MGetRotY(deg.yaw));
 		camPosOffset = VTransform(cam.offset, tmp);
@@ -138,22 +139,27 @@ tuple<VECTOR,VECTOR,VECTOR,VECTOR,VECTOR,float> Player::Update(const VECTOR2 tir
 	cam.pos = VAdd(carPos, camPosOffset);
 
 	// ëOÉtÉåÇ©ÇÁÇÃà⁄ìÆó 
-	vectorSpeed = VGet(dirVecRot.x * this->speed,dirVecRot.y,dirVecRot.z * this->speed);
+	vectorSpeed = VGet(dirVecRot.x * speed,dirVecRot.y,dirVecRot.z * speed);
 	vectorSpeed = VSub(beforeCarPos,carPos);
 	vectorSpeed.x *= -1;
 	vectorSpeed.z *= -1;
 	beforeCarPos = carPos;
 	
-	acceleration = -(oldSpeed - this->speed) * DT;
-	oldSpeed = this->speed;
+	acceleration = -(oldSpeed - speed) * DT;
+	oldSpeed = speed;
 
-	//DrawFormatString(0, 40, 0xffffff, "tireForce.x,y,z(%.2f,%.2f,%.2f)", this->tireForce.x, this->tireForce.y, this->tireForce.z);
-	//DrawFormatString(0, 80, 0xffffff, "speed:%.2f", this->speed);
+	//DrawFormatString(0, 40, 0xffffff, "tireForce.x,y,z(%.2f,%.2f,%.2f)", tireForce.x, tireForce.y, tireForce.z);
+	//DrawFormatString(0, 80, 0xffffff, "speed:%.2f", speed);
 	//DrawFormatString(0, 100, 0xffffff, "deg:p(%.3f),y(%.3f),r(%.3f)", deg.pitch,deg.yaw,deg.roll);
 	//DrawFormatString(0, 120, 0xffffff, "acceleration:(%.5f)", acceleration);
 	//DrawFormatString(0, 140, 0xffffff, "vectorSpeedRot:x(%.2f),y(%.2f),z(%.2f)", vectorSpeedRot.x,vectorSpeedRot.y,vectorSpeedRot.z);
 
-	return forward_as_tuple(vectorSpeed,vectorSpeedRot,dirVecRot,beforeCarPos,this->fWheelVec,acceleration);
+	lpGameTask.SetVectorSpeed(vectorSpeed);
+	lpGameTask.SetVectorSpeedRot(vectorSpeedRot);
+	lpGameTask.SetDirVecRot(dirVecRot);
+	lpGameTask.SetCarPos(carPos);
+	lpGameTask.SetFrontWheelVecRot(fWheelVec);
+	lpGameTask.SetAcceleration(acceleration);
 }
 
 void Player::Render()
@@ -169,6 +175,17 @@ void Player::Render()
 	VECTOR tmp = { vectorSpeed.x * 500.0f ,vectorSpeed.y * 500.0f ,vectorSpeed.z * 500.0f };
 	VECTOR tmp1 = { dirVecRot.x * 500.0f ,0.0f ,dirVecRot.z * 500.0f };
 	VECTOR tmp2 = { fWheelVec.x * 500.0f ,0.0f ,fWheelVec.z * 500.0f };
+
+	if (lpGameTask.GetLT())
+	{
+		MV1SetMaterialDifColor(carModel, 10, GetColorF(1.0f, 0.1f, 0.1f, 1.0f));
+		MV1SetMaterialEmiColor(carModel, 10, GetColorF(0.8f, 0.1f, 0.1f, 1.0f));
+	}
+	else
+	{
+		MV1SetMaterialDifColor(carModel, 10, GetColorF(0.5f, 0.0f, 0.0f, 1.0f));
+		MV1SetMaterialEmiColor(carModel, 10, GetColorF(0.3f, 0.0f, 0.0f, 1.0f));
+	}
 
 	//DrawLine3D(carPos, VAdd(carPos, tmp), 0xffffff);
 	//DrawLine3D(carPos, VAdd(carPos, tmp1), 0xff0000);

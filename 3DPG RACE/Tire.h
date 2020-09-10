@@ -32,7 +32,7 @@ public:
 	float WheelRot(float kph);
 
 	void Draw();
-	std::tuple<VECTOR2,VECTOR2, VECTOR2, int> Update(float engineTorque,float steering,int gearNum,float accel,float driveTireVel,VECTOR vectorSpeed,VECTOR vectorSpeedRot,VECTOR dirVecRot, VECTOR fWheelVecRot,float acceleration);
+	void Update();
 
 	float Cross(VECTOR2 va, VECTOR2 vb);
 	float Dot(VECTOR2 va, VECTOR2 vb);
@@ -48,29 +48,29 @@ private:
 
 	VECTOR2 posCenter = {645,230};
 
-	VECTOR2 dirVec = { 0,0 };
-	VECTOR2 fWheelVec = { 0,0 };
-	VECTOR2 fWheelVecRot = { 0.0f,0.0f };
-	VECTOR2 rWheelVec = { 0,0 };
+	VECTOR2 dirVec = { 0.0f,1.0f };
+	VECTOR2 fWheelVec = { 0.0f,1.0f };
+	VECTOR2 fWheelVecRot = { 0.0f,1.0f };
+	VECTOR2 rWheelVec = { 0.0f,1.0f };
 
 	struct Front {
 		struct L {
-			VECTOR2 tireForce = { 0,0 };
-			VECTOR2 pos = { 0,0 };
-			VECTOR2 preYaw = { 0.0f,0.0f };
+			VECTOR2 tireForce = { 0.0f,1.0f };
+			VECTOR2 pos = { 0.0f,1.0f };
+			VECTOR2 preYaw = { 0.0f,1.0f };
 			float slipAngle = 0.0f;
 			float slipRatio = 0.0f;
 			float load = 0.0f;
 		};
 		struct R {
-			VECTOR2 tireForce = { 0,0 };
-			VECTOR2 pos = { 0,0 };
-			VECTOR2 preYaw = { 0.0f,0.0f };
+			VECTOR2 tireForce = { 0.0f,1.0f };
+			VECTOR2 pos = { 0.0f,1.0f };
+			VECTOR2 preYaw = { 0.0f,1.0f };
 			float slipAngle = 0.0f;
 			float slipRatio = 0.0f;
 			float load = 0.0f;
 		};
-		VECTOR2 centerPos = { 0.0f,0.0f };
+		VECTOR2 centerPos = { 0.0f,1.0f };
 
 		L left;
 		R right;
@@ -79,46 +79,39 @@ private:
 
 	struct Rear {
 		struct L {
-			VECTOR2 tireForce = { 0,0 };
-			VECTOR2 pos = { 0,0 };
+			VECTOR2 tireForce = { 0.0f,1.0f };
+			VECTOR2 pos = { 0.0f,1.0f };
 			float slipAngle = 0.0f;
 			float preSlipAngle = 0.0f;
 			float slipRatio = 0.0f;
 			float load = 0.0f;
 		};
 		struct R {
-			VECTOR2 tireForce = { 0,0 };
-			VECTOR2 pos = { 0,0 };
+			VECTOR2 tireForce = { 0.0f,1.0f };
+			VECTOR2 pos = { 0.0f,1.0f };
 			float slipAngle = 0.0f;
 			float preSlipAngle = 0.0f;
 			float slipRatio = 0.0f;
 			float load = 0.0f;
 		};
-		VECTOR2 centerPos = {0.0f,0.0f};
+		VECTOR2 centerPos = {0.0f,1.0f};
 
 		L left;
 		R right;
 	};
 	Rear rear;
 
-	struct ABS
-	{
-		bool flag = true;
-		int power = 1; // 0,1,2
-	};
-	ABS _abs;
-
 	int lr = 0;
 	int beforeLr = 0;
 	float deg = 0.0f;
 
-	VECTOR2 allTireForce = { 0.0f,0.0f };
-	VECTOR2 vectorSpeed = { 0.0f,0.0f };
+	VECTOR2 allTireForce = { 0.0f,1.0f };
+	VECTOR2 vectorSpeed = { 0.0f,1.0f };
 
-	VECTOR2 dirVecRotVec2 = { 0.0f,0.0f };
+	VECTOR2 dirVecRotVec2 = { 0.0f,1.0f };
 
-	VECTOR2 beforeVec = { 0.0f,0.0f };
-	VECTOR2 vectorSpeedRot = { 0.0f,0.0f };
+	VECTOR2 beforeVec = { 0.0f,1.0f };
+	VECTOR2 vectorSpeedRot = { 0.0f,1.0f };
 
 	float driveTireVel = 0.0f;
 	float nonDriveTireVel = 0.0f;
@@ -137,5 +130,10 @@ private:
 
 	int volCount = 0;
 	int volume = 0;
+
+	float steering = 0.0f;
+	int gearNum = -1;
+	float accel = 0.0f;
+	float engineTorque = 0.0f;
 };
  

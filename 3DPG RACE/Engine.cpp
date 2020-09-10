@@ -54,8 +54,9 @@ float Engine::ChangeUnit(float kgf)
 	return 0.0f;
 }
 
-tuple<float, float, float> Engine::Update(float accel)
+void Engine::Update()
 {
+	accel = lpGameTask.GetRT();
 	//if (thousand < MAX_THOUSAND)
 	{
 		forwardTorque = CalcForwardTorque(t[thousand + 1], t[thousand], (thousand + 1) * 1000, thousand * 1000, rpm);
@@ -81,12 +82,14 @@ tuple<float, float, float> Engine::Update(float accel)
 
 	thousand = rpm / 1000;
 
-	return forward_as_tuple(torque,rpm,angularAccel);
+	lpGameTask.SetEngineTorque(torque);
+	lpGameTask.SetRpm(rpm);
+	lpGameTask.SetOnlyEngineVel(angularAccel);
 }
 
-void Engine::Draw(float accel, float rightTrigger)
+void Engine::Draw()
 {
-	int rt = 420 - rightTrigger;
+	int rt = 420 - lpGameTask.GetRT();
 	//DrawBox(50, 420, 100, rt, 0x00ff00, true);
 	//DrawBox(50, 420, 100, 420 - 255, 0xffffff, false);
 

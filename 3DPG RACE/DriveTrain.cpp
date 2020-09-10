@@ -112,8 +112,13 @@ float DriveTrain::MaxTireVel(float speed)
 	return radPerSec;
 }
 
-tuple<float, float> DriveTrain::Update(float clutch, float engineTorque, float rpm, int gearNum, float onlyEngineVel)
+void DriveTrain::Update()
 {
+	clutch = lpGameTask.GetClutch();
+	engineTorque = lpGameTask.GetEngineTorque();
+	rpm = lpGameTask.GetRpm();
+	gearNum = lpGameTask.GetGearNum();
+	onlyEngineVel = lpGameTask.GetOnlyEngineVel();
 	Sound();
 
 	brakePower = lpGameTask.GetBrake();
@@ -190,10 +195,11 @@ tuple<float, float> DriveTrain::Update(float clutch, float engineTorque, float r
 	}
 	lpGameTask.SetSpeed(speed);
 	
-	return forward_as_tuple(driveTireVel,wheelTorque);
+	lpGameTask.SetDriveTireVel(driveTireVel);
+	lpGameTask.SetWheelTorque(wheelTorque);
 }
 
-void DriveTrain::Draw(float clutch, int gearNum)
+void DriveTrain::Draw()
 {
 	int rS = 420 - clutch * 255;
 	//DrawBox(250, 420, 300, rS, 0x00ff00, true);

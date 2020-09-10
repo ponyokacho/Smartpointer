@@ -54,6 +54,8 @@ void GameTask::GameInit()
 
 void GameTask::GameUpdate()
 {
+	FPS();
+
 	Control();
 
 	if (clutch > 1.0f)
@@ -62,12 +64,13 @@ void GameTask::GameUpdate()
 	}
 
 	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x9DCCff, true);
+	//DrawFormatString(0, 0, 0xffffff, "%d", fps);
 
 	for (auto i : p)
 	{
 		if (!t.empty())
 		{
-			tie(vectorSpeed,vectorSpeedRot, dirVecRot, carPos, fWheelVecRot, acceleration) = (*i).Update(tireForce,dirVec,fWheelVec,lr,steering);
+			(*i).Update();
 			i->Render();
 		}
 	}
@@ -83,18 +86,18 @@ void GameTask::GameUpdate()
 
 	for (auto i : e)
 	{
-		tie(engineTorque, rpm, onlyEngineVel) = (*i).Update(accel);
-		i->Draw(accel, input.RightTrigger);
+		(*i).Update();
+		i->Draw();
 	}
 	for (auto i : d)
 	{
 		i->SetSoundVol(volume);
-		tie(driveTireVel, wheelTorque) = (*i).Update(clutch, engineTorque, rpm, gearNum, onlyEngineVel);
-		i->Draw(clutch, gearNum);
+		(*i).Update();
+		i->Draw();
 	}
 	for (auto i : t)
 	{
-		tie(tireForce, dirVec, fWheelVec, lr) = (*i).Update(engineTorque, steering, gearNum, accel, driveTireVel,vectorSpeed, vectorSpeedRot, dirVecRot, fWheelVecRot,acceleration);
+		(*i).Update();
 		i->Draw();
 
 		np = i->GetPitchLoad();
@@ -237,5 +240,27 @@ void GameTask::Control()
 				}
 			}
 		}
+	}
+}
+
+void GameTask::FPS()
+{
+	// 現在のシステム時間を取得
+	NowTime = GetNowHiPerformanceCount();
+
+	// 前回取得した時間からの経過時間を秒に変換してセット
+	// ( GetNowHiPerformanceCount で取得できる値はマイクロ秒単位なので 1000000 で割ることで秒単位になる )
+	deltaTime = (NowTime - Time) / 1000000.0f;
+
+	// 今回取得した時間を保存
+	Time = NowTime;
+
+	// FPS関係の処理( 1秒経過する間に実行されたメインループの回数を FPS とする )
+	FPSCounter++;
+	if (NowTime - FPSCheckTime > 1000000)
+	{
+		fps = FPSCounter;
+		FPSCounter = 0;
+		FPSCheckTime = NowTime;
 	}
 }

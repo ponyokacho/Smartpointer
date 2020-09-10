@@ -26,8 +26,8 @@ public:
 	float CarSpeedEngine(float rpmE,int gearNum);
 	float MaxTireVel(float speed);
 
-	tuple<float, float> Update(float clutch, float engineTorque, float rpm, int gearNum,float onlyEngineVel);
-	void Draw(float clutch, int gearNum);
+	void Update();
+	void Draw();
 	void Sound();
 
 private:
@@ -54,5 +54,10 @@ private:
 	float freq = 50000;
 	int volume = 100;
 	int count = 0;
+
+	float clutch = 0.0f;
+	float engineTorque = 0.0f;;
+	float rpm = 0.0f;
+	float onlyEngineVel = 0.0f;
 };
 

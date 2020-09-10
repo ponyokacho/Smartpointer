@@ -13,11 +13,11 @@ void Camera::Init()
 	// ----- ｶﾒﾗの描画範囲を設定する
 	// (奥行10.0～1000までをｶﾒﾗの描画範囲とする)
 	c_near = 10.0f;	// 手前
-	c_far = 40000.0f;	// 奥
+	c_far = 600000.0f;	// 奥
 	SetCameraNearFar(c_near, c_far);	// 初期ｾｯﾄ
 
 	// ----- ｶﾒﾗの視野を変更する
-	fov = (DX_PI_F/180) * 70;	// 視野(60度)
+	fov = (DX_PI_F/180) * 65;	// 視野(60度)
 	SetupCamera_Perspective(fov);	// 初期ｾｯﾄ
 
 	// ----- 遠近法ｶﾒﾗ(奥行情報のないｶﾒﾗ)

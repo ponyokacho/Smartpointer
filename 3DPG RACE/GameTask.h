@@ -78,6 +78,7 @@ public:
 	void GameInit();
 	void GameUpdate();
 	void Control();
+	void FPS();
 
 	float GetPitchLoad()
 	{
@@ -88,14 +89,18 @@ public:
 		return nr;
 	}
 
-	float GetWheelTorque()
-	{
-		return wheelTorque;
-	}
-
 	float GetBrake()
 	{
 		return brake * BRAKE_POWER_MAX;
+	}
+
+	void SetRpm(float r)
+	{
+		rpm = r;
+	}
+	float GetRpm()
+	{
+		return rpm;
 	}
 
 	void SetActualRpm(float rpm)
@@ -162,14 +167,158 @@ public:
 	{
 		return transmission;
 	}
-
-	void SetAbsFlag(bool flag)
+	bool GetABSFlag()
 	{
-		absFlag = flag;
+		return _abs.flag;
 	}
-	bool GetAbsFlag()
+	int GetABSPower()
 	{
-		return absFlag;
+		return _abs.power;
+	}
+
+	float GetDeltaTime()
+	{
+		return deltaTime;
+	}
+
+	void SetTireForce(VECTOR2 tf)
+	{
+		tireForce = tf;
+	}
+	VECTOR2 GetTireForce()
+	{
+		return tireForce;
+	}
+
+	void SetDirVec(VECTOR2 vec)
+	{
+		dirVec = vec;
+	}
+	VECTOR2 GetDirVec()
+	{
+		return dirVec;
+	}
+
+	void SetFrontWheelVec(VECTOR2 vec)
+	{
+		fWheelVec = vec;
+	}
+	VECTOR2 GetFrontWheelVec()
+	{
+		return fWheelVec;
+	}
+
+	void SetFrontWheelVecRot(VECTOR vec)
+	{
+		fWheelVecRot = vec;
+	}
+	VECTOR GetFrontWheelVecRot()
+	{
+		return fWheelVecRot;
+	}
+
+	void SetLRFlag(int flag)
+	{
+		lr = flag;
+	}
+	int GetLRFlag()
+	{
+		return lr;
+	}
+
+	void SetSteering(float steer)
+	{
+		steering = steer;
+	}
+	float GetSteering()
+	{
+		return steering;
+	}
+	
+	void SetVectorSpeed(VECTOR vec)
+	{
+		vectorSpeed = vec;
+	}
+	VECTOR GetVectorSpeed()
+	{
+		return vectorSpeed;
+	}
+
+	void SetVectorSpeedRot(VECTOR vec)
+	{
+		vectorSpeedRot = vec;
+	}
+	VECTOR GetVectorSpeedRot()
+	{
+		return vectorSpeedRot;
+	}
+
+	void SetDirVecRot(VECTOR vec)
+	{
+		dirVecRot = vec;
+	}
+	VECTOR GetDirVecRot()
+	{
+		return dirVecRot;
+	}
+
+	void SetCarPos(VECTOR pos)
+	{
+		carPos = pos;
+	}
+	VECTOR GetCarPos()
+	{
+		return carPos;
+	}
+
+	void SetAcceleration(float accel)
+	{
+		acceleration = accel;
+	}
+	float GetAcceleration()
+	{
+		return acceleration;
+	}
+
+	void SetEngineTorque(float t)
+	{
+		engineTorque = t;
+	}
+	float GetEngineTorque()
+	{
+		return engineTorque;
+	}
+
+	void SetOnlyEngineVel(float v)
+	{
+		onlyEngineVel = v;
+	}
+	float GetOnlyEngineVel()
+	{
+		return onlyEngineVel;
+	}
+
+	float GetClutch()
+	{
+		return clutch;
+	}
+
+	void SetDriveTireVel(float d)
+	{
+		driveTireVel = d;
+	}
+	float GetDriveTireVel()
+	{
+		return driveTireVel;
+	}
+
+	void SetWheelTorque(float wt)
+	{
+		wheelTorque = wt;
+	}
+	float GetWheelTorque()
+	{
+		return wheelTorque;
 	}
 
 private:
@@ -212,15 +361,15 @@ private:
 
 	VECTOR2 pos = { 0.0f,0.0f };
 	VECTOR2 dirVec = { 0.0f,0.0f };
-	VECTOR dirVecRot = { 0.0f,0.0f,0.0f };
+	VECTOR dirVecRot = { 0.0f,0.0f,1.0f };
 	VECTOR2 rotVec = { 0.0f ,0.0f };
 	VECTOR2 tireForce = { 0.0f ,0.0f };
-	VECTOR vectorSpeed = { 0.0f,0.0f,0.0f };
-	VECTOR vectorSpeedRot = { 0.0f,0.0f,0.0f };
-	VECTOR carPos = { 0.0f,0.0f,0.0f };
+	VECTOR vectorSpeed = { 0.0f,0.0f,1.0f };
+	VECTOR vectorSpeedRot = { 0.0f,0.0f,1.0f };
+	VECTOR carPos = { 0.0f,0.0f,1.0f };
 
 	VECTOR2 fWheelVec = { 0.0f ,0.0f };
-	VECTOR fWheelVecRot = { 0.0f ,0.0f, 0.0f };
+	VECTOR fWheelVecRot = { 0.0f ,0.0f, 1.0f };
 
 	float wheelAngle = 0.0f;
 	int lr = 0;
@@ -238,12 +387,25 @@ private:
 
 	int volume = 0;
 
-	bool transmission = true; // false:mt, true:at
 	float actualRpm = 0.0f;
 	int saveGearNum = 0;
 
 	bool view = false;
 
-	bool absFlag = false;
+	LONGLONG NowTime;
+	LONGLONG Time;
+	int fps = 0;
+	int FPSCounter = 0;
+	LONGLONG FPSCheckTime = 0;
+	float deltaTime = 0.0f;
+
+	struct ABS
+	{
+		bool flag = true;
+		int power = 1; // 0,1,2
+	};
+	ABS _abs;
+
+	bool transmission = false; // false:mt, true:at
 };
 

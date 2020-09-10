@@ -25,7 +25,7 @@ void UI::Update()
 	s.accelBox = lpGameTask.GetRT();
 	s.brakeBox = lpGameTask.GetLT();
 	g.transmission = lpGameTask.GetTransmission();
-	s.absFlag = lpGameTask.GetAbsFlag();
+	s.absFlag = lpGameTask.GetABSFlag();
 
 	r.Normalize = r.rpm / ACTUAL_MAX_RPM;
 	s.Normalize = s.speed / s.maxSpeed;
