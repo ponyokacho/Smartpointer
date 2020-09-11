@@ -46,6 +46,11 @@ void Field::Update()
 	blueTarget.y = hitPos.HitPosition.y;
 }
 
+void Field::Render()
+{
+	MV1DrawModel(floorTestModel);
+}
+
 void Field::Render(VECTOR carPos)
 {
 	// ê¬∫∞›

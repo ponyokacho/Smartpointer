@@ -27,7 +27,7 @@ bool KeyMng::Update()
 	if (CheckHitKey(KEY_INPUT_SPACE)) newKey[P1_SPACE] = true;
 	if (CheckHitKey(KEY_INPUT_RETURN)) newKey[P1_ENTER] = true;
 	if (CheckHitKey(KEY_INPUT_LCONTROL))newKey[P1_LCtrl] = true;
-	if (CheckHitKey(KEY_INPUT_P))newKey[P1_PAUSE] = true;
+	if (CheckHitKey(KEY_INPUT_P))newKey[P1_START] = true;
 	if (CheckHitKey(KEY_INPUT_X))newKey[P1_X] = true;
 	if (CheckHitKey(KEY_INPUT_Z))newKey[P1_Z] = true;
 
@@ -37,7 +37,7 @@ bool KeyMng::Update()
 	if (CheckHitKey(PAD_INPUT_LEFT)) newKey[P1_LEFT] = true;
 	if (CheckHitKey(PAD_INPUT_X)) newKey[P1_SPACE] = true;
 	if (CheckHitKey(PAD_INPUT_A)) newKey[P1_ENTER] = true;
-	if (CheckHitKey(PAD_INPUT_START))newKey[P1_PAUSE] = true;
+	if (CheckHitKey(PAD_INPUT_START))newKey[P1_START] = true;
 
 	// Xboxコン
 	GetJoypadXInputState(DX_INPUT_PAD1, &input);
@@ -57,7 +57,7 @@ bool KeyMng::Update()
 	if ((GetJoypadInputState(DX_INPUT_PAD1) & PAD_INPUT_5) != 0) newKey[P1_LB] = true;
 
 	if ((GetJoypadInputState(DX_INPUT_PAD1) & PAD_INPUT_1) != 0 || (GetJoypadInputState(DX_INPUT_PAD1) & PAD_INPUT_2) != 0) newKey[P1_SPACE] = true;
-	if ((GetJoypadInputState(DX_INPUT_PAD1) & PAD_INPUT_8) != 0) newKey[P1_PAUSE] = true;
+	if ((GetJoypadInputState(DX_INPUT_PAD1) & PAD_INPUT_8) != 0) newKey[P1_START] = true;
 
 	//トリガand アップ
 	for (int i = 0; i < KEY_MAX; i++) {

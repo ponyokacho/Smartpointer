@@ -174,7 +174,7 @@ void UI::Draw()
 		DrawRotaGraph(g.pos.x, g.pos.y, g.size, 0.0f, g.gear[10], true);
 	}
 
-	if (g.transmission)
+	if (!g.transmission)
 	{
 		DrawRotaGraph(g.tmPos.x, g.tmPos.y - g.tmOffset, g.tmSize, 0.0f, g.at[0], true);
 		DrawRotaGraph(g.tmPos.x, g.tmPos.y + g.tmOffset, g.tmSize, 0.0f, g.mt[1], true);

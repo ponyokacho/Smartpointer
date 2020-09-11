@@ -3,6 +3,7 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <stdio.h>
 #include "DxLib.h"
 #include "VECTOR2.h"
 
@@ -63,12 +64,17 @@ constexpr float WHEEL_ANGLE_MAX_RAD = WHEEL_ANGLE_MAX * PI / 180;
 
 constexpr float G_RATIO[6] = { 3.626,2.188,1.541,1.213,1.000,0.767 };
 
+enum GMODE {
+	MENU,
+	MAIN
+};
+
 class GameTask
 {
 public:
 	// º›∏ﬁŸƒ›
 	static void Create(void);
-	static GameTask &GetInstance(void)
+	static GameTask& GetInstance(void)
 	{
 		Create();
 		return *s_Instance;
@@ -77,8 +83,12 @@ public:
 	int SystemInit();
 	void GameInit();
 	void GameUpdate();
+	void GameMenu();
+	void GameMain();
 	void Control();
 	void FPS();
+
+	void (GameTask::*mode[2])() = { &GameTask::GameMenu,&GameTask::GameMain };
 
 	float GetPitchLoad()
 	{
@@ -112,7 +122,7 @@ public:
 		return actualRpm;
 	}
 
-	void SetGearMaxSpeed(float speed,int i)
+	void SetGearMaxSpeed(float speed, int i)
 	{
 		gearMaxSpeed[i] = speed;
 	}
@@ -140,11 +150,11 @@ public:
 		return shift;
 	}
 
-	void SetView(bool v)
+	void SetView(int v)
 	{
 		view = v;
 	}
-	bool GetView()
+	int GetView()
 	{
 		return view;
 	}
@@ -234,7 +244,7 @@ public:
 	{
 		return steering;
 	}
-	
+
 	void SetVectorSpeed(VECTOR vec)
 	{
 		vectorSpeed = vec;
@@ -321,8 +331,31 @@ public:
 		return wheelTorque;
 	}
 
+	void SetTireLock(bool tl)
+	{
+		tireLock = tl;
+	}
+	bool GetTireLock()
+	{
+		return tireLock;
+	}
+
+	void SetWheelAngle(float wa)
+	{
+		wheelAngle = wa;
+	}
+	float GetWheelAngle()
+	{
+		return wheelAngle;
+	}
+
+	int GetUpdateMode()
+	{
+		return updateMode;
+	}
+
 private:
-	static GameTask *s_Instance;
+	static GameTask* s_Instance;
 
 	XINPUT_STATE input;
 
@@ -335,6 +368,8 @@ private:
 	vector<shared_ptr<Field>>f;
 
 	vector<shared_ptr<UI>>u;
+
+	int updateMode = 0;
 
 	float accel = 0.0f;
 	float brake = 0.0f;
@@ -390,7 +425,9 @@ private:
 	float actualRpm = 0.0f;
 	int saveGearNum = 0;
 
-	bool view = false;
+	bool tireLock = 0.0f;
+
+	int view = 0;
 
 	LONGLONG NowTime;
 	LONGLONG Time;
@@ -398,6 +435,26 @@ private:
 	int FPSCounter = 0;
 	LONGLONG FPSCheckTime = 0;
 	float deltaTime = 0.0f;
+
+	// ÉÅÉjÉÖÅ[óp
+	int absImg[2];
+	int gearImg[2];
+	int mtImg[2];
+	int atImg[2];
+	int lineImg[4];
+	int strongImg[2];
+	int weakImg[2];
+	int pov = 0;
+	int oldPov = 0;
+	float count = 0;
+	float sizeB = 0.0f;
+	float sizeG = 0.0f;
+	float sizeP = 0.0f;
+	VECTOR2 pointPos = { 0.0f,0.0f };
+	int chooseNumX = 0;
+	int chooseNumY = 0;
+	int bs = 0;
+	int tm = 0;
 
 	struct ABS
 	{
@@ -408,4 +465,3 @@ private:
 
 	bool transmission = false; // false:mt, true:at
 };
-

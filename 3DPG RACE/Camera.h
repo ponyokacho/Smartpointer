@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <memory>
 
 constexpr VECTOR TARGET_OFFSET = { 0.0f,110.0f,0.0f };

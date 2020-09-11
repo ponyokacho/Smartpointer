@@ -263,6 +263,7 @@ void Tire::Update()
 
 	wheelAngle = -steering * (WHEEL_ANGLE_MAX);
 	wheelAngle *= PI / 180;
+	lpGameTask.SetWheelAngle(wheelAngle);
 
 	fWheelVecRot = dirVecRotVec2;
 	fWheelVecRot = FrontWheelAngle(fWheelVecRot, wheelAngle);

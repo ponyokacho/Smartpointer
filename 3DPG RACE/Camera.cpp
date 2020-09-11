@@ -1,7 +1,9 @@
 #include "DxLib.h"
+#include <math.h>
 #include "GameTask.h"
 #include "Camera.h"
 #include "Player.h"
+#include "KeyMng.h"
 
 Camera::Camera(std::shared_ptr<Player> p) : player(*p)
 {
@@ -32,17 +34,31 @@ void Camera::Init()
 
 void Camera::Update()
 {
-	//player->Update();
-	pos = VGet(player.cam.pos.x, player.cam.pos.y, player.cam.pos.z);
-	if (!player.cam.view)
+	if (lpGameTask.GetUpdateMode() == MAIN)
 	{
-		target = VAdd(player.carPos, TARGET_OFFSET);
+		pos = VGet(player.cam.pos.x, player.cam.pos.y, player.cam.pos.z);
+		if (player.cam.view == 0)
+		{
+			target = VAdd(player.carPos, TARGET_OFFSET);
+		}
+		else if (player.cam.view == 1)
+		{
+			target = VAdd(player.carFrontPos, VGet(0.0f, player.deg.pitch * -200.0f, player.deg.roll * 200.0f));
+		}
+		else if (player.cam.view == 2)
+		{
+			target = player.tireViewFrontPos;
+		}
+		else
+		{
+			target = player.carPos;
+		}
 	}
 	else
 	{
-		target = VAdd(player.carFrontPos,VGet(0.0f,player.deg.pitch * -200.0f,player.deg.roll * 200.0f));
+		pos = VGet(-12000, 400, 38928);
+		target = VGet(-12858, 140, 38024);
 	}
-
 
 	// ¶Ò×¾¯Ä
 	SetCameraPositionAndTarget_UpVecY(pos, target);

@@ -15,7 +15,7 @@ enum KEY_CODE {
 	P1_Z,
 	P1_RB,
 	P1_LB,
-	P1_PAUSE,
+	P1_START,
 
 	KEY_MAX
 };
