@@ -67,10 +67,18 @@ void TitleScene::Update()
 	}
 	else
 	{
+		SetFontSize(70);
+		ChangeFont("HG‘n‰pŠpÎß¯Ìß‘Ì");
+
+		DrawString(301, 121, "ƒŒƒbƒcƒS[I", 0x000000);
+		DrawString(300, 120, "ƒŒƒbƒcƒS[I", GetColor(255,255,0));
+
 		SetFontSize(100);
 
-		DrawString(301, 101, "RACE LOAD", 0x000000);
-		DrawString(300, 100, "RACE LOAD", 0xffffff);
+		DrawString(201, 201, "‚­‚é‚Ü‚à‚Ç‚«", 0x000000);
+		DrawString(200, 200, "‚­‚é‚Ü‚à‚Ç‚«", 0xffffff);
+
+		ChangeFont("‚l‚r ƒSƒVƒbƒN");
 		SetFontSize(16);
 		if (_time % 60 >= 20)
 		{

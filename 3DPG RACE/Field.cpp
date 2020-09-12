@@ -97,10 +97,10 @@ bool Field::HitCollision(VECTOR a, VECTOR b, VECTOR wallA, VECTOR wallB)
 		for (int i = 0; i < wallCheck.HitNum; i++)
 		{
 			// “–‚½‚Á‚½ƒ|ƒŠƒSƒ“‚ð•`‰æ
-			DrawTriangle3D(
+			/*DrawTriangle3D(
 				wallCheck.Dim[i].Position[0],
 				wallCheck.Dim[i].Position[1],
-				wallCheck.Dim[i].Position[2], GetColor(255, 0, 255), true);
+				wallCheck.Dim[i].Position[2], GetColor(255, 0, 255), true);*/
 			_field = FieldStatus::Wall;
 		}
 

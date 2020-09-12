@@ -1,11 +1,22 @@
 #include "OptionScene.h"
 #include "GameTask.h"
 #include "KeyMng.h"
+#include "ResourceMng.h"
 
 OptionScene::OptionScene()
 {
 	_option = SelectOption::ABS;
 	_optionSize = { SCREEN_SIZE_X / 5 + SCREEN_SIZE_X / 2 ,100 };
+
+	DIV_IMAGE_ID("image/brake2types.png", 2, 2, 1, 0, 0, 2778, 2505, absImg);
+	DIV_IMAGE_ID("image/gear2types.png", 2, 2, 1, 0, 0, 1826, 2753, gearImg);
+	DIV_IMAGE_ID("image/mt_m_2types.png", 2, 2, 1, 0, 0, 166, 97, mtImg);
+	DIV_IMAGE_ID("image/at_m_2types.png", 2, 2, 1, 0, 0, 156, 97, atImg);
+	DIV_IMAGE_ID("image/line_m_all.png", 4, 1, 4, 0, 0, 807, 49, lineImg);
+	DIV_IMAGE_ID("image/strong_m2types.png", 2, 2, 1, 0, 0, 484, 97, strongImg);
+	DIV_IMAGE_ID("image/weak_m2types.png", 2, 2, 1, 0, 0, 363, 97, weakImg);
+	count = 0;
+
 }
 
 OptionScene::~OptionScene()
@@ -14,184 +25,172 @@ OptionScene::~OptionScene()
 
 void OptionScene::Draw()
 {
-	SetFontSize(40);
 
-	DrawString(_optionSize.x, _optionSize.y, "ABSflag", GetColor(100, 100, 100));
-	DrawString(_optionSize.x, _optionSize.y * 2, "power", GetColor(100, 100, 100));
-	DrawString(_optionSize.x, _optionSize.y * 3, "transMission", GetColor(100, 100, 100));
-
-	//‘I‘ð
-	if (_option != SelectOption::NON)
+	if (lpGameTask.GetABSFlag())
 	{
-		if (_option == SelectOption::ABS)
-		{
-			DrawString(_optionSize.x, _optionSize.y, "ABSflag", GetColor(255, 255, 255));
-		}
-		if (_option == SelectOption::POWER)
-		{
-			DrawString(_optionSize.x, _optionSize.y * 2, "power", GetColor(255, 255, 255));
-		}
-		if (_option == SelectOption::TRANSMISSION)
-		{
-			DrawString(_optionSize.x, _optionSize.y * 3, "transMission", GetColor(255, 255, 255));
-		}
+		bs = IMAGE_ID("image/on_m.png");
+	}
+	else
+	{
+		bs = IMAGE_ID("image/off_m.png");
 	}
 
-	SetFontSize(30);
-
-	//ABS On or Off
-	DrawString(_optionSize.x + _intervalSize, _intervalSize + _optionSize.y, "off", GetColor(100, 100, 100));
-	DrawString(_optionSize.x + _intervalSize * 3, _intervalSize + _optionSize.y, "on", GetColor(100, 100, 100));
-
-	//Power 0 or 1 or 2
-	DrawString(_optionSize.x + _intervalSize, _intervalSize + _optionSize.y * 2, "0", GetColor(100, 100, 100));
-	DrawString(_optionSize.x + _intervalSize * 2, _intervalSize + _optionSize.y * 2, "1", GetColor(100, 100, 100));
-	DrawString(_optionSize.x + _intervalSize * 3, _intervalSize + _optionSize.y * 2, "2", GetColor(100, 100, 100));
-
-	//transmission MT or AT
-	DrawString(_optionSize.x + _intervalSize, _intervalSize + _optionSize.y * 3, "MT", GetColor(100, 100, 100));
-	DrawString(_optionSize.x + _intervalSize * 3, _intervalSize + _optionSize.y * 3, "AT", GetColor(100, 100, 100));
-
-	if (_option != SelectOption::NON)
+	if (lpGameTask.GetTransmission())
 	{
-		if (_option == SelectOption::ABS)
-		{
-			if (!lpGameTask.GetABSFlag())
-			{
-				DrawString(_optionSize.x + _intervalSize, _intervalSize + _optionSize.y, "off", GetColor(255, 255, 255));
-			}
-			else
-			{
-				DrawString(_optionSize.x + _intervalSize * 3, _intervalSize + _optionSize.y, "on", GetColor(255, 255, 255));
-			}
-		}
-		if (_option == SelectOption::POWER)
-		{
-			if (lpGameTask.GetABSPower() == 0)
-			{
-				DrawString(_optionSize.x + _intervalSize, _intervalSize + _optionSize.y * 2, "0", GetColor(255, 255, 255));
-			}
-			else if (lpGameTask.GetABSPower() == 1)
-			{
-				DrawString(_optionSize.x + _intervalSize * 2, _intervalSize + _optionSize.y * 2, "1", GetColor(255, 255, 255));
-			}
-			else if (lpGameTask.GetABSPower() == 2)
-			{
-				DrawString(_optionSize.x + _intervalSize * 3, _intervalSize + _optionSize.y * 2, "2", GetColor(255, 255, 255));
-			}
-		}
-		if (_option == SelectOption::TRANSMISSION)
-		{
-			if (!lpGameTask.GetTransmission())
-			{
-				DrawString(_optionSize.x + _intervalSize, _intervalSize + _optionSize.y * 3, "MT", GetColor(255, 255, 255));
-			}
-			else
-			{
-				DrawString(_optionSize.x + _intervalSize * 3, _intervalSize + _optionSize.y * 3, "AT", GetColor(255, 255, 255));
-			}
+		tm = mtImg[0];
+	}
+	else
+	{
+		tm = atImg[0];
+	}
+	DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2, 1.0f, 0.0f, IMAGE_ID("image/toka.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2, 80, 0.6f, 0.0f, IMAGE_ID("image/setting.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 200, SCREEN_SIZE_Y / 2, 0.07f + sizeB, 0.0f, absImg[!lpGameTask.GetABSFlag()], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 200, SCREEN_SIZE_Y / 2, 0.07f + sizeG, 0.0f, gearImg[!lpGameTask.GetTransmission()], true);
 
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 250, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, IMAGE_ID("image/abs_m.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 200, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 150, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, bs, true);
+
+
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 150, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, IMAGE_ID("image/transmission_m.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 200, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 250, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, tm, true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100, SCREEN_SIZE_Y - 70 + (5.0f * sin(count / 10.0f)), 0.2f, 0.0f, IMAGE_ID("image/XboxCon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X - 275, SCREEN_SIZE_Y - 65 + (5.0f * sin(count / 10.0f)), 0.2f, 0.0f, IMAGE_ID("image/pressStart.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X - 232, SCREEN_SIZE_Y - 40 + (5.0f * sin(count / 10.0f)), 0.19f, 0.0f, IMAGE_ID("image/select.png"), true);
+
+	if (lpGameTask.GetABSFlag())
+	{
+		if (lpGameTask.GetABSPower() != 3)
+		{
+			DrawRotaGraph(SCREEN_SIZE_X / 2 - 200, SCREEN_SIZE_Y / 2 + 200, 0.3f, 0.0f, lineImg[lpGameTask.GetABSPower() + 1], true);
 		}
+		DrawRotaGraph(SCREEN_SIZE_X / 2 - 310, SCREEN_SIZE_Y / 2 + 230, 0.2f, 0.0f, weakImg[0], true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 - 90, SCREEN_SIZE_Y / 2 + 230, 0.2f, 0.0f, strongImg[0], true);
+
+		if (lpGameTask.GetABSPower() == 0)
+		{
+			pointPos = VECTOR2(SCREEN_SIZE_X / 2 - 315, SCREEN_SIZE_Y / 2 + 200);
+		}
+		else if (lpGameTask.GetABSPower() == 1)
+		{
+			pointPos = VECTOR2(SCREEN_SIZE_X / 2 - 200, SCREEN_SIZE_Y / 2 + 200);
+		}
+		else
+		{
+			pointPos = VECTOR2(SCREEN_SIZE_X / 2 - 85, SCREEN_SIZE_Y / 2 + 200);
+		}
+		DrawRotaGraph(pointPos.x, pointPos.y, 0.2f + sizeP, 0.0f, IMAGE_ID("image/redPoint.png"), true);
+	}
+	else
+	{
+		DrawRotaGraph(SCREEN_SIZE_X / 2 - 200, SCREEN_SIZE_Y / 2 + 200, 0.3f, 0.0f, lineImg[0], true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 - 310, SCREEN_SIZE_Y / 2 + 230, 0.2f, 0.0f, weakImg[1], true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 - 90, SCREEN_SIZE_Y / 2 + 230, 0.2f, 0.0f, strongImg[1], true);
 	}
 
-	SetFontSize(16);
 }
 
 void OptionScene::Update()
 {
+	pov = GetJoypadPOVState(DX_INPUT_PAD1, 0);
 
-	if (lpKeyMng.trgKey[P1_DOWN])
+	if (chooseNumY == 0)
 	{
-		if (_option == SelectOption::ABS)
+		if (pov == 9000 && pov != oldPov)
 		{
-			if (lpGameTask.GetABSFlag())
+			chooseNumX++;
+			if (chooseNumX > 1)
 			{
-				_option = SelectOption::POWER;
-			}
-			else
-			{
-				_option = SelectOption::TRANSMISSION;
+				chooseNumX = 1;
 			}
 		}
-		else if (_option == SelectOption::POWER)
+		else if (pov == 27000 && pov != oldPov)
 		{
-			_option = SelectOption::TRANSMISSION;
-		}
-		else if (_option == SelectOption::TRANSMISSION)
-		{
-			_option = SelectOption::MAX;
+			chooseNumX--;
+			if (chooseNumX < 0)
+			{
+				chooseNumX = 0;
+			}
 		}
 	}
-	if (lpKeyMng.trgKey[P1_UP])
+	else
 	{
-		if (_option == SelectOption::POWER)
+		count++;
+		sizeG = 0.0f;
+		sizeB = 0.0f;
+		sizeP = (0.07f * sin(count / 10.0f)) + 0.07f;
+		if (pov == 9000 && pov != oldPov)
 		{
-			_option = SelectOption::ABS;
-		}
-		else if (_option == SelectOption::TRANSMISSION)
-		{
-			if (lpGameTask.GetABSFlag())
+			lpGameTask.AddABSPower();
+			if (lpGameTask.GetABSPower() > 2)
 			{
-				_option = SelectOption::POWER;
-			}
-			else
-			{
-				_option = SelectOption::ABS;
+				lpGameTask.SetABSPower(2);
 			}
 		}
-		else if (_option == SelectOption::MAX)
+		else if (pov == 27000 && pov != oldPov)
 		{
-			_option = SelectOption::TRANSMISSION;
+			lpGameTask.SubABSPower();
+			if (lpGameTask.GetABSPower() < 0)
+			{
+				lpGameTask.SetABSPower(0);
+			}
 		}
 	}
 
-	if (lpKeyMng.trgKey[P1_RIGHT])
+	if (chooseNumX == 0 && lpGameTask.GetABSFlag())
 	{
-		if (_option == SelectOption::ABS)
+		if (pov == 0 && pov != oldPov)
 		{
-			if (!lpGameTask.GetABSFlag())
+			chooseNumY--;
+			if (chooseNumY < 0)
 			{
-				lpGameTask.SetABSFlag(true);
+				chooseNumY = 0;
 			}
 		}
-		else if (_option == SelectOption::POWER)
+		else if (pov == 18000 && pov != oldPov)
 		{
-			unsigned int powerMax = 2;
-			if (lpGameTask.GetABSPower() < 2)
+			chooseNumY++;
+			if (chooseNumY > 1)
 			{
-				lpGameTask.AddABSPower();
-			}
-		}
-		else if (_option == SelectOption::TRANSMISSION)
-		{
-			if (!lpGameTask.GetTransmission())
-			{
-				lpGameTask.SetTransmission(true);
+				chooseNumY = 1;
 			}
 		}
 	}
-	if (lpKeyMng.trgKey[P1_LEFT])
+
+	oldPov = pov;
+
+	if (chooseNumX == 0 && chooseNumY == 0)
 	{
-		if (_option == SelectOption::ABS)
+		count++;
+		sizeG = 0.0f;
+		sizeB = 0.01f * sin(count / 10.0f);
+		sizeP = 0.0f;
+		if (lpKeyMng.trgKey[P1_B])
 		{
-			if (lpGameTask.GetABSFlag())
-			{
-				lpGameTask.SetABSFlag(false);
-			}
-		}
-		else if (_option == SelectOption::POWER)
-		{
-			if (lpGameTask.GetABSPower() > 0)
-			{
-				lpGameTask.SubABSPower();
-			}
-		}
-		else if (_option == SelectOption::TRANSMISSION)
-		{
-			if (lpGameTask.GetTransmission())
-			{
-				lpGameTask.SetTransmission(false);
-			}
+			lpGameTask.SetABSFlag(!lpGameTask.GetABSFlag());
 		}
 	}
+	else if (chooseNumX == 1 && chooseNumY == 0)
+	{
+		count++;
+		sizeB = 0.0f;
+		sizeG = 0.01f * sin(count / 10.0f);
+		sizeP = 0.0f;
+		if (lpKeyMng.trgKey[P1_B])
+		{
+			lpGameTask.SetTransmission(!lpGameTask.GetTransmission());
+		}
+	}
+}
+
+const SelectOption& OptionScene::GetOption()
+{
+	return _option;
+}
+
+void OptionScene::SetOption(SelectOption select)
+{
+	_option = select;
 }

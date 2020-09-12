@@ -103,6 +103,8 @@ public:
 
 	bool FadeIn();
 
+	bool FadeOut();
+
 	const bool& GetCollisionFlag();
 
 	void SetCollisionFlag(bool flag);
@@ -214,6 +216,10 @@ public:
 	void SetABSFlag(bool flag)
 	{
 		_abs.flag = flag;
+	}
+	void SetABSPower(int num)
+	{
+		_abs.power = num;
 	}
 	void AddABSPower()
 	{
@@ -369,6 +375,24 @@ public:
 		return wheelTorque;
 	}
 
+	void SetTireLock(bool tl)
+	{
+		tireLock = tl;
+	}
+	bool GetTireLock()
+	{
+		return tireLock;
+	}
+
+	void SetWheelAngle(float wa)
+	{
+		wheelAngle = wa;
+	}
+	float GetWheelAngle()
+	{
+		return wheelAngle;
+	}
+
 	void SetCollisionPos(VECTOR p)
 	{
 		_collisionPos = p;
@@ -447,6 +471,7 @@ private:
 	float actualRpm = 0.0f;
 	int saveGearNum = 0;
 
+	bool tireLock = 0.0f;
 	bool view = false;
 
 	LONGLONG NowTime;
@@ -456,19 +481,15 @@ private:
 	LONGLONG FPSCheckTime = 0;
 	float deltaTime = 0.0f;
 
-	struct ABS
-	{
-		bool flag = false;
-		int power = 1; // 0,1,2
-	};
-	ABS _abs;
 
-	bool transmission = false; // false:mt, true:at
+	//フェードインorアウト
+	bool _fadeFlag = false;
 
 	//time計測
 	int _raceTime = 0;
 	std::array<int, 6> _raceCnt;
-	std::array<int, 6> _topRaceCnt;
+	using _topRaceCnt = std::array<int, 6>;
+	std::vector<_topRaceCnt> _raceRanking;
 
 
 	//Title変数
@@ -482,7 +503,15 @@ private:
 
 	//GameOption
 	//
+	struct ABS
+	{
+		bool flag = false;
+		int power = 1; // 0,1,2
+	};
+	ABS _abs;
+	bool transmission = false; // false:mt, true:at
 	std::unique_ptr<OptionScene> _option;
+	bool _optionFlag = false;
 
 	//GameMain変数
 	struct Ghost
@@ -493,6 +522,7 @@ private:
 		float speed;
 	};
 	Ghost _ghost;
+	bool _ghostSetFlag = false;
 
 	std::vector<Ghost> _setGhost;
 	std::vector<Ghost> _getGhost;
@@ -513,6 +543,7 @@ private:
 	//Result変数
 	std::unique_ptr<ResultScene> _result;
 	bool _resultFlag = false;
+	bool _resultFadeFlag = false;
 
 
 
