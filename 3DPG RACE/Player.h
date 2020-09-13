@@ -10,18 +10,38 @@ constexpr VECTOR WHEEL_OFFSET = { 135.0f, 80.0f, 250.0f };
 
 class Player {
 private:
+	//当たり判定
+	struct Capsule
+	{
+		VECTOR _startPos;
+		VECTOR _endPos;
+		VECTOR _wallStart;
+		VECTOR _wallEnd;
+	};
+	Capsule _hitBox;
+
 	//--- ﾓﾃﾞﾙ
+	int wheelFRModel;
+	int wheelFLModel;
+	int wheelRRModel;
+	int wheelRLModel;
 	int boxModel;// 本体
 	int carModel;
 	int camModel;
 
+	int _playerNum = 0;
+
 public:
-	Player();
+	Player(int num);
 	~Player();
+
+	void ModelInit();
 
 	void Init();
 	void Update();
 	void Render();
+
+	bool HitGoalCollision(VECTOR a, VECTOR b);
 
 	float Cross(VECTOR va, VECTOR vb);
 	float Dot(VECTOR va, VECTOR vb);
@@ -40,12 +60,19 @@ public:
 	};
 	Camera cam;
 
+	// wheelPos
+	VECTOR wheelFRPos;
+	VECTOR wheelFLPos;
+	VECTOR wheelRRPos;
+	VECTOR wheelRLPos;
+
 	VECTOR boxPos;
 
 	VECTOR carPos;
 	VECTOR carVec = { 0.0f,0.0f,1.0f };
 	VECTOR carFrontPos = { 0.0f,0.0f,1.0f };
 	VECTOR tireViewFrontPos = { 0.0f,0.0f,0.0f };
+
 	VECTOR carOffsetPos;
 	MATRIX carMat;
 	VECTOR carScl;
@@ -94,7 +121,7 @@ public:
 				float deg = 0.0f;
 				int model = 0;
 				VECTOR moveOffset = { 0.0f,0.0f,0.0f };
-				
+
 			};
 			struct Right
 			{
@@ -103,7 +130,7 @@ public:
 				int model = 0;
 				VECTOR moveOffset = { 0.0f,0.0f,0.0f };
 			};
-			
+
 			float tireRotX = 0.0f;
 			MATRIX rotMatY;
 
@@ -138,11 +165,60 @@ public:
 	};
 	Wheel wheel;
 
-	array<VECTOR, 11>viewPoint = {VGet(242,600,37714),VGet(35207,500,20096),VGet(8420,500,23231),VGet(-9118,500,27067),VGet(-30049,100,28264),
+	array<VECTOR, 11>viewPoint = { VGet(242,600,37714),VGet(35207,500,20096),VGet(8420,500,23231),VGet(-9118,500,27067),VGet(-30049,100,28264),
 		VGet(-14561,500,16833),VGet(1408,1000,-4890),VGet(40322,100,-42065),VGet(19664,140,-35776)/*<-ストレート->*/,VGet(-31218,140,7036),VGet(-41584,1000,42912)
 	};
 	int viewNum = 0;
 	int changeViewNumCounter = 0;
 	int minTime = 0;
 	bool changeFlag = false;
+
+	const Capsule& GetHitBox()
+	{
+		return _hitBox;
+	}
+
+	const VECTOR& GetCarPos()
+	{
+		return carPos;
+	}
+
+	void SetCarPos(VECTOR p)
+	{
+		carPos = p;
+	}
+
+	const Deg& GetDeg()
+	{
+		return deg;
+	}
+
+	void SetDeg(float y, float p, float o, float r)
+	{
+		deg.yaw = y;
+		deg.pitch = p;
+		deg.oldPitch = o;
+		deg.roll = r;
+	}
+
+	const VECTOR& GetVec()
+	{
+		return vectorSpeed;
+	}
+
+	void SetVec(VECTOR v)
+	{
+		vectorSpeed = v;
+	}
+
+	const float& GetSpeed()
+	{
+		return speed;
+	}
+
+	void SetSpeed(float s)
+	{
+		speed = s;
+	}
+
 };

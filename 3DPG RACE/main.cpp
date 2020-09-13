@@ -12,7 +12,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	{
 		ClsDrawScreen();
 
-		GameTask::GetInstance().GameUpdate();
+		GameTask::GetInstance().Update();
 
 		ScreenFlip();
 	}

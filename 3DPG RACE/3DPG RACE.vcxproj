@@ -134,9 +134,12 @@
     <ClCompile Include="GameTask.cpp" />
     <ClCompile Include="KeyMng.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="OptionScene.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="ResourceMng.cpp" />
+    <ClCompile Include="ResultScene.cpp" />
     <ClCompile Include="Tire.cpp" />
+    <ClCompile Include="TitleScene.cpp" />
     <ClCompile Include="UI.cpp" />
     <ClCompile Include="VECTOR2.cpp" />
   </ItemGroup>
@@ -147,9 +150,12 @@
     <ClInclude Include="Field.h" />
     <ClInclude Include="GameTask.h" />
     <ClInclude Include="KeyMng.h" />
+    <ClInclude Include="OptionScene.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="ResourceMng.h" />
+    <ClInclude Include="ResultScene.h" />
     <ClInclude Include="Tire.h" />
+    <ClInclude Include="TitleScene.h" />
     <ClInclude Include="UI.h" />
     <ClInclude Include="VECTOR2.h" />
   </ItemGroup>

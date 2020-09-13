@@ -6,14 +6,19 @@
 
 Tire::Tire()
 {
-	front.left.pos = { posCenter.x - T_OFFSET_X,posCenter.y - T_OFFSET_Y };
-	front.right.pos = { posCenter.x + T_OFFSET_X,posCenter.y - T_OFFSET_Y };
-	rear.left.pos = { posCenter.x - T_OFFSET_X,posCenter.y + T_OFFSET_Y };
-	rear.right.pos = { posCenter.x + T_OFFSET_X,posCenter.y + T_OFFSET_Y };
+	Init();
 }
 
 Tire::~Tire()
 {
+}
+
+void Tire::Init()
+{
+	front.left.pos = { posCenter.x - T_OFFSET_X,posCenter.y - T_OFFSET_Y };
+	front.right.pos = { posCenter.x + T_OFFSET_X,posCenter.y - T_OFFSET_Y };
+	rear.left.pos = { posCenter.x - T_OFFSET_X,posCenter.y + T_OFFSET_Y };
+	rear.right.pos = { posCenter.x + T_OFFSET_X,posCenter.y + T_OFFSET_Y };
 }
 
 float Tire::VerticalForceAtWheelPitch(float pitch)
@@ -263,7 +268,6 @@ void Tire::Update()
 
 	wheelAngle = -steering * (WHEEL_ANGLE_MAX);
 	wheelAngle *= PI / 180;
-	lpGameTask.SetWheelAngle(wheelAngle);
 
 	fWheelVecRot = dirVecRotVec2;
 	fWheelVecRot = FrontWheelAngle(fWheelVecRot, wheelAngle);

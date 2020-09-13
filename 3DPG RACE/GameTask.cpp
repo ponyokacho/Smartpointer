@@ -1,4 +1,4 @@
- #include "GameTask.h"
+#include "GameTask.h"
 #include "KeyMng.h"
 #include "DxLib.h"
 #include "Player.h"
@@ -9,6 +9,9 @@
 #include "DriveTrain.h"
 #include "Tire.h"
 #include "UI.h"
+#include "TitleScene.h"
+#include "ResultScene.h"
+#include "OptionScene.h"
 
 #include <vector>
 #include <memory>
@@ -25,18 +28,16 @@ void GameTask::Create(void)
 
 int GameTask::SystemInit()
 {
-	SetWindowText ("Template");
+	SetWindowText ("レッツゴー！くるまもどき");
 	SetGraphMode(SCREEN_SIZE_X, SCREEN_SIZE_Y, 16);
 	ChangeWindowMode(true);
 	if (DxLib_Init() == -1) {
 		return -1;
 	}
 	SetDrawScreen(DX_SCREEN_BACK);
-	
-	updateMode = MENU;
+	gLoopPtr = &GameTask::GameTitle;
 
 	GameInit();
-
 	return 0;
 }
 
@@ -46,215 +47,340 @@ void GameTask::GameInit()
 	d.push_back(make_shared<DriveTrain>());
 	t.push_back(make_shared<Tire>());
 
-	p.push_back(make_shared<Player>());
+	for (int j = 0; j < 2; j++)
+	{
+		p.push_back(make_shared<Player>(j));
+	}
+
 	c.push_back(make_shared<Camera>(p.back()));
 	f.push_back(make_shared<Field>());
 	
 	u.push_back(make_shared<UI>());
 
-	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/shift_change.wav"));
+	_title = std::make_unique<TitleScene>();
+	_title->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
+	_result = std::make_unique<ResultScene>();
+	_result->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
 
-	DIV_IMAGE_ID("image/brake2types.png", 2, 2, 1, 0, 0, 2778, 2505, absImg);
-	DIV_IMAGE_ID("image/gear2types.png", 2, 2, 1, 0, 0, 1826, 2753,gearImg);
-	DIV_IMAGE_ID("image/mt_m_2types.png", 2, 2, 1, 0, 0, 166, 97, mtImg);
-	DIV_IMAGE_ID("image/at_m_2types.png", 2, 2, 1, 0, 0, 156, 97, atImg);
-	DIV_IMAGE_ID("image/line_m_all.png", 4, 1, 4, 0, 0, 807, 49, lineImg);
-	DIV_IMAGE_ID("image/strong_m2types.png", 2, 2, 1, 0, 0, 484, 97, strongImg);
-	DIV_IMAGE_ID("image/weak_m2types.png", 2, 2, 1, 0, 0, 363, 97, weakImg);
-	count = 0;
+	_option = std::make_unique<OptionScene>();
+
+	DIV_IMAGE_ID("image/gear_num.png", 10, 10, 1, 0, 0, 60, 60, _number);
+
+	Open();
+
+	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/shift_change.wav"));
+	ChangeVolumeSoundMem(255 * 60 / 100, SOUND_ID("sounds/REVIVE_LUVS.wav"));
+	ChangeVolumeSoundMem(255 * 40 / 100, SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav"));
+	ChangeVolumeSoundMem(255 * 100 / 100, SOUND_ID("sounds/cursorMove.wav"));
+	ChangeVolumeSoundMem(255 * 100 / 100, SOUND_ID("sounds/decision.wav"));
 }
 
-void GameTask::GameUpdate()
+
+void GameTask::Update()
 {
 	KeyMng::GetInstance().Update();
 
-	FPS();
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x9DCCff, true);
 
-	(this->*mode[updateMode])();
+	(this->*gLoopPtr)();
 }
 
-void GameTask::GameMenu()
-{
-	DrawFormatString(0, 0, 0xff0000, "MENU");
 
-	for (auto i : f)
+void GameTask::GameTitle()
+{
+	_titleFlag = true;
+	titleCnt++;
+
+	if (_fadeFlag)
+	{
+		if (FadeOut())
+		{
+			_fadeFlag = false;
+		}
+	}
+
+	if (!CheckSoundMem(SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav")))
+	{
+		PlaySoundMem(SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav"), DX_PLAYTYPE_LOOP);
+	}
+
+	p[0]->Update();
+	p[0]->Render();
+
+	for (auto i : c)
+	{
+		i->SetCamera(p[0]);
+		i->Update();
+	}
+
+	for (auto field : f)
+	{
+		field->Update();
+		field->Render(carPos);
+	}
+
+	_title->Draw();
+	_title->Update();
+
+
+	if (lpKeyMng.trgKey[P1_B])
+	{
+		if (!CheckSoundMem(SOUND_ID("sounds/decision.wav")))
+		{
+			PlaySoundMem(SOUND_ID("sounds/decision.wav"), DX_PLAYTYPE_BACK);
+		}
+		if (!replayFlag)
+		{
+			_fadeinFlag = true;
+		}
+		else
+		{
+			titleCnt = 0;
+			replayFlag = false;
+		}
+		
+	}
+	//Init();
+
+	if (_ghostTime < _getGhost.size())
+	{
+		p[0]->SetCarPos(_getGhost[_ghostTime]._pos);
+		p[0]->SetVec(_getGhost[_ghostTime]._vec);
+		p[0]->SetDeg(_getGhost[_ghostTime]._deg.x, _getGhost[_ghostTime]._deg.y, 0.0f, _getGhost[_ghostTime]._deg.z);
+		p[0]->SetSpeed(_getGhost[_ghostTime].speed);
+	}
+	else
+	{
+		_ghostTime = 0;
+	}
+	_ghostTime++;
+
+	if (_fadeinFlag)
+	{
+		if (FadeIn())
+		{
+			for (auto i : d)
+			{
+				i->StopIdoling();
+			}
+
+			_fadeinFlag = false;
+			_fadeFlag = true;
+			_titleFlag = false;
+			replayFlag = false;
+			titleCnt = 0;
+			_ghostTime = 0;
+			p[0]->Init();
+			gLoopPtr = &GameTask::GameExplanation;
+		}
+	}
+
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+}
+
+void GameTask::GameExplanation()
+{
+	_isOption = true;
+
+	for (auto i : c)
 	{
 		i->Update();
-		i->Render();
 	}
+	for (auto field : f)
+	{
+		field->Update();
+		field->Render(carPos);
+	}
+
+	DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2, 1.0f, 0.0f, IMAGE_ID("image/toka_w.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2, 0.70f, 0.0f, IMAGE_ID("image/control.png"),true);
+	if (lpKeyMng.trgKey[P1_B])
+	{
+		gLoopPtr = &GameTask::GameOption;
+	}
+}
+
+void GameTask::GameOption()
+{
 	for (auto i : c)
 	{
 		i->Update();
 	}
 
-	if (_abs.flag)
+	if (_fadeFlag)
 	{
-		bs = IMAGE_ID("image/on_m.png");
+		if (FadeOut())
+		{
+			_fadeFlag = false;
+		}
+	}
+
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	DrawString(0, 0, "GameOption", 0xffffff);
+
+	for (auto field : f)
+	{
+		field->Update();
+		field->Render(carPos);
+	}
+
+	_option->Draw();
+	_option->Update();
+
+
+	if (!_fadeFlag)
+	{
+		if (KeyMng::GetInstance().trgKey[P1_PAUSE])
+		{
+			// 音変える？？
+			PlaySoundMem(SOUND_ID("sounds/decision.wav"), DX_PLAYTYPE_BACK);
+
+			_optionFlag = true;
+		}
+	}
+
+	if (cursorMove)
+	{
+		if (!CheckSoundMem(SOUND_ID("sounds/cursorMove.wav")))
+		{
+			PlaySoundMem(SOUND_ID("sounds/cursorMove.wav"), DX_PLAYTYPE_BACK);
+		}
 	}
 	else
 	{
-		bs = IMAGE_ID("image/off_m.png");
-	}
-
-	if (transmission)
-	{
-		tm = mtImg[0];
-	}
-	else
-	{
-		tm = atImg[0];
-	}
-	DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2, 1.0f, 0.0f, IMAGE_ID("image/toka.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2, 80, 0.6f, 0.0f, IMAGE_ID("image/setting.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 - 200, SCREEN_SIZE_Y / 2, 0.07f + sizeB, 0.0f, absImg[!_abs.flag], true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 + 200, SCREEN_SIZE_Y / 2, 0.07f + sizeG, 0.0f, gearImg[!transmission], true);
-
-	DrawRotaGraph(SCREEN_SIZE_X / 2 - 250, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, IMAGE_ID("image/abs_m.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 - 200, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 - 150, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, bs, true);
-
-
-	DrawRotaGraph(SCREEN_SIZE_X / 2 + 150, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, IMAGE_ID("image/transmission_m.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 + 200, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 + 250, SCREEN_SIZE_Y / 2 + 150, 0.3f, 0.0f, tm, true);
-	DrawRotaGraph(SCREEN_SIZE_X - 100, SCREEN_SIZE_Y - 70 + (5.0f * sin(count / 10.0f)), 0.2f, 0.0f, IMAGE_ID("image/XboxCon.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X - 275, SCREEN_SIZE_Y - 65 + (5.0f * sin(count / 10.0f)), 0.2f, 0.0f, IMAGE_ID("image/pressStart.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X - 232, SCREEN_SIZE_Y - 40 + (5.0f * sin(count / 10.0f)), 0.19f, 0.0f, IMAGE_ID("image/select.png"), true);
-
-	if (_abs.flag)
-	{
-		if (_abs.power != 3)
+		if (!CheckSoundMem(SOUND_ID("sounds/cursorMove.wav")))
 		{
-			DrawRotaGraph(SCREEN_SIZE_X / 2 - 200, SCREEN_SIZE_Y / 2 + 200, 0.3f, 0.0f, lineImg[_abs.power + 1], true);
+			StopSoundMem(SOUND_ID("sounds/cursorMove.wav"));
 		}
-		DrawRotaGraph(SCREEN_SIZE_X / 2 - 310, SCREEN_SIZE_Y / 2 + 230, 0.2f, 0.0f, weakImg[0], true);
-		DrawRotaGraph(SCREEN_SIZE_X / 2 - 90, SCREEN_SIZE_Y / 2 + 230, 0.2f, 0.0f, strongImg[0], true);
+	}
 
-		if (_abs.power == 0)
+	if (decision)
+	{
+		PlaySoundMem(SOUND_ID("sounds/decision.wav"), DX_PLAYTYPE_BACK);
+	}
+
+	if (_optionFlag)
+	{
+		if (FadeIn())
 		{
-			pointPos = VECTOR2(SCREEN_SIZE_X / 2 - 315, SCREEN_SIZE_Y / 2 + 200);
+			for (auto i : p)
+			{
+				i->Init();
+			}
+			for (auto i : e)
+			{
+				i->Init();
+			}
+			for (auto i : d)
+			{
+				i->Init();
+			}
+			for (auto i : t)
+			{
+				i->Init();
+			}
+			for (int j = 0; j < _raceCnt.size(); j++)
+			{
+				_raceCnt[j] = 0;
+			}
+			_optionFlag = false;
+			_isOption = false;
+			_fadeFlag = true;
+			_startCnt = 3;
+			_startFlag = false;
+			Open();
+			_ghostTime = 0;
+			gLoopPtr = &GameTask::GameUpdate;
+			_option->SetOption(SelectOption::ABS);
+
+			if (CheckSoundMem(SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav")))
+			{
+				StopSoundMem(SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav"));
+			}
 		}
-		else if (_abs.power == 1)
+	}
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+}
+
+void GameTask::GameUpdate()
+{
+	if (_fadeFlag)
+	{
+		if (FadeOut())
 		{
-			pointPos = VECTOR2(SCREEN_SIZE_X / 2 - 200, SCREEN_SIZE_Y / 2 + 200);
+			_fadeFlag = false;
+		}
+	}
+	if (!CheckSoundMem(SOUND_ID("sounds/REVIVE_LUVS.wav")))
+	{
+		PlaySoundMem(SOUND_ID("sounds/REVIVE_LUVS.wav"), DX_PLAYTYPE_LOOP);
+	}
+
+	FPS();
+
+	auto getOldPos = p[0]->GetCarPos();
+
+	if (_startFlag)
+	{
+		if (_ghostTime < _getGhost.size())
+		{
+			p[0]->SetCarPos(_getGhost[_ghostTime]._pos);
+			p[0]->SetVec(_getGhost[_ghostTime]._vec);
+			p[0]->SetDeg(_getGhost[_ghostTime]._deg.x, _getGhost[_ghostTime]._deg.y, 0.0f, _getGhost[_ghostTime]._deg.z);
+			p[0]->SetSpeed(_getGhost[_ghostTime].speed);
 		}
 		else
 		{
-			pointPos = VECTOR2(SCREEN_SIZE_X / 2 - 85, SCREEN_SIZE_Y / 2 + 200);
+			_ghostTime = 0;
 		}
-		DrawRotaGraph(pointPos.x,pointPos.y, 0.2f + sizeP, 0.0f, IMAGE_ID("image/redPoint.png"), true);
+		_ghostTime++;
+		_raceTime++;
+		if (_raceCnt[0]++ >= 9)
+		{
+
+			_raceCnt[0] = 0;
+			if (_raceCnt[1]++ >= 9)
+			{
+				_raceCnt[1] = 0;
+				if (_raceCnt[2]++ >= 9)
+				{
+					_raceCnt[2] = 0;
+					if (_raceCnt[3]++ >= 9)
+					{
+						_raceCnt[3] = 0;
+						if (_raceCnt[4]++ >= 6)
+						{
+							_raceCnt[4] = 0;
+							//_raceCnt[5]++;
+						}
+					}
+				}
+			}
+		}
+		Control();
 	}
 	else
 	{
-		DrawRotaGraph(SCREEN_SIZE_X / 2 - 200, SCREEN_SIZE_Y / 2 + 200, 0.3f, 0.0f, lineImg[0], true);
-		DrawRotaGraph(SCREEN_SIZE_X / 2 - 310, SCREEN_SIZE_Y / 2 + 230, 0.2f, 0.0f, weakImg[1], true);
-		DrawRotaGraph(SCREEN_SIZE_X / 2 - 90, SCREEN_SIZE_Y / 2 + 230, 0.2f, 0.0f, strongImg[1], true);
-	}
+		gearNum = -1;
 
-
-	pov = GetJoypadPOVState(DX_INPUT_PAD1, 0);
-
-	if (chooseNumY == 0)
-	{
-		if (pov == 9000 && pov != oldPov)
-		{
-			chooseNumX++;
-			if (chooseNumX > 1)
-			{
-				chooseNumX = 1;
-			}
-		}
-		else if (pov == 27000 && pov != oldPov)
-		{
-			chooseNumX--;
-			if (chooseNumX < 0)
-			{
-				chooseNumX = 0;
-			}
-		}
 	}
-	else
-	{
-		count++;
-		sizeG = 0.0f;
-		sizeB = 0.0f;
-		sizeP = (0.07f * sin(count / 10.0f)) + 0.07f;
-		if (pov == 9000 && pov != oldPov)
-		{
-			_abs.power++;
-			if (_abs.power > 2)
-			{
-				_abs.power = 2;
-			}
-		}
-		else if (pov == 27000 && pov != oldPov)
-		{
-			_abs.power--;
-			if (_abs.power < 0)
-			{
-				_abs.power = 0;
-			}
-		}
-	}
-	
-	if (chooseNumX == 0 && _abs.flag)
-	{
-		if (pov == 0 && pov != oldPov)
-		{
-			chooseNumY--;
-			if (chooseNumY < 0)
-			{
-				chooseNumY = 0;
-			}
-		}
-		else if (pov == 18000 && pov != oldPov)
-		{
-			chooseNumY++;
-			if (chooseNumY > 1)
-			{
-				chooseNumY = 1;
-			}
-		}
-	}
-
-	oldPov = pov;
-
-	if (chooseNumX == 0 && chooseNumY == 0)
-	{
-		count++;
-		sizeG = 0.0f;
-		sizeB = 0.01f * sin(count / 10.0f);
-		sizeP = 0.0f;
-		if (lpKeyMng.trgKey[P1_B])
-		{
-			_abs.flag = !_abs.flag;
-		}
-	}
-	else if (chooseNumX == 1 && chooseNumY == 0)
-	{
-		count++;
-		sizeB = 0.0f;
-		sizeG = 0.01f * sin(count / 10.0f);
-		sizeP = 0.0f;
-		if (lpKeyMng.trgKey[P1_B])
-		{
-			transmission = !transmission;
-		}
-	}
-
-	if (lpKeyMng.trgKey[P1_START])
-	{
-		updateMode = MAIN;
-	}
-}
-
-void GameTask::GameMain()
-{
-	Control();
 
 	if (clutch > 1.0f)
 	{
 		clutch = 1.0f;
+	}
+
+	if (_collisionFlag)
+	{
+		_collisionFlag = false;
 	}
 
 	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x9DCCff, true);
@@ -267,7 +393,64 @@ void GameTask::GameMain()
 			(*i).Update();
 			i->Render();
 		}
+
+		if (i == p[p.size() - 1])
+		{
+			if (_startFlag)
+			{
+				//保存
+				_ghost._pos = i->GetCarPos();
+				_ghost._vec = i->GetVec();
+
+				//
+				_ghost._deg.x = i->GetDeg().yaw;
+				_ghost._deg.y = i->GetDeg().pitch;
+				_ghost._deg.z = i->GetDeg().roll;
+
+				_ghost.speed = i->GetSpeed();
+
+				_setGhost.emplace_back(_ghost);
+
+				auto check = i->GetHitBox();
+
+				if (f[0]->HitCollision(check._startPos, check._endPos, check._wallStart, check._wallEnd))
+				{
+
+					if (f[0]->GetField() == FieldStatus::Wall)
+					{
+						_status = CollisionStatus::Wall;
+
+						auto deg = p[p.size() - 1]->GetDeg();
+						auto Cpos = p[p.size() - 1]->GetCarPos();
+						auto wallCheck = VGet(_collisionPos.x - Cpos.x, _collisionPos.y - Cpos.y, _collisionPos.y - Cpos.y);
+						wallCheck = VNorm(wallCheck);
+
+						if (_checkPos.x > 0.0f)
+						{
+							i->SetDeg(deg.yaw + (wallCheck.x * 0.1f), deg.pitch, deg.oldPitch, deg.roll);
+						}
+						if(_checkPos.x < 0.0f)
+						{
+							i->SetDeg(deg.yaw - (wallCheck.x * 0.1f), deg.pitch, deg.oldPitch, deg.roll);
+						}
+
+					}
+					if (f[0]->GetField() == FieldStatus::Turf)
+					{
+						_status = CollisionStatus::Turf;
+						brake = 1.0f;
+					}
+				}
+
+				auto goalCheck = f[0]->GetGoal();
+				if (i->HitGoalCollision(goalCheck._goalStart, goalCheck._goalEnd))
+				{
+					_resultFlag = true;
+				}
+			}
+		}
 	}
+
 	for (auto i : c)
 	{
 		i->Update();
@@ -304,7 +487,110 @@ void GameTask::GameMain()
 		i->Draw();
 	}
 
-	DrawFormatString(0, 0, 0xff0000, "carPos.x,y,z(%.2f,%.2f,%.2f)", carPos.x, carPos.y, carPos.z);
+	if (!_startFlag)
+	{
+		if (_bright[1] >= 255)
+		{
+			_bright[1] = 0;
+			_startCnt--;
+
+			if (!CheckSoundMem(SOUND_ID("sounds/CountdownLow.wav")))
+			{
+				PlaySoundMem(SOUND_ID("sounds/CountdownLow.wav"), DX_PLAYTYPE_BACK);
+			}
+		}
+		else
+		{
+			_bright[1] += 2;
+		}
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[1]);
+		if (_startCnt > 0)
+		{
+			DrawFormatString(SCREEN_SIZE_X / 2 - 40 + 1, 101, 0x000000, "%d", _startCnt);
+			DrawFormatString(SCREEN_SIZE_X / 2 - 40, 100, 0xffffff, "%d", _startCnt);
+		}
+		else
+		{
+			_startFlag = true;
+			gearNum = 0;
+
+			if (!CheckSoundMem(SOUND_ID("sounds/CountdownHigh.wav")))
+			{
+				PlaySoundMem(SOUND_ID("sounds/CountdownHigh.wav"), DX_PLAYTYPE_BACK);
+			}
+		}
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+	if (_resultFlag)
+	{
+		if (_bright[2] < 255)
+		{
+			_bright[2] += 5;
+		}
+		else
+		{
+			_bright[2] = 0;
+			_resultFlag = false;
+			for (auto i : d)
+			{
+				i->StopIdoling();
+			}
+			gLoopPtr = &GameTask::GameResult;
+		}
+	}
+
+	DrawRotaGraph(SCREEN_SIZE_X / 2, 90, 0.45f, 0.0f, IMAGE_ID("image/raceTimeBox.png"), true);
+
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 70, 95, 0.5f, 0.0f, _number[0], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 50, 95, 0.5f, 0.0f, _number[_raceCnt[4]], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 30, 95, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 10, 95, 0.5f, 0.0f, _number[_raceCnt[3]], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 10, 95, 0.5f, 0.0f, _number[_raceCnt[2]], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 30, 95, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 50, 95, 0.5f, 0.0f, _number[_raceCnt[1]], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 70, 95, 0.5f, 0.0f, _number[_raceCnt[0]], true);
+
+	for (int i = 0; i < _raceRanking.size(); i++)
+	{
+		DrawFormatString(1, 51 + (20 * i), 0x000000, "%d:%d%d:%d%d", _raceRanking[i][4], _raceRanking[i][3], _raceRanking[i][2], _raceRanking[i][1], _raceRanking[i][0]);
+		DrawFormatString(0, 50 + (20 * i), 0xffffff, "%d:%d%d:%d%d", _raceRanking[i][4], _raceRanking[i][3], _raceRanking[i][2], _raceRanking[i][1], _raceRanking[i][0]);
+
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (70 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[0], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (50 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[_raceRanking[i][4]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (30 * 0.8f), 120 + (25 * i), 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (10 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[_raceRanking[i][3]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (10 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[_raceRanking[i][2]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (30 * 0.8f), 120 + (25 * i), 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (50 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[_raceRanking[i][1]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (70 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[_raceRanking[i][0]], true);
+	}
+	SetFontSize(16);
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[2]);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	auto checkDeg = p[p.size() - 1]->GetDeg();
+
+	auto carPos = p[p.size() - 1]->GetCarPos();
+	_checkPos = VGet(getOldPos.x - carPos.x, getOldPos.y - carPos.y, getOldPos.y - carPos.y);
+	_checkPos = VNorm(_checkPos);
+
+	auto WallcheckPos = VGet(_collisionPos.x - carPos.x, _collisionPos.y - carPos.y, _collisionPos.y - carPos.y);
+	WallcheckPos = VNorm(WallcheckPos);
+
+	//DrawFormatString(0, 220, 0xffffff, "check:x(%.2f),y(%.2f),z(%.2f)", carPos.x, carPos.y, carPos.z);
+	//DrawFormatString(0, 140, 0xffffff, "vectorSpeed:x(%.2f),y(%.2f),z(%.2f)", checkDeg.yaw, checkDeg.pitch, checkDeg.roll);
+	//DrawFormatString(0, 180, 0xffffff, "setSteering:(%.2f)", setSteering);
+	//DrawFormatString(0, 260, 0xffffff, "WallcheckPos:x(%.2f),y(%.2f),z(%.2f)", WallcheckPos.x, WallcheckPos.y, WallcheckPos.z);
+
+	if (_fadeFlag)
+	{
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
+		DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+
 }
 
 void GameTask::Control()
@@ -339,7 +625,7 @@ void GameTask::Control()
 
 		if (shiftCnt == 1)
 		{
-			if (!CheckSoundMem(SOUND_ID("sounds/shift_change.wav"))) 
+			if (!CheckSoundMem(SOUND_ID("sounds/shift_change.wav")))
 			{
 				PlaySoundMem(SOUND_ID("sounds/shift_change.wav"), DX_PLAYTYPE_BACK);
 			}
@@ -379,7 +665,7 @@ void GameTask::Control()
 		if (!shift)
 		{
 			if (KeyMng::GetInstance().trgKey[P1_LB])
-			{	
+			{
 				if (gearNum < -1)
 				{
 					gearNum = -1;
@@ -442,6 +728,92 @@ void GameTask::Control()
 	}
 }
 
+void GameTask::GameResult()
+{
+	if (_fadeFlag)
+	{
+		if (FadeOut())
+		{
+			_fadeFlag = false;
+		}
+	}
+
+	for (auto field : f)
+	{
+		field->Update();
+		field->Render(carPos);
+	}
+
+	_result->Draw();
+	_result->Update();
+
+	auto raceCntMax = 0.0f;
+	auto rankingMax = 0.0f;
+	raceCntMax = (_raceCnt[0] * 0.01f) + (_raceCnt[1] * 0.1f) + (_raceCnt[2]) + (_raceCnt[3] * 10) + (_raceCnt[4] * 100);
+	rankingMax = (_raceRanking[0][0] * 0.01f) + (_raceRanking[0][1] * 0.1f) + (_raceRanking[0][2]) + (_raceRanking[0][3] * 10) + (_raceRanking[0][4] * 100);
+
+	_resultFadeFlag = true;
+
+	if (_resultFadeFlag)
+	{
+		if (FadeIn())
+		{
+			_resultFadeFlag = false;
+			bool rankingChangeFlag = false;
+			for (int i = 0; i < _raceRanking.size(); i++)
+			{
+				rankingMax = (_raceRanking[i][0] * 0.01f) + (_raceRanking[i][1] * 0.1f) + (_raceRanking[i][2]) + (_raceRanking[i][3] * 10) + (_raceRanking[i][4] * 100);
+				if (rankingMax == 0)
+				{
+					rankingMax = 9999;
+				}
+				if (raceCntMax < rankingMax)
+				{
+					if (i == 0)
+					{
+						_ghostSetFlag = true;
+					}
+					for (; i < _raceRanking.size(); i++)
+					{
+						auto rankingDown = _raceRanking[i];
+						_raceRanking[i] = _raceCnt;
+						_raceCnt = rankingDown;
+					}
+					Upload();
+					break;
+				}
+			}
+			
+			_resultFlag = false;
+			_startFlag = false;
+			_result->SetFlag(false);
+			_fadeFlag = true;
+			_abs.flag = true;
+			_abs.power = 1;
+			gLoopPtr = &GameTask::GameTitle;
+			_title->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
+			_result->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
+			_bright[0] = 0;
+			if (CheckSoundMem(SOUND_ID("sounds/REVIVE_LUVS.wav")))
+			{
+				StopSoundMem(SOUND_ID("sounds/REVIVE_LUVS.wav"));
+			}
+		}
+	}
+
+	if (_result->GetFlag())
+	{
+		SetFontSize(50);
+		DrawFormatString(401, 151, 0x000000, "%d:%d%d:%d%d", _raceCnt[4], _raceCnt[3], _raceCnt[2], _raceCnt[1], _raceCnt[0]);
+		DrawFormatString(400, 150, 0xffffff, "%d:%d%d:%d%d", _raceCnt[4], _raceCnt[3], _raceCnt[2], _raceCnt[1], _raceCnt[0]);
+		SetFontSize(16);
+	}
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
 void GameTask::FPS()
 {
 	// 現在のシステム時間を取得
@@ -462,4 +834,269 @@ void GameTask::FPS()
 		FPSCounter = 0;
 		FPSCheckTime = NowTime;
 	}
+}
+
+void GameTask::Upload()
+{
+	float size = 0.0f;
+	float nondata = 0.0f;
+	VECTOR2 nonVec2 = { 0.5f, 0.5f };
+
+	Ghost data;
+	size = _getGhost.size();
+
+	if (_ghostSetFlag)
+	{
+		size = _setGhost.size();
+	}
+
+	FILE* file;
+	fopen_s(&file, "Data/data.map", "wb+");
+
+	if (!file)
+	{
+		return;
+	}
+	auto Csize = sizeof(Ghost);
+	int Not = 0;
+	fwrite(&size, sizeof(float), 1, file);
+	fwrite(&Not, sizeof(int), 1, file);
+	fwrite(&nonVec2, sizeof(VECTOR2), 1, file);
+
+	for (int j = 0; j < size; ++j)
+	{
+		Ghost ghost;
+		ghost = _getGhost[j];
+		if (_ghostSetFlag)
+		{
+			ghost = _setGhost[j];
+		}
+		fwrite(&ghost._pos, sizeof(VECTOR), 1, file);
+		fwrite(&nondata, sizeof(float), 1, file);
+
+		fwrite(&ghost._vec, sizeof(VECTOR), 1, file);
+		fwrite(&nondata, sizeof(float), 1, file);
+
+		fwrite(&ghost._deg, sizeof(VECTOR), 1, file);
+		fwrite(&nondata, sizeof(float), 1, file);
+
+		fwrite(&ghost.speed, sizeof(float), 1, file);
+		fwrite(&nondata, sizeof(float), 1, file);
+		fwrite(&nondata, sizeof(float), 1, file);
+		fwrite(&nondata, sizeof(float), 1, file);
+
+
+	}
+
+	_ghostSetFlag = false;
+	//fwrite(&data, sizeof(Data), sizeof(Data), file);
+
+	fopen_s(&file, "Data/timeRanking.map", "wb+");
+	int dummy = 0;
+
+	for (int i = 0; i < _raceRanking.size(); i++)
+	{
+		fwrite(&_raceRanking[i][0], sizeof(int), 1, file);
+		fwrite(&_raceRanking[i][1], sizeof(int), 1, file);
+		fwrite(&_raceRanking[i][2], sizeof(int), 1, file);
+		fwrite(&_raceRanking[i][3], sizeof(int), 1, file);
+		fwrite(&_raceRanking[i][4], sizeof(int), 1, file);
+		fwrite(&dummy, sizeof(int), 1, file);
+		fwrite(&dummy, sizeof(int), 1, file);
+		fwrite(&dummy, sizeof(int), 1, file);
+
+	}
+
+	fclose(file);
+}
+
+void GameTask::Open()
+{
+	FILE* file;
+	float getSize = 0.0f;
+	float nondata = 0.5f;
+	int Not = 0;
+	VECTOR2 nonVec2 = { 0.0f, 0.0f };
+
+	fopen_s(&file, "Data/data.map", "rb");
+
+	if (!file)
+	{
+		_raceRanking.resize(5);
+		for (int i = 0; i < 5; i++)
+		{
+			_raceRanking[0][i] = 0;
+			_raceRanking[1][i] = 0;
+			_raceRanking[2][i] = 0;
+			_raceRanking[3][i] = 0;
+			_raceRanking[4][i] = 0;
+
+		}
+		fclose(file);
+
+		return;
+	}
+
+	fread(&getSize, sizeof(float), 1, file);
+	fread(&Not, sizeof(int), 1, file);
+	fread(&nonVec2, sizeof(VECTOR2), 1, file);
+
+	_getGhost.resize(getSize);
+
+	for (int i = 0; i < _getGhost.size(); ++i)
+	{
+		fread(&_getGhost[i]._pos, sizeof(VECTOR), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+		fread(&_getGhost[i]._vec, sizeof(VECTOR), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+		fread(&_getGhost[i]._deg, sizeof(VECTOR), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+		fread(&_getGhost[i].speed, sizeof(float), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+	}
+
+	fopen_s(&file, "Data/timeRanking.map", "rb");
+
+	if (!file)
+	{
+		_raceRanking.resize(5);
+		for (int i = 0; i < 5; i++)
+		{
+			_raceRanking[0][i] = 0;
+			_raceRanking[1][i] = 0;
+			_raceRanking[2][i] = 0;
+			_raceRanking[3][i] = 0;
+			_raceRanking[4][i] = 0;
+
+		}
+		fclose(file);
+		return;
+	}
+	_raceRanking.resize(5);
+	for (int i = 0; i < 5; i++)
+	{
+		_raceRanking[0][i] = 0;
+		_raceRanking[1][i] = 0;
+		_raceRanking[2][i] = 0;
+		_raceRanking[3][i] = 0;
+		_raceRanking[4][i] = 0;
+
+	}
+
+	int dummy = 0;
+
+	for (int i = 0; i < _raceRanking.size(); i++)
+	{
+		fread(&_raceRanking[i][0], sizeof(int), 1, file);
+		fread(&_raceRanking[i][1], sizeof(int), 1, file);
+		fread(&_raceRanking[i][2], sizeof(int), 1, file);
+		fread(&_raceRanking[i][3], sizeof(int), 1, file);
+		fread(&_raceRanking[i][4], sizeof(int), 1, file);
+		fread(&dummy, sizeof(int), 1, file);
+		fread(&dummy, sizeof(int), 1, file);
+		fread(&dummy, sizeof(int), 1, file);
+
+	}
+	fclose(file);
+
+}
+//フェードインアウト
+bool GameTask::Fade(VECTOR pos, float target, int fadeInMax, int fadeOutMax)
+{
+	lpKeyMng.Update();
+	bool rtnFlag = false;
+	if (pos.x > target)
+	{
+		if (!_titleFlag)
+		{
+			if (_bright[0] < fadeInMax)
+			{
+				_bright[0] += 10;
+			}
+			else
+			{
+				_titleFlag = true;
+			}
+		}
+		else
+		{
+			if (_bright[0] > fadeOutMax)
+			{
+				_bright[0] -= 5;
+			}
+			else
+			{
+				if (KeyMng::GetInstance().newKey[P1_SPACE])
+				{
+					_titleFlag = false;
+					rtnFlag = true;
+				}
+			}
+		}
+	}
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	return rtnFlag;
+}
+
+bool GameTask::FadeIn()
+{
+	bool rtnFlag = false;
+	if (_bright[0] < 255)
+	{
+		_bright[0] += 5;
+	}
+	else
+	{
+		rtnFlag = true;
+	}
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	return rtnFlag;
+}
+
+bool GameTask::FadeOut()
+{
+	bool rtnFlag = false;
+	if (_bright[0] > 0)
+	{
+		_bright[0] -= 5;
+	}
+	else
+	{
+		rtnFlag = true;
+	}
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	return rtnFlag;
+}
+
+const bool& GameTask::GetCollisionFlag()
+{
+	return _collisionFlag;
+}
+
+void GameTask::SetCollisionFlag(bool flag)
+{
+	_collisionFlag = flag;
+}
+
+const CollisionStatus& GameTask::GetField()
+{
+	return _status;
 }

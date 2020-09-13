@@ -12,6 +12,8 @@ public:
 	Tire();
 	~Tire();
 
+	void Init();
+
 	float GetPitchLoad() 
 	{
 		return np;

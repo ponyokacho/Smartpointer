@@ -11,6 +11,8 @@ public:
 	DriveTrain();
 	~DriveTrain();
 
+	void Init();
+
 	int GetSoundVol() { return volume; }
 	void SetSoundVol(int vol) { volume = vol; }
 
@@ -29,6 +31,9 @@ public:
 	void Update();
 	void Draw();
 	void Sound();
+
+	void PlayIdoling();
+	void StopIdoling();
 
 private:
 	int gearNum = -1;

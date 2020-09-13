@@ -24,6 +24,9 @@ void Field::Init()
 	blueTarget = VGet(0.0f, 0.0f, 0.0f);
 
 	ChangeLightTypeDir(VGet(0.0f, -1.0f, 0.0f));
+	_goal._goalStart = VGet(-9000.0f, 100.0f, 43650.0f);
+	_goal._goalEnd = VGet(-10800.0f, 100.0f, 39000.0f);
+
 }
 
 void Field::Update()
@@ -46,11 +49,6 @@ void Field::Update()
 	blueTarget.y = hitPos.HitPosition.y;
 }
 
-void Field::Render()
-{
-	MV1DrawModel(floorTestModel);
-}
-
 void Field::Render(VECTOR carPos)
 {
 	// Âº°İ
@@ -68,4 +66,49 @@ void Field::Render(VECTOR carPos)
 	{
 		//DrawSphere3D(i->point, 50, 10, 0xff0000, 0xff0000, true);
 	}
+}
+
+bool Field::HitCollision(VECTOR a, VECTOR b, VECTOR wallA, VECTOR wallB)
+{
+	bool rtnFlag = false;
+	auto hitCheck = MV1CollCheck_Capsule(floorTestModel, -1, a, b, 80.0f);
+
+	if (hitCheck.HitNum > 0)
+	{
+		// “–‚½‚Á‚½ƒ|ƒŠƒSƒ“‚Ì”‚¾‚¯ŒJ‚è•Ô‚µ
+		for (int i = 0; i < hitCheck.HitNum; i++)
+		{
+			// “–‚½‚Á‚½ƒ|ƒŠƒSƒ“‚ğ•`‰æ
+			/*DrawTriangle3D(
+				hitCheck.Dim[i].Position[0],
+				hitCheck.Dim[i].Position[1],
+				hitCheck.Dim[i].Position[2], GetColor(0, 255, 255), true);*/
+
+			_field = FieldStatus::Turf;
+		}
+		rtnFlag = true;
+	}
+
+	//‘¤–Ê‚Æ‚ÌÕ“Ë”»’f
+	auto wallCheck = MV1CollCheck_Capsule(floorTestModel, -1, wallA, wallB, 100.0f);
+	if (wallCheck.HitNum > 0)
+	{
+		// “–‚½‚Á‚½ƒ|ƒŠƒSƒ“‚Ì”‚¾‚¯ŒJ‚è•Ô‚µ
+		for (int i = 0; i < wallCheck.HitNum; i++)
+		{
+			// “–‚½‚Á‚½ƒ|ƒŠƒSƒ“‚ğ•`‰æ
+			/*DrawTriangle3D(
+				wallCheck.Dim[i].Position[0],
+				wallCheck.Dim[i].Position[1],
+				wallCheck.Dim[i].Position[2], GetColor(255, 0, 255), true);*/
+			_field = FieldStatus::Wall;
+		}
+
+		lpGameTask.SetCollisionPos(wallCheck.Dim->Position[0]);
+
+		rtnFlag = true;
+
+	}
+
+	return rtnFlag;
 }

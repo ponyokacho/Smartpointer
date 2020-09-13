@@ -13,6 +13,8 @@ public:
 	Engine();
 	~Engine();
 
+	void Init();
+
 	float CalcForwardTorque(float topTorque,float bottomTorque,float topRpm,float bottomRpm,float T_rpm);		// エンジンが生む正のトルク
 	float AccelTorque(float forwardTorque, float accel);		//アクセル開度によりトルクが増減
 	float CalcAngularAccel(float I, float Torque);		// 角加速度計算

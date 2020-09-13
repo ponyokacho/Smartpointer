@@ -10,6 +10,19 @@ struct Point {
 	VECTOR point = { 0.0f,0.0f,0.0f };
 };
 
+enum class FieldStatus
+{
+	Non,
+	Turf,
+	Wall,
+};
+
+struct Goal
+{
+	VECTOR _goalStart;
+	VECTOR _goalEnd;
+};
+
 class Field {
 
 private:
@@ -18,6 +31,8 @@ private:
 	VECTOR floorTestPos;
 	MV1_COLL_RESULT_POLY hitPos;
 	VECTOR blueTarget;	// ê¬ÇÃµÃﬁºﬁ™∏ƒÇÃç¿ïW
+	FieldStatus _field;
+	Goal _goal;
 
 	int count = 0;
 	std::vector<shared_ptr<Point>>p;
@@ -28,8 +43,19 @@ public:
 
 	void Init();
 	void Update();
-	void Render();
 	void Render(VECTOR);
 
+	bool HitCollision(VECTOR a, VECTOR b, VECTOR wallA, VECTOR wallB);
+
 	Player* player;
+
+	const FieldStatus& GetField()
+	{
+		return _field;
+	}
+
+	const Goal& GetGoal()
+	{
+		return _goal;
+	}
 };

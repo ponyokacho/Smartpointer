@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <memory>
 
 constexpr VECTOR TARGET_OFFSET = { 0.0f,110.0f,0.0f };
@@ -10,13 +9,14 @@ class Player;
 class Camera
 {
 public:
-	//Camera() {};
 	Camera(std::shared_ptr<Player>);
 
 	~Camera(){}
 
 	void Init(void);
 	void Update(void);
+
+	void SetCamera(std::shared_ptr<Player> p);
 
 	VECTOR pos;		// ╤рв█ю∙W
 	VECTOR rol;		// ╤рв┴Я⌠]

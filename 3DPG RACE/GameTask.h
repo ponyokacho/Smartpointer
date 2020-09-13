@@ -3,7 +3,6 @@
 #include <vector>
 #include <array>
 #include <memory>
-#include <stdio.h>
 #include "DxLib.h"
 #include "VECTOR2.h"
 
@@ -14,6 +13,9 @@ class Player;
 class Camera;
 class Field;
 class UI;
+class TitleScene;
+class ResultScene;
+class OptionScene;
 
 #define  lpGameTask GameTask::GetInstance()
 
@@ -64,9 +66,12 @@ constexpr float WHEEL_ANGLE_MAX_RAD = WHEEL_ANGLE_MAX * PI / 180;
 
 constexpr float G_RATIO[6] = { 3.626,2.188,1.541,1.213,1.000,0.767 };
 
-enum GMODE {
-	MENU,
-	MAIN
+
+enum class CollisionStatus
+{
+	Non,
+	Turf,
+	Wall,
 };
 
 class GameTask
@@ -74,7 +79,7 @@ class GameTask
 public:
 	// ｼﾝｸﾞﾙﾄﾝ
 	static void Create(void);
-	static GameTask& GetInstance(void)
+	static GameTask &GetInstance(void)
 	{
 		Create();
 		return *s_Instance;
@@ -82,13 +87,30 @@ public:
 
 	int SystemInit();
 	void GameInit();
+	void Update();
+	void GameTitle();
+	void GameExplanation();
+	void GameOption();
 	void GameUpdate();
-	void GameMenu();
-	void GameMain();
 	void Control();
+	void GameResult();
 	void FPS();
 
-	void (GameTask::*mode[2])() = { &GameTask::GameMenu,&GameTask::GameMain };
+	void Upload();
+
+	void Open();
+
+	bool Fade(VECTOR pos, float target, int fadeInMax, int fadeOutMax);
+
+	bool FadeIn();
+
+	bool FadeOut();
+
+	const bool& GetCollisionFlag();
+
+	void SetCollisionFlag(bool flag);
+
+	const CollisionStatus& GetField();
 
 	float GetPitchLoad()
 	{
@@ -122,7 +144,7 @@ public:
 		return actualRpm;
 	}
 
-	void SetGearMaxSpeed(float speed, int i)
+	void SetGearMaxSpeed(float speed,int i)
 	{
 		gearMaxSpeed[i] = speed;
 	}
@@ -150,11 +172,11 @@ public:
 		return shift;
 	}
 
-	void SetView(int v)
+	void SetView(bool v)
 	{
 		view = v;
 	}
-	int GetView()
+	bool GetView()
 	{
 		return view;
 	}
@@ -173,6 +195,7 @@ public:
 		return brake;
 	}
 
+	//option Get
 	bool GetTransmission()
 	{
 		return transmission;
@@ -184,6 +207,28 @@ public:
 	int GetABSPower()
 	{
 		return _abs.power;
+	}
+
+	//option Set
+	void SetTransmission(bool flag)
+	{
+		transmission = flag;
+	}
+	void SetABSFlag(bool flag)
+	{
+		_abs.flag = flag;
+	}
+	void SetABSPower(int num)
+	{
+		_abs.power = num;
+	}
+	void AddABSPower()
+	{
+		_abs.power++;
+	}
+	void SubABSPower()
+	{
+		_abs.power--;
 	}
 
 	float GetDeltaTime()
@@ -244,7 +289,7 @@ public:
 	{
 		return steering;
 	}
-
+	
 	void SetVectorSpeed(VECTOR vec)
 	{
 		vectorSpeed = vec;
@@ -349,13 +394,51 @@ public:
 		return wheelAngle;
 	}
 
-	int GetUpdateMode()
+	void SetCollisionPos(VECTOR p)
 	{
-		return updateMode;
+		_collisionPos = p;
+	}
+
+	// add
+	void SetCursorMove(bool cur)
+	{
+		cursorMove = cur;
+	}
+	void SetDecision(bool dec)
+	{
+		decision = dec;
+	}
+
+	bool GetOptionFlag()
+	{
+		return _isOption;
+	}
+
+	bool GetTitleFlag()
+	{
+		return _titleFlag;
+	}
+
+	void SetTitleCnt(int t)
+	{
+		titleCnt = t;
+	}
+	int GetTitleCnt()
+	{
+		return titleCnt;
+	}
+
+	void SetReplayFlag(bool re)
+	{
+		replayFlag = re;
 	}
 
 private:
-	static GameTask* s_Instance;
+	static GameTask *s_Instance;
+
+	// ｹﾞｰﾑﾙｰﾌﾟ用関数ﾎﾟｲﾝﾀｰ
+	void (GameTask::* gLoopPtr)(void);
+
 
 	XINPUT_STATE input;
 
@@ -368,8 +451,6 @@ private:
 	vector<shared_ptr<Field>>f;
 
 	vector<shared_ptr<UI>>u;
-
-	int updateMode = 0;
 
 	float accel = 0.0f;
 	float brake = 0.0f;
@@ -426,8 +507,10 @@ private:
 	int saveGearNum = 0;
 
 	bool tireLock = 0.0f;
+	bool view = false;
 
-	int view = 0;
+	bool cursorMove = false;
+	bool decision = false;
 
 	LONGLONG NowTime;
 	LONGLONG Time;
@@ -436,32 +519,72 @@ private:
 	LONGLONG FPSCheckTime = 0;
 	float deltaTime = 0.0f;
 
-	// メニュー用
-	int absImg[2];
-	int gearImg[2];
-	int mtImg[2];
-	int atImg[2];
-	int lineImg[4];
-	int strongImg[2];
-	int weakImg[2];
-	int pov = 0;
-	int oldPov = 0;
-	float count = 0;
-	float sizeB = 0.0f;
-	float sizeG = 0.0f;
-	float sizeP = 0.0f;
-	VECTOR2 pointPos = { 0.0f,0.0f };
-	int chooseNumX = 0;
-	int chooseNumY = 0;
-	int bs = 0;
-	int tm = 0;
 
+	//フェードインorアウト
+	bool _fadeFlag = false;
+
+	//time計測
+	int _raceTime = 0;
+	std::array<int, 6> _raceCnt;
+	using _topRaceCnt = std::array<int, 6>;
+	std::vector<_topRaceCnt> _raceRanking;
+
+
+	//Title変数
+	std::unique_ptr<TitleScene> _title;
+	std::array<int, 3> _bright{ 0,0,0 };
+	bool _brightFlag = false;
+	bool _titleFlag = false;
+	bool _fadeinFlag = false;
+	int titleCnt = 0;
+	bool replayFlag = false;
+
+	//GameOption
+	//
 	struct ABS
 	{
 		bool flag = true;
 		int power = 1; // 0,1,2
 	};
 	ABS _abs;
-
 	bool transmission = false; // false:mt, true:at
+	std::unique_ptr<OptionScene> _option;
+	bool _optionFlag = false;
+	bool _isOption = false;
+
+	//GameMain変数
+	struct Ghost
+	{
+		VECTOR _pos;
+		VECTOR _vec;
+		VECTOR _deg;
+		float speed;
+	};
+	Ghost _ghost;
+	bool _ghostSetFlag = false;
+
+	std::vector<Ghost> _setGhost;
+	std::vector<Ghost> _getGhost;
+	int _ghostTime = 0;
+	int _number[10] = { 0 };
+
+	//レースのスタート関係
+	bool _startFlag = false;
+	int _startCnt = 3;
+	int _knockbackTime = 0;
+	bool _collisionFlag = false;
+	CollisionStatus _status;
+
+	float setSteering = 0.0f;
+	VECTOR _collisionPos;
+	VECTOR _checkPos;
+
+	//Result変数
+	std::unique_ptr<ResultScene> _result;
+	bool _resultFlag = false;
+	bool _resultFadeFlag = false;
+
+
+
 };
+

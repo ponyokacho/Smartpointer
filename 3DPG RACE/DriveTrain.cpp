@@ -7,6 +7,14 @@
 
 DriveTrain::DriveTrain()
 {
+}
+
+DriveTrain::~DriveTrain()
+{
+}
+
+void DriveTrain::Init()
+{
 	gearNum = -1;
 	for (int i = 0; i < MAX_GEAR; i++)
 	{
@@ -18,11 +26,7 @@ DriveTrain::DriveTrain()
 		gearMinTireRpm[i] = tmp / TIRE_PERIMETER;
 		gearMinTireVel[i] = (gearMinTireRpm[i] / 60) * (2 * PI);
 	}
-	PlaySoundMem(SOUND_ID("sounds/car_idoling.wav"), DX_PLAYTYPE_LOOP);
-}
-
-DriveTrain::~DriveTrain()
-{
+	PlayIdoling();
 }
 
 float DriveTrain::ReverseTorque(float brakePower)
@@ -193,6 +197,15 @@ void DriveTrain::Update()
 	{
 		speed = CarSpeedTire(driveTireVel);
 	}
+	if (lpGameTask.GetCollisionFlag())
+	{
+		if (lpGameTask.GetField() == CollisionStatus::Wall)
+		{
+			speed *= -1;
+			//lpGameTask.SetCollisionFlag(false);
+		}
+	}
+
 	lpGameTask.SetSpeed(speed);
 	
 	lpGameTask.SetDriveTireVel(driveTireVel);
@@ -201,6 +214,7 @@ void DriveTrain::Update()
 
 void DriveTrain::Draw()
 {
+	PlayIdoling();
 	int rS = 420 - clutch * 255;
 	//DrawBox(250, 420, 300, rS, 0x00ff00, true);
 	//DrawBox(250, 420, 300, 420 - 255, 0xffffff, false);
@@ -240,4 +254,20 @@ void DriveTrain::Sound()
 {
 	ChangeVolumeSoundMem(255 * volume / 100, SOUND_ID("sounds/car_idoling.wav"));
 	SetFrequencySoundMem(freq + (engineVel / (2 * PI) * 60) * 20, SOUND_ID("sounds/car_idoling.wav"));
+}
+
+void DriveTrain::PlayIdoling()
+{
+	if (!CheckSoundMem(SOUND_ID("sounds/car_idoling.wav")))
+	{
+		PlaySoundMem(SOUND_ID("sounds/car_idoling.wav"), DX_PLAYTYPE_LOOP);
+	}
+}
+
+void DriveTrain::StopIdoling()
+{
+	if (CheckSoundMem(SOUND_ID("sounds/car_idoling.wav")))
+	{
+		StopSoundMem(SOUND_ID("sounds/car_idoling.wav"));
+	}
 }

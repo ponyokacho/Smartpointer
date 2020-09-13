@@ -5,11 +5,16 @@
 
 Engine::Engine()
 {
-	rpm = IDOL_RPM;
+	Init();
 }
 
 Engine::~Engine()
 {
+}
+
+void Engine::Init()
+{
+	rpm = IDOL_RPM;
 }
 
 float Engine::CalcForwardTorque(float topTorque, float bottomTorque, float topRpm, float bottomRpm, float T_rpm)

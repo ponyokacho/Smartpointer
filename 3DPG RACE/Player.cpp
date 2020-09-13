@@ -4,17 +4,17 @@
 #include "Tire.h"
 #include "KeyMng.h"
 
-Player::Player()
+Player::Player(int num)
 {
-	Init();
+	ModelInit();
+	_playerNum = num;
 }
 
 Player::~Player()
 {
 }
 
-
-void Player::Init()
+void Player::ModelInit()
 {
 	wheel.front.right.model = MV1LoadModel("model/ae86RWheel.mv1");
 	wheel.front.left.model = MV1LoadModel("model/ae86LWheel.mv1");
@@ -23,25 +23,41 @@ void Player::Init()
 	boxModel = MV1LoadModel("model/box.mv1");
 	carModel = MV1LoadModel("model/ae86Cp.mv1");
 	camModel = MV1LoadModel("model/box.mv1");
+	Init();
 
+	ChangeLightTypeDir(VGet(0.1f, 0.9f, 0.0f));
+
+}
+
+void Player::Init()
+{
 	carPos = PLAYER_POS_OFFSET;
 	carScl = VGet(1.0f, 1.0f, 1.0f);
 	carMat = MGetScale(carScl);
 	boxPos = carPos;
+	wheelFRPos = VGet(0.0f, 0.0f, 0.0f);
+	wheelFLPos = VGet(0.0f, 0.0f, 0.0f);
+	wheelRRPos = VGet(0.0f, 0.0f, 0.0f);
+	wheelRLPos = VGet(0.0f, 0.0f, 0.0f);
 
-	cam.scl = VGet(1.0f,1.0f,1.0f);
+	cam.scl = VGet(1.0f, 1.0f, 1.0f);
 	cam.mat = MGetScale(cam.scl);
-	cam.pos = VGet(0.0f,0.0f,0.0f); 
+	cam.pos = VGet(0.0f, 0.0f, 0.0f);
 
 	// 車の座標を上にあげるための平行移動
 	offsetMat = MGetTranslate(PLAYER_POS_OFFSET);
 	carOffsetPos = VTransform(carPos, offsetMat);
-	carPos = carOffsetPos;
+	carPos = VAdd(VGet(-8000.0f, 0.0f, 40300.0f), carOffsetPos);
+	deg.yaw = 1.85f;
 	carMat = MGetScale(carScl);
 
-	beforeCarPos = carPos;
+	//当たり判定の初期設定
+	_hitBox._startPos.y = 110.0f;
+	_hitBox._endPos.y = 110.0f;
+	_hitBox._wallStart.y = 150.0f;
+	_hitBox._wallEnd.y = 150.0f;
 
-	ChangeLightTypeDir(VGet(0.1f, 0.9f, 0.0f));
+	beforeCarPos = carPos;
 }
 
 //---ﾎﾞﾃﾞｨにﾎｲｰﾙを追従させる
@@ -68,7 +84,7 @@ void Player::Update()
 		tmp = ((tanhf(speed - 100.0f / 2.0f) + 1.0f) / 2.0f) * 15.0f;
 	}
 
-	deg.yaw += ((tireForce.x) * (DT * (tmp + 2.0f))); 
+	deg.yaw += ((tireForce.x) * (DT * (tmp + 2.0f)));
 	deg.pitch = -lpGameTask.GetPitchLoad();
 	if (deg.pitch < -0.5f)
 	{
@@ -106,7 +122,7 @@ void Player::Update()
 	carPosMat = MGetTranslate(carPos);
 	MV1SetMatrix(carModel, MMult(MMult(MMult(MGetRotX(deg.pitch), MGetRotZ(deg.roll * lr)), MGetRotY(deg.yaw)), carPosMat));
 
-	VECTOR playerFrontPosOffset = VTransform(VGet(0.0f, 80.0f, 500.0f),MMult(carMat,MGetRotY(deg.yaw)));
+	VECTOR playerFrontPosOffset = VTransform(VGet(0.0f, 80.0f, 500.0f), MMult(carMat, MGetRotY(deg.yaw)));
 	carFrontPos = VAdd(carPos, playerFrontPosOffset);
 	tireViewFrontPos = VGet(carFrontPos.x + 200.0f, 0.0f, carFrontPos.z);
 
@@ -117,14 +133,14 @@ void Player::Update()
 	wheel.rear.tireRotX += lpGameTask.GetDriveTireVel() * DT;
 
 	// FL
-	wheel.front.left.moveOffset = VAdd(VTransform(VGet(-WHEEL_OFFSET.x, WHEEL_OFFSET.y, WHEEL_OFFSET.z), MMult(carMat, MGetRotY(deg.yaw))),VGet(carPos.x,0.0f,carPos.z));
+	wheel.front.left.moveOffset = VAdd(VTransform(VGet(-WHEEL_OFFSET.x, WHEEL_OFFSET.y, WHEEL_OFFSET.z), MMult(carMat, MGetRotY(deg.yaw))), VGet(carPos.x, 0.0f, carPos.z));
 	MV1SetMatrix(wheel.front.left.model, MMult(MMult(MMult(MGetRotX(wheel.front.tireRotX), carMat), wheel.front.rotMatY), MGetTranslate(wheel.front.left.moveOffset)));
 	// FR
 	wheel.front.right.moveOffset = VAdd(VTransform(VGet(WHEEL_OFFSET.x, WHEEL_OFFSET.y, WHEEL_OFFSET.z), MMult(carMat, MGetRotY(deg.yaw))), VGet(carPos.x, 0.0f, carPos.z));
 	MV1SetMatrix(wheel.front.right.model, MMult(MMult(MMult(MGetRotX(wheel.front.tireRotX), carMat), wheel.front.rotMatY), MGetTranslate(wheel.front.right.moveOffset)));
 	// RL
 	wheel.rear.left.moveOffset = VAdd(VTransform(VGet(-WHEEL_OFFSET.x, WHEEL_OFFSET.y, -WHEEL_OFFSET.z), MMult(carMat, MGetRotY(deg.yaw))), VGet(carPos.x, 0.0f, carPos.z));
-	MV1SetMatrix(wheel.rear.left.model, MMult(MMult(MMult(MGetRotX(wheel.rear.tireRotX),carMat),wheel.rear.rotMatY),MGetTranslate(wheel.rear.left.moveOffset)));
+	MV1SetMatrix(wheel.rear.left.model, MMult(MMult(MMult(MGetRotX(wheel.rear.tireRotX), carMat), wheel.rear.rotMatY), MGetTranslate(wheel.rear.left.moveOffset)));
 	// RR
 	wheel.rear.right.moveOffset = VAdd(VTransform(VGet(WHEEL_OFFSET.x, WHEEL_OFFSET.y, -WHEEL_OFFSET.z), MMult(carMat, MGetRotY(deg.yaw))), VGet(carPos.x, 0.0f, carPos.z));
 	MV1SetMatrix(wheel.rear.right.model, MMult(MMult(MMult(MGetRotX(wheel.rear.tireRotX), carMat), wheel.rear.rotMatY), MGetTranslate(wheel.rear.right.moveOffset)));
@@ -133,12 +149,21 @@ void Player::Update()
 	if (KeyMng::GetInstance().trgKey[P1_Y])
 	{
 		cam.view++;
-		if (cam.view > 3)
+	}
+
+	if (!lpGameTask.GetTitleFlag())
+	{
+		if (cam.view > 2)
 		{
 			cam.view = 0;
 		}
-		lpGameTask.SetView(cam.view);
 	}
+
+	if (lpGameTask.GetTitleFlag())
+	{
+		cam.view = 3;
+	}
+	lpGameTask.SetView(cam.view);
 
 	float camAccelOffset = speed / lpGameTask.GetMaxSpeed();
 
@@ -223,17 +248,17 @@ void Player::Update()
 		}
 		else
 		{
-			cam.pos = VGet(carFrontPos.x - 500.0f,carFrontPos.y,carFrontPos.z - 300.0f);
+			cam.pos = VGet(carFrontPos.x - 500.0f, carFrontPos.y, carFrontPos.z - 300.0f);
 		}
 	}
 
 	// 前フレからの移動量
-	vectorSpeed = VGet(dirVecRot.x * speed,dirVecRot.y,dirVecRot.z * speed);
-	vectorSpeed = VSub(beforeCarPos,carPos);
+	vectorSpeed = VGet(dirVecRot.x * speed, dirVecRot.y, dirVecRot.z * speed);
+	vectorSpeed = VSub(beforeCarPos, carPos);
 	vectorSpeed.x *= -1;
 	vectorSpeed.z *= -1;
 	beforeCarPos = carPos;
-	
+
 	acceleration = -(oldSpeed - speed) * DT;
 	oldSpeed = speed;
 
@@ -254,12 +279,24 @@ void Player::Update()
 void Player::Render()
 {
 	//MV1DrawModel(boxModel);
+	if (_playerNum == 0 && !lpGameTask.GetTitleFlag())
+	{
+		MV1SetOpacityRate(carModel, 0.2f);
+
+		MV1SetOpacityRate(wheel.front.right.model, 0.2f);
+		MV1SetOpacityRate(wheel.front.left.model, 0.2f);
+		MV1SetOpacityRate(wheel.rear.right.model, 0.2f);
+		MV1SetOpacityRate(wheel.rear.left.model, 0.2f);
+	}
+
+
 	MV1DrawModel(carModel);
 	MV1DrawModel(wheel.front.right.model);
 	MV1DrawModel(wheel.front.left.model);
 	MV1DrawModel(wheel.rear.right.model);
 	MV1DrawModel(wheel.rear.left.model);
-	//MV1DrawModel(camModel);
+
+	MV1RefreshCollInfo(carModel, -1);
 
 	VECTOR tmp = { vectorSpeed.x * 500.0f ,vectorSpeed.y * 500.0f ,vectorSpeed.z * 500.0f };
 	VECTOR tmp1 = { dirVecRot.x * 500.0f ,0.0f ,dirVecRot.z * 500.0f };
@@ -283,7 +320,27 @@ void Player::Render()
 	//DrawLine3D(carPos, VAdd(carPos, tmp1), 0xff0000);
 	//DrawLine3D(carPos, VAdd(carPos, tmp2), 0xffff00);
 
+	//DrawFormatString(0, 0, 0xffffff, "carPos.x,y,z(%.2f,%.2f,%.2f)", carPos.x * DT, carPos.y * DT, carPos.z * DT);
 	//DrawFormatString(0, 20, 0xffffff, "vectorSpeed.x,y,z(%.2f,%.2f,%.2f)", vectorSpeed.x, vectorSpeed.y, vectorSpeed.z);
+
+	_hitBox._startPos = VGet(carPos.x + tireForceRot.x, _hitBox._startPos.y, carPos.z + tireForceRot.z);
+	_hitBox._endPos = VGet(carPos.x - 10, _hitBox._endPos.y, carPos.z - 10);
+	_hitBox._wallStart = VGet(carPos.x + tireForceRot.x, _hitBox._wallStart.y, carPos.z + tireForceRot.z);
+	_hitBox._wallEnd = VGet(carPos.x - 10, _hitBox._wallEnd.y, carPos.z - 10);
+}
+
+
+bool Player::HitGoalCollision(VECTOR a, VECTOR b)
+{
+	bool rtnFlag = false;
+
+	auto hitCheck = MV1CollCheck_Capsule(carModel, -1, a, b, 50.0f);
+
+	if (hitCheck.HitNum > 0)
+	{
+		rtnFlag = true;
+	}
+	return rtnFlag;
 }
 
 // 外積
