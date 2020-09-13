@@ -248,6 +248,7 @@ void GameTask::GameOption()
 
 			OpenGhostData();
 			OpenRaceTime();
+			TopTimeValue();
 
 			_ghostTime = 0;
 			gLoopPtr = &GameTask::GameUpdate;
@@ -265,8 +266,31 @@ void GameTask::GameOption()
 
 }
 
+void GameTask::TopTimeValue()
+{
+	topTime = _raceRanking[0];
+	auto ranking1 = (_raceRanking[0][0] * 0.01f) + (_raceRanking[0][1] * 0.1f) + (_raceRanking[0][2])
+		+ (_raceRanking[0][3] * 10) + (_raceRanking[0][4] * 100);
+
+	for (int i = 1; i < 3; i++)
+	{
+		auto a = (_raceRanking[i][0] * 0.01f) + (_raceRanking[i][1] * 0.1f) + (_raceRanking[i][2])
+			+ (_raceRanking[i][3] * 10) + (_raceRanking[i][4] * 100);
+
+		if (ranking1 > a)
+		{
+			if (a != 0.0f)
+			{
+				topTime = _raceRanking[i];
+				ranking1 = a;
+			}
+		}
+	}
+}
+
 void GameTask::GameUpdate()
 {
+
 	if (_fadeFlag)
 	{
 		if (FadeOut())
@@ -1053,6 +1077,8 @@ void GameTask::OpenGhostData()
 		fread(&nondata, sizeof(float), 1, file);
 
 	}
+
+	fclose(file);
 }
 
 void GameTask::OpenRaceTime()

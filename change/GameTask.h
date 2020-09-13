@@ -90,6 +90,7 @@ public:
 	void Update();
 	void GameTitle();
 	void GameOption();
+	void TopTimeValue();
 	void GameUpdate();
 	void AddCountRaceTime(std::array<int, 6>& time);
 	void Control();
@@ -494,6 +495,7 @@ private:
 	int _raceTime = 0;
 	std::array<int, 6> _raceCnt;
 	std::array<int, 6> _playerRapCnt;
+	std::array<int, 6> topTime;
 
 	using _topRaceCnt = std::array<int, 6>;
 
