@@ -519,6 +519,8 @@ private:
 	bool cursorMove = false;
 	bool decision = false;
 
+	int camView = 0;
+
 	LONGLONG NowTime;
 	LONGLONG Time;
 	int fps = 0;
@@ -529,6 +531,8 @@ private:
 
 	//フェードインorアウト
 	bool _fadeFlag = false;
+	bool _replayFadeFlag = false;
+
 
 	//time計測
 	int _raceTime = 0;
@@ -571,6 +575,8 @@ private:
 		VECTOR _vec;
 		VECTOR _deg;
 		float speed;
+		float wheelAngle;
+		float driveTireVel;
 	};
 	Ghost _ghost;
 	bool _ghostSetFlag = false;
@@ -579,6 +585,9 @@ private:
 	std::vector<std::vector<Ghost>> _getGhost;
 	int _ghostTime = 0;
 	int _ghostLap = 0;
+
+	int recordCnt = 0;
+	bool recordFlag = false;
 
 	int _number[10] = { 0 };
 

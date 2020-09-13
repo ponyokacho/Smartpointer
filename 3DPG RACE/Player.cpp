@@ -86,27 +86,30 @@ void Player::Update()
 		tmp = ((tanhf(speed - 100.0f / 2.0f) + 1.0f) / 2.0f) * 15.0f;
 	}
 
-	deg.yaw += ((tireForce.x) * (DT * (tmp + 2.0f)));
-	deg.pitch = -lpGameTask.GetPitchLoad();
-	if (deg.pitch < -0.5f)
-	{
-		deg.pitch = -0.5f;
-	}
-	if (deg.pitch > 0.5f)
-	{
-		deg.pitch = 0.5f;
-	}
+	if(_playerNum == 1)
+	{ 
+		deg.yaw += ((tireForce.x) * (DT * (tmp + 2.0f)));
+		deg.pitch = -lpGameTask.GetPitchLoad();
+		if (deg.pitch < -0.5f)
+		{
+			deg.pitch = -0.5f;
+		}
+		if (deg.pitch > 0.5f)
+		{
+			deg.pitch = 0.5f;
+		}
 
-	if (deg.oldPitch - deg.pitch > 0.3f || deg.oldPitch - deg.pitch < -0.3f)
-	{
-		deg.pitch = 0.0f;
-	}
-	deg.oldPitch = deg.pitch;
-	deg.roll = abs(lpGameTask.GetRollLoad());
+		if (deg.oldPitch - deg.pitch > 0.3f || deg.oldPitch - deg.pitch < -0.3f)
+		{
+			deg.pitch = 0.0f;
+		}
+		deg.oldPitch = deg.pitch;
+		deg.roll = abs(lpGameTask.GetRollLoad());
 
-	if (deg.roll > 0.10f)
-	{
-		deg.roll = 0.10f;
+		if (deg.roll > 0.10f)
+		{
+			deg.roll = 0.10f;
+		}
 	}
 
 	MATRIX RotYMat = MMult(carMat, MGetRotY(deg.yaw));

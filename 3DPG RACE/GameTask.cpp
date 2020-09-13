@@ -118,6 +118,7 @@ void GameTask::GameTitle()
 		if (FadeOut())
 		{
 			_fadeFlag = false;
+			_replayFadeFlag = false;
 		}
 	}
 
@@ -145,7 +146,7 @@ void GameTask::GameTitle()
 	_title->Update();
 
 
-	if (lpKeyMng.trgKey[P1_B])
+	if (lpKeyMng.trgKey[P1_B] && !_fadeFlag && !_replayFadeFlag)
 	{
 		if (!CheckSoundMem(SOUND_ID("sounds/decision.wav")))
 		{
@@ -172,17 +173,43 @@ void GameTask::GameTitle()
 			p[0]->SetVec(_getGhost[_ghostLap][_ghostTime]._vec);
 			p[0]->SetDeg(_getGhost[_ghostLap][_ghostTime]._deg.x, _getGhost[_ghostLap][_ghostTime]._deg.y, 0.0f, _getGhost[_ghostLap][_ghostTime]._deg.z);
 			p[0]->SetSpeed(_getGhost[_ghostLap][_ghostTime].speed);
+			wheelAngle = _getGhost[_ghostLap][_ghostTime].wheelAngle;
+			driveTireVel = _getGhost[_ghostLap][_ghostTime].driveTireVel;
 		}
 		else
 		{
 			_ghostLap++;
 			_ghostTime = 0;
 		}
-		if (_ghostLap >= 3)
+		if (_ghostLap >= _numberOfLaps)
 		{
 			_ghostLap = 0;
 		}
+		if (_ghostTime >= _getGhost[_ghostLap].size() - 51)
+		{
+			_replayFadeFlag = true;
+		}
 		_ghostTime++;
+	}
+
+	if (_replayFadeFlag)
+	{
+		if (!_fadeFlag)
+		{
+			if (FadeIn())
+			{
+				_fadeFlag = true;
+			}
+		}
+	}
+
+	for (auto i : t)
+	{
+		(*i).Update();
+		i->Draw();
+
+		np = i->GetPitchLoad();
+		nr = i->GetRollLoad();
 	}
 
 	if (_fadeinFlag)
@@ -194,6 +221,7 @@ void GameTask::GameTitle()
 				i->StopIdoling();
 			}
 
+			_replayFadeFlag = false;
 			_fadeinFlag = false;
 			_fadeFlag = true;
 			_titleFlag = false;
@@ -202,10 +230,11 @@ void GameTask::GameTitle()
 			_ghostTime = 0;
 			p[0]->Init();
 			p[1]->SetPlayerNum(1);
+			_ghostLap = 0;
+			_title->Init();
 			gLoopPtr = &GameTask::GameExplanation;
 		}
 	}
-
 
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
 	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
@@ -215,6 +244,13 @@ void GameTask::GameTitle()
 
 void GameTask::GameExplanation()
 {
+	if (_fadeFlag)
+	{
+		if (FadeOut())
+		{
+			_fadeFlag = false;
+		}
+	}
 	_isOption = true;
 
 	for (auto i : c)
@@ -229,10 +265,25 @@ void GameTask::GameExplanation()
 
 	DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2, 1.0f, 0.0f, IMAGE_ID("image/toka_w.png"), true);
 	DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2, 0.70f, 0.0f, IMAGE_ID("image/control.png"),true);
-	if (lpKeyMng.trgKey[P1_B])
+
+	if (lpKeyMng.trgKey[P1_B] && !_fadeFlag)
 	{
-		gLoopPtr = &GameTask::GameOption;
+		_fadeinFlag = true;
 	}
+
+	if (_fadeinFlag)
+	{
+		if (FadeIn())
+		{
+			_fadeinFlag = false;
+			_fadeFlag = true;
+			gLoopPtr = &GameTask::GameOption;
+		}
+	}
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 }
 
 void GameTask::GameOption()
@@ -369,6 +420,10 @@ void GameTask::TopTimeValue()
 			{
 				topTime = _raceRanking[i];
 				ranking1 = a;
+				if (_startFlag)
+				{
+					recordFlag = true;
+				}
 			}
 		}
 	}
@@ -400,6 +455,8 @@ void GameTask::GameUpdate()
 			p[0]->SetVec(_getGhost[_ghostLap][_ghostTime]._vec);
 			p[0]->SetDeg(_getGhost[_ghostLap][_ghostTime]._deg.x, _getGhost[_ghostLap][_ghostTime]._deg.y, 0.0f, _getGhost[_ghostLap][_ghostTime]._deg.z);
 			p[0]->SetSpeed(_getGhost[_ghostLap][_ghostTime].speed);
+			wheelAngle = _getGhost[_ghostLap][_ghostTime].wheelAngle;
+			driveTireVel = _getGhost[_ghostLap][_ghostTime].driveTireVel;
 		}
 		else
 		{
@@ -475,6 +532,9 @@ void GameTask::GameUpdate()
 
 				_ghost.speed = i->GetSpeed();
 
+				_ghost.wheelAngle = t[0]->GetWheelAngle();
+				_ghost.driveTireVel = driveTireVel;
+
 				_setGhost[_ghostLap].emplace_back(_ghost);
 
 				auto check = i->GetHitBox();
@@ -534,6 +594,12 @@ void GameTask::GameUpdate()
 						}
 						_raceCnt = { 0,0,0,0,0,0 };
 						_lap++;
+						if (_ghostLap < _getGhost.size()) 
+						{
+							_ghostLap++;
+							_ghostTime = 0;
+						}
+					
 						if (!CheckSoundMem(SOUND_ID("sounds/lapCntUp.wav")))
 						{
 							PlaySoundMem(SOUND_ID("sounds/lapCntUp.wav"), DX_PLAYTYPE_BACK);
@@ -618,8 +684,7 @@ void GameTask::GameUpdate()
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[1]);
 		if (_startCnt > 0)
 		{
-			DrawFormatString(SCREEN_SIZE_X / 2 - 40 + 1, 101, 0x000000, "%d", _startCnt);
-			DrawFormatString(SCREEN_SIZE_X / 2 - 40, 100, 0xffffff, "%d", _startCnt);
+			
 		}
 		else
 		{
@@ -652,28 +717,34 @@ void GameTask::GameUpdate()
 		}
 	}
 
-	DrawRotaGraph(SCREEN_SIZE_X / 2, 90, 0.45f, 0.0f, IMAGE_ID("image/raceTimeBox.png"), true);
+	if (_startFlag)
+	{
+		DrawRotaGraph(SCREEN_SIZE_X / 2, 90, 0.45f, 0.0f, IMAGE_ID("image/raceTimeBox.png"), true);
 
-	DrawRotaGraph(SCREEN_SIZE_X / 2 - 70, 95, 0.5f, 0.0f, _number[0], true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 - 50, 95, 0.5f, 0.0f, _number[_raceCnt[4]], true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 - 30, 95, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 - 10, 95, 0.5f, 0.0f, _number[_raceCnt[3]], true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 + 10, 95, 0.5f, 0.0f, _number[_raceCnt[2]], true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 + 30, 95, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 + 50, 95, 0.5f, 0.0f, _number[_raceCnt[1]], true);
-	DrawRotaGraph(SCREEN_SIZE_X / 2 + 70, 95, 0.5f, 0.0f, _number[_raceCnt[0]], true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 - 70, 95, 0.5f, 0.0f, _number[_raceCnt[5]], true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 - 50, 95, 0.5f, 0.0f, _number[_raceCnt[4]], true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 - 30, 95, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 - 10, 95, 0.5f, 0.0f, _number[_raceCnt[3]], true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 + 10, 95, 0.5f, 0.0f, _number[_raceCnt[2]], true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 + 30, 95, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 + 50, 95, 0.5f, 0.0f, _number[_raceCnt[1]], true);
+		DrawRotaGraph(SCREEN_SIZE_X / 2 + 70, 95, 0.5f, 0.0f, _number[_raceCnt[0]], true);
+	}
+	else
+	{
+		DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2 - 100, 0.8f, 0.0f, _number[_startCnt], true);
+	}
 
 	DrawRotaGraph(SCREEN_SIZE_X - 100, 120, 0.20f, 0.0f, IMAGE_ID("image/record.png"), true);
 
-	DrawRotaGraph(SCREEN_SIZE_X - 100 - (70 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[5]], true);
-	DrawRotaGraph(SCREEN_SIZE_X - 100 - (50 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[4]], true);
-	DrawRotaGraph(SCREEN_SIZE_X - 100 - (30 * 0.8f), 130 + 25 , 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X - 100 - (10 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[3]], true);
-	DrawRotaGraph(SCREEN_SIZE_X - 100 + (10 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[2]], true);
-	DrawRotaGraph(SCREEN_SIZE_X - 100 + (30 * 0.8f), 130 + 25 , 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
-	DrawRotaGraph(SCREEN_SIZE_X - 100 + (50 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[1]], true);
-	DrawRotaGraph(SCREEN_SIZE_X - 100 + (70 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[0]], true);
-
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (70 * 0.8f), 130 + 25, 0.35f, 0.0f, _number[topTime[5]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (50 * 0.8f), 130 + 25, 0.35f, 0.0f, _number[topTime[4]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (30 * 0.8f), 130 + 25, 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (10 * 0.8f), 130 + 25, 0.35f, 0.0f, _number[topTime[3]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (10 * 0.8f), 130 + 25, 0.35f, 0.0f, _number[topTime[2]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (30 * 0.8f), 130 + 25, 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (50 * 0.8f), 130 + 25, 0.35f, 0.0f, _number[topTime[1]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (70 * 0.8f), 130 + 25, 0.35f, 0.0f, _number[topTime[0]], true);
 
 	DrawRotaGraph(SCREEN_SIZE_X - 100, 200, 0.20f, 0.0f, IMAGE_ID("image/lapTime.png"), true);
 
@@ -696,10 +767,22 @@ void GameTask::GameUpdate()
 	DrawRotaGraph(40, 50, 0.25f, 0.0f, IMAGE_ID("image/slash.png"), true);
 	DrawRotaGraph(60, 50, 0.35f, 0.0f, _number[_numberOfLaps], true);
 
-
-	DrawRotaGraph(20, 50, 0.35f, 0.0f, _number[_lap + 1], true);
-	DrawRotaGraph(40, 50, 0.25f, 0.0f, IMAGE_ID("image/slash.png"), true);
-	DrawRotaGraph(60, 50, 0.35f, 0.0f, _number[_numberOfLaps], true);
+	if (recordFlag)
+	{
+		recordCnt++;
+		if (recordCnt < 120)
+		{
+			if (recordCnt / 10 % 3 == 0)
+			{
+				DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2 - 100, 0.2f, 0.0f, IMAGE_ID("image/newRecord.png"), true);
+			}
+		}
+		else
+		{
+			recordFlag = false;
+			recordCnt = 0;
+		}
+	}
 
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[2]);
 	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
@@ -905,7 +988,6 @@ void GameTask::GameResult()
 			_result->SetFlag(false);
 			_fadeFlag = true;
 			_abs.flag = true;
-			_abs.power = 1;
 			gLoopPtr = &GameTask::GameTitle;
 			_title->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
 			_result->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
@@ -919,10 +1001,20 @@ void GameTask::GameResult()
 
 	if (_result->GetFlag())
 	{
-		SetFontSize(50);
-		DrawFormatString(401, 151, 0x000000, "%d:%d%d:%d%d", _raceCnt[4], _raceCnt[3], _raceCnt[2], _raceCnt[1], _raceCnt[0]);
-		DrawFormatString(400, 150, 0xffffff, "%d:%d%d:%d%d", _raceCnt[4], _raceCnt[3], _raceCnt[2], _raceCnt[1], _raceCnt[0]);
-		SetFontSize(16);
+		DrawRotaGraph(SCREEN_SIZE_X / 2, 80, 0.6f, 0.0f, IMAGE_ID("image/result.png"), true);
+
+		for (int i = 0; i < _numberOfLaps; i++)
+		{
+			DrawRotaGraph(SCREEN_SIZE_X / 2 - 105, (SCREEN_SIZE_Y / 2 - 100) + (i * 75), 0.6f, 0.0f, _number[0], true);
+			DrawRotaGraph(SCREEN_SIZE_X / 2 - 75, (SCREEN_SIZE_Y / 2 - 100) + (i * 75), 0.6f, 0.0f, _number[_playerRanking[i][4]], true);
+			DrawRotaGraph(SCREEN_SIZE_X / 2 - 45, (SCREEN_SIZE_Y / 2 - 100) + (i * 75), 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
+			DrawRotaGraph(SCREEN_SIZE_X / 2 - 15, (SCREEN_SIZE_Y / 2 - 100) + (i * 75), 0.6f, 0.0f, _number[_playerRanking[i][3]], true);
+			DrawRotaGraph(SCREEN_SIZE_X / 2 + 15, (SCREEN_SIZE_Y / 2 - 100) + (i * 75), 0.6f, 0.0f, _number[_playerRanking[i][2]], true);
+			DrawRotaGraph(SCREEN_SIZE_X / 2 + 45, (SCREEN_SIZE_Y / 2 - 100) + (i * 75), 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
+			DrawRotaGraph(SCREEN_SIZE_X / 2 + 75, (SCREEN_SIZE_Y / 2 - 100) + (i * 75), 0.6f, 0.0f, _number[_playerRanking[i][1]], true);
+			DrawRotaGraph(SCREEN_SIZE_X / 2 + 105, (SCREEN_SIZE_Y / 2 - 100) + (i * 75), 0.6f, 0.0f, _number[_playerRanking[i][0]], true);
+		}
+		
 	}
 
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
@@ -1005,8 +1097,8 @@ void GameTask::UploadGhostData(int i)
 		fwrite(&nondata, sizeof(float), 1, file);
 
 		fwrite(&ghost.speed, sizeof(float), 1, file);
-		fwrite(&nondata, sizeof(float), 1, file);
-		fwrite(&nondata, sizeof(float), 1, file);
+		fwrite(&ghost.wheelAngle, sizeof(float), 1, file);
+		fwrite(&ghost.driveTireVel, sizeof(float), 1, file);
 		fwrite(&nondata, sizeof(float), 1, file);
 
 
@@ -1083,8 +1175,8 @@ void GameTask::OpenGhostData()
 		fread(&nondata, sizeof(float), 1, file);
 
 		fread(&_getGhost[0][i].speed, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
+		fread(&_getGhost[0][i].wheelAngle, sizeof(float), 1, file);
+		fread(&_getGhost[0][i].driveTireVel, sizeof(float), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 
 	}
@@ -1115,8 +1207,8 @@ void GameTask::OpenGhostData()
 		fread(&nondata, sizeof(float), 1, file);
 
 		fread(&_getGhost[1][i].speed, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
+		fread(&_getGhost[1][i].wheelAngle, sizeof(float), 1, file);
+		fread(&_getGhost[1][i].driveTireVel, sizeof(float), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 
 	}
@@ -1147,8 +1239,8 @@ void GameTask::OpenGhostData()
 		fread(&nondata, sizeof(float), 1, file);
 
 		fread(&_getGhost[2][i].speed, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
+		fread(&_getGhost[2][i].wheelAngle, sizeof(float), 1, file);
+		fread(&_getGhost[2][i].driveTireVel, sizeof(float), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 	}
 	fclose(file);

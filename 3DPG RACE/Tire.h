@@ -22,6 +22,10 @@ public:
 	{
 		return nr;
 	}
+	const float& GetWheelAngle()
+	{
+		return wheelAngle;
+	}
 
 	float VerticalForceAtWheelPitch(float pitch);
 	float VerticalForceAtWheelRoll(float roll);

@@ -7,6 +7,7 @@ public:
 	TitleScene();
 	~TitleScene();
 
+	void Init();
 	void Draw();
 	void Update();
 
@@ -27,6 +28,8 @@ private:
 	int _model;
 	int _wheelFRModel, _wheelRRModel;
 	int _wheelFLModel, _wheelRLModel;
+	int _fadein = 0;
+	int _fadeinImage = 0;
 
 	float cnt = 0.0f;
 

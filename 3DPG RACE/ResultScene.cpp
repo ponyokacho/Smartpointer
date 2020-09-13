@@ -1,4 +1,6 @@
 #include "ResultScene.h"
+#include "GameTask.h"
+#include "ResourceMng.h"
 
 ResultScene::ResultScene()
 {
@@ -64,8 +66,7 @@ void ResultScene::Update()
 		_resultFlag = true;
 		if (_time % 60 >= 20)
 		{
-			DrawString(431, 401, "Press Button", 0x000000);
-			DrawString(430, 400, "Press Button", 0xffffff);
+			DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2 + 200, 0.25f, 0.0f, IMAGE_ID("image/pressBButton.png"), true);
 		}
 	}
 }

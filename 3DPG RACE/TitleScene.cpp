@@ -15,10 +15,17 @@ TitleScene::TitleScene()
 
 	MV1SetupCollInfo(_model, 0, 8, 8, 8);
 
+	Init();
 }
 
 TitleScene::~TitleScene()
 {
+}
+
+void TitleScene::Init()
+{
+	_fadein = 150;
+	_fadeinImage = 255;
 }
 
 void TitleScene::Draw()
@@ -44,22 +51,36 @@ void TitleScene::Update()
 	MV1SetPosition(_wheelRRModel, wheelRRtmp);
 	MV1SetPosition(_wheelRLModel, wheelRLtmp);
 
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _fadein);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
 	if (lpGameTask.GetTitleCnt() < 500)
 	{
 		replayFlag = false;
-		DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2, 1.0f, 0.0f, IMAGE_ID("image/toka.png"), true);
 		DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2 - 50, 0.25f, 0.0f, IMAGE_ID("image/letsGoKurumaModoki.png"), true);
 	}
 	else
 	{
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, _fadeinImage);
+		DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2 - 50, 0.25f, 0.0f, IMAGE_ID("image/letsGoKurumaModoki.png"), true);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 		replayFlag = true;
+		if (_fadein > 0)
+		{
+			_fadein--;
+		}
+		if (_fadeinImage > 0)
+		{
+			_fadeinImage -= 5;
+		}
 	}
 
 	lpGameTask.SetReplayFlag(replayFlag);
 
 	if (_time % 60 >= 20)
 	{
-		DrawString(430, SCREEN_SIZE_Y - 75, "Press Button", 0xffffff);
+		DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2 + 200, 0.25f, 0.0f, IMAGE_ID("image/pressBButton.png"), true);
 	}
 
 	if (lpKeyMng.newKey[P1_X])
