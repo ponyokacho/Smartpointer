@@ -96,7 +96,9 @@ public:
 	void GameResult();
 	void FPS();
 
-	void Upload(int i);
+	void UploadGhostData(int i);
+
+	void UploadRaceTime(int i);
 
 	void OpenGhostData();
 

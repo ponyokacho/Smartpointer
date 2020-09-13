@@ -386,6 +386,23 @@ void GameTask::GameUpdate()
 					if (!_rapRagFlag)
 					{
 						_playerRanking[_rap] = _raceCnt;
+
+						auto raceCntMax = (_playerRanking[_rap][0] * 0.01f) + (_playerRanking[_rap][1] * 0.1f) + (_playerRanking[_rap][2])
+							+ (_playerRanking[_rap][3] * 10) + (_playerRanking[_rap][4] * 100);
+
+						auto rankingMax = (_raceRanking[_rap][0] * 0.01f) + (_raceRanking[_rap][1] * 0.1f) + (_raceRanking[_rap][2])
+							+ (_raceRanking[_rap][3] * 10) + (_raceRanking[_rap][4] * 100);
+						if (rankingMax == 0)
+						{
+							rankingMax = 9999;
+						}
+						if (raceCntMax < rankingMax)
+						{
+							_ghostSetFlag = true;
+							UploadGhostData(_rap);
+							UploadRaceTime(_rap);
+							OpenRaceTime();
+						}
 						_raceCnt = { 0,0,0,0,0,0 };
 						_rap++;
 						if (_ghostLap < 2)
@@ -765,7 +782,7 @@ void GameTask::GameResult()
 		{
 			_resultFadeFlag = false;
 			bool rankingChangeFlag = false;
-			for (int i = 0; i < _raceRanking.size(); i++)
+			/*for (int i = 0; i < _raceRanking.size(); i++)
 			{
 				raceCntMax = (_playerRanking[i][0] * 0.01f) + (_playerRanking[i][1] * 0.1f) + (_playerRanking[i][2])
 					       + (_playerRanking[i][3] * 10) + (_playerRanking[i][4] * 100);
@@ -779,9 +796,9 @@ void GameTask::GameResult()
 				if (raceCntMax < rankingMax)
 				{
 					_ghostSetFlag = true;
-					Upload(i);
+					UploadGhostData(i);
 				}
-			}
+			}*/
 			
 			_resultFlag = false;
 			_startFlag = false;
@@ -790,6 +807,7 @@ void GameTask::GameResult()
 			_abs.flag = true;
 			_abs.power = 1;
 			transmission = false;
+			speed = 0.0f;
 			gLoopPtr = &GameTask::GameTitle;
 			_title->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
 			_result->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
@@ -836,7 +854,7 @@ void GameTask::FPS()
 	}
 }
 
-void GameTask::Upload(int i)
+void GameTask::UploadGhostData(int i)
 {
 	float size = 0.0f;
 	float nondata = 0.0f;
@@ -897,7 +915,15 @@ void GameTask::Upload(int i)
 	}
 
 	_ghostSetFlag = false;
-	//fwrite(&data, sizeof(Data), sizeof(Data), file);
+	fclose(file);
+}
+
+void GameTask::UploadRaceTime(int i)
+{
+	float size = 0.0f;
+	float nondata = 0.0f;
+	VECTOR2 nonVec2 = { 0.5f, 0.5f };
+	FILE* file;
 
 	if (i == 0)
 	{
