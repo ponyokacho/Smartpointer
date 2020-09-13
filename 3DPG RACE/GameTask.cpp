@@ -390,7 +390,7 @@ void GameTask::GameUpdate()
 	{
 		if (!t.empty())
 		{
-			(*i).Update();
+			i->Update();
 			i->Render();
 		}
 
