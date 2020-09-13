@@ -57,8 +57,6 @@ void GameTask::GameInit()
 	
 	u.push_back(make_shared<UI>());
 
-	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/shift_change.wav"));
-
 	_title = std::make_unique<TitleScene>();
 	_title->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
 	_result = std::make_unique<ResultScene>();
@@ -66,16 +64,16 @@ void GameTask::GameInit()
 
 	_option = std::make_unique<OptionScene>();
 
-	_playerRanking.resize(3);
-	for (int i = 0; i < 3; i++)
+	_playerRanking.resize(_numberOfLaps);
+	for (int i = 0; i < _numberOfLaps; i++)
 	{
 		_playerRanking[0][i] = 0;
 		_playerRanking[1][i] = 0;
 		_playerRanking[2][i] = 0;
 
 	}
-	_raceRanking.resize(3);
-	for (int i = 0; i < 3; i++)
+	_raceRanking.resize(_numberOfLaps);
+	for (int i = 0; i < _numberOfLaps; i++)
 	{
 		_raceRanking[0][i] = 0;
 		_raceRanking[1][i] = 0;
@@ -83,6 +81,20 @@ void GameTask::GameInit()
 
 	}
 
+
+	DIV_IMAGE_ID("image/gear_num.png", 10, 10, 1, 0, 0, 60, 60, _number);
+
+	//ｻｲｽﾞ変更
+	_setGhost.resize(3);
+	_getGhost.resize(3);
+	
+	OpenGhostData();
+
+	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/shift_change.wav"));
+	ChangeVolumeSoundMem(255 * 60 / 100, SOUND_ID("sounds/REVIVE_LUVS.wav"));
+	ChangeVolumeSoundMem(255 * 40 / 100, SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav"));
+	ChangeVolumeSoundMem(255 * 100 / 100, SOUND_ID("sounds/cursorMove.wav"));
+	ChangeVolumeSoundMem(255 * 100 / 100, SOUND_ID("sounds/decision.wav"));
 }
 
 
@@ -93,12 +105,14 @@ void GameTask::Update()
 	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x9DCCff, true);
 
 	(this->*gLoopPtr)();
-
 }
 
 
 void GameTask::GameTitle()
 {
+	_titleFlag = true;
+	titleCnt++;
+
 	if (_fadeFlag)
 	{
 		if (FadeOut())
@@ -107,21 +121,19 @@ void GameTask::GameTitle()
 		}
 	}
 
-	if (!CheckSoundMem(SOUND_ID("sounds/bgm_maoudamashii_neorock73.mp3")))
+	if (!CheckSoundMem(SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav")))
 	{
-		PlaySoundMem(SOUND_ID("sounds/bgm_maoudamashii_neorock73.mp3"), DX_PLAYTYPE_LOOP);
+		PlaySoundMem(SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav"), DX_PLAYTYPE_LOOP);
 	}
-	_titleCamera = VGet(-15000, 1500, 40000);//VGet(1000, 1000, 1500);
 
-	ChangeFont("Bauhaus 93");
-	SetFontSize(50);
-	ChangeFont("MSゴシック");
-	SetFontSize(10);
-	SetFontSize(16);
+	p[0]->Update();
+	p[0]->Render();
 
-
-	bodyPos = _title->GetPos();
-	SetCameraPositionAndTarget_UpVecY(_titleCamera, bodyPos);
+	for (auto i : c)
+	{
+		i->SetCamera(p[0]);
+		i->Update();
+	}
 
 	for (auto field : f)
 	{
@@ -132,15 +144,59 @@ void GameTask::GameTitle()
 	_title->Draw();
 	_title->Update();
 
-	if (Fade(bodyPos, -10000.0f, 255, 0))
-	{	
-		//Init();
-		if (!CheckSoundMem(SOUND_ID("sounds/menu1.mp3")))
+
+	if (lpKeyMng.trgKey[P1_B])
+	{
+		if (!CheckSoundMem(SOUND_ID("sounds/decision.wav")))
 		{
-			PlaySoundMem(SOUND_ID("sounds/menu1.mp3"), DX_PLAYTYPE_BACK);
+			PlaySoundMem(SOUND_ID("sounds/decision.wav"), DX_PLAYTYPE_BACK);
 		}
-		_fadeinFlag = true;
+		if (!replayFlag)
+		{
+			_fadeinFlag = true;
+		}
+		else
+		{
+			titleCnt = 0;
+			replayFlag = false;
+		}
+		
 	}
+	//Init();
+
+	if (_getGhost.size() > 0)
+	{
+		if (_ghostTime < _getGhost[_ghostLap].size())
+		{
+			p[0]->SetCarPos(_getGhost[_ghostLap][_ghostTime]._pos);
+			p[0]->SetVec(_getGhost[_ghostLap][_ghostTime]._vec);
+			p[0]->SetDeg(_getGhost[_ghostLap][_ghostTime]._deg.x, _getGhost[_ghostLap][_ghostTime]._deg.y, 0.0f, _getGhost[_ghostLap][_ghostTime]._deg.z);
+			p[0]->SetSpeed(_getGhost[_ghostLap][_ghostTime].speed);
+			wheelAngle = _getGhost[_ghostLap][_ghostTime].wheelAngle;
+			driveTireVel = _getGhost[_ghostLap][_ghostTime].driveTireVel;
+
+		}
+		else
+		{
+			_ghostLap++;
+			_ghostTime = 0;
+		}
+		if (_ghostLap >= 3)
+		{
+			_ghostLap = 0;
+		}
+		_ghostTime++;
+	}
+
+	for (auto i : t)
+	{
+		(*i).Update();
+		i->Draw();
+
+		np = i->GetPitchLoad();
+		nr = i->GetRollLoad();
+	}
+
 
 	if (_fadeinFlag)
 	{
@@ -153,13 +209,17 @@ void GameTask::GameTitle()
 
 			_fadeinFlag = false;
 			_fadeFlag = true;
-			gLoopPtr = &GameTask::GameOption;
-			if (CheckSoundMem(SOUND_ID("sounds/bgm_maoudamashii_neorock73.mp3")))
-			{
-				StopSoundMem(SOUND_ID("sounds/bgm_maoudamashii_neorock73.mp3"));
-			}
+			_titleFlag = false;
+			replayFlag = false;
+			titleCnt = 0;
+			_ghostTime = 0;
+			p[0]->Init();
+			p[1]->SetPlayerNum(1);
+			_ghostLap = 0;
+			gLoopPtr = &GameTask::GameExplanation;
 		}
 	}
+
 
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
 	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
@@ -167,7 +227,7 @@ void GameTask::GameTitle()
 
 }
 
-void GameTask::GameOption()
+void GameTask::GameExplanation()
 {
 	if (_fadeFlag)
 	{
@@ -176,19 +236,57 @@ void GameTask::GameOption()
 			_fadeFlag = false;
 		}
 	}
-	if (!CheckSoundMem(SOUND_ID("sounds/bgm_maoudamashii_cyber38.mp3")))
+	_isOption = true;
+
+	for (auto i : c)
 	{
-		PlaySoundMem(SOUND_ID("sounds/bgm_maoudamashii_cyber38.mp3"), DX_PLAYTYPE_LOOP);
+		i->Update();
 	}
+	for (auto field : f)
+	{
+		field->Update();
+		field->Render(carPos);
+	}
+
+	DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2, 1.0f, 0.0f, IMAGE_ID("image/toka_w.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2, SCREEN_SIZE_Y / 2, 0.70f, 0.0f, IMAGE_ID("image/control.png"),true);
+	if (lpKeyMng.trgKey[P1_B])
+	{
+		_fadeinFlag = true;
+	}
+
+	if (_fadeinFlag)
+	{
+		if (FadeIn())
+		{
+			_fadeinFlag = false;
+			_fadeFlag = true;
+			gLoopPtr = &GameTask::GameOption;
+		}
+	}
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[0]);
+	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
+void GameTask::GameOption()
+{
+	for (auto i : c)
+	{
+		i->Update();
+	}
+
+	if (_fadeFlag)
+	{
+		if (FadeOut())
+		{
+			_fadeFlag = false;
+		}
+	}
+
 	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
 	DrawString(0, 0, "GameOption", 0xffffff);
-
-	//-12800,200,37650,
-	_titleCamera = VGet(-13000, 700, 34100);
-	bodyPos = VGet(-12000, 200, 37650);
-
-
-	SetCameraPositionAndTarget_UpVecY(_titleCamera, bodyPos);
 
 	for (auto field : f)
 	{
@@ -204,12 +302,31 @@ void GameTask::GameOption()
 	{
 		if (KeyMng::GetInstance().trgKey[P1_PAUSE])
 		{
-			if (!CheckSoundMem(SOUND_ID("sounds/menu1.mp3")))
-			{
-				PlaySoundMem(SOUND_ID("sounds/menu1.mp3"), DX_PLAYTYPE_BACK);
-			}
+			// 音変える？？
+			PlaySoundMem(SOUND_ID("sounds/decision.wav"), DX_PLAYTYPE_BACK);
+
 			_optionFlag = true;
 		}
+	}
+
+	if (cursorMove)
+	{
+		if (!CheckSoundMem(SOUND_ID("sounds/cursorMove.wav")))
+		{
+			PlaySoundMem(SOUND_ID("sounds/cursorMove.wav"), DX_PLAYTYPE_BACK);
+		}
+	}
+	else
+	{
+		if (!CheckSoundMem(SOUND_ID("sounds/cursorMove.wav")))
+		{
+			StopSoundMem(SOUND_ID("sounds/cursorMove.wav"));
+		}
+	}
+
+	if (decision)
+	{
+		PlaySoundMem(SOUND_ID("sounds/decision.wav"), DX_PLAYTYPE_BACK);
 	}
 
 	if (_optionFlag)
@@ -236,26 +353,22 @@ void GameTask::GameOption()
 			{
 				_raceCnt[j] = 0;
 			}
-			//ｻｲｽﾞ変更
-			_setGhost.resize(3);
-			_getGhost.resize(3);
-
 
 			_optionFlag = false;
+			_isOption = false;
 			_fadeFlag = true;
 			_startCnt = 3;
 			_startFlag = false;
-
-			OpenGhostData();
-			OpenRaceTime();
-			TopTimeValue();
-
 			_ghostTime = 0;
 			gLoopPtr = &GameTask::GameUpdate;
 			_option->SetOption(SelectOption::ABS);
-			if (CheckSoundMem(SOUND_ID("sounds/bgm_maoudamashii_cyber38.mp3")))
+
+			OpenRaceTime();
+			TopTimeValue();
+
+			if (CheckSoundMem(SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav")))
 			{
-				StopSoundMem(SOUND_ID("sounds/bgm_maoudamashii_cyber38.mp3"));
+				StopSoundMem(SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav"));
 			}
 		}
 	}
@@ -268,11 +381,19 @@ void GameTask::GameOption()
 
 void GameTask::TopTimeValue()
 {
-	topTime = _raceRanking[0];
-	auto ranking1 = (_raceRanking[0][0] * 0.01f) + (_raceRanking[0][1] * 0.1f) + (_raceRanking[0][2])
-		+ (_raceRanking[0][3] * 10) + (_raceRanking[0][4] * 100);
+	if (topTime[0] == 0 && topTime[1] == 0 && topTime[2] == 0 &&
+		topTime[3] == 0 && topTime[4] == 0 && topTime[5] == 0)
+	{
+		for (int i = 0; i < 6; i++)
+		{
+			topTime[i] = 9;
+		}
+	}
 
-	for (int i = 1; i < 3; i++)
+	auto ranking1 = (topTime[0] * 0.01f) + (topTime[1] * 0.1f) + (topTime[2])
+		+ (topTime[3] * 10) + (topTime[4] * 100);
+
+	for (int i = 0; i < 3; i++)
 	{
 		auto a = (_raceRanking[i][0] * 0.01f) + (_raceRanking[i][1] * 0.1f) + (_raceRanking[i][2])
 			+ (_raceRanking[i][3] * 10) + (_raceRanking[i][4] * 100);
@@ -290,7 +411,6 @@ void GameTask::TopTimeValue()
 
 void GameTask::GameUpdate()
 {
-
 	if (_fadeFlag)
 	{
 		if (FadeOut())
@@ -298,41 +418,62 @@ void GameTask::GameUpdate()
 			_fadeFlag = false;
 		}
 	}
-	if (!CheckSoundMem(SOUND_ID("sounds/bgm_maoudamashii_neorock81.mp3")))
+	if (!CheckSoundMem(SOUND_ID("sounds/REVIVE_LUVS.wav")))
 	{
-		PlaySoundMem(SOUND_ID("sounds/bgm_maoudamashii_neorock81.mp3"), DX_PLAYTYPE_LOOP);
+		PlaySoundMem(SOUND_ID("sounds/REVIVE_LUVS.wav"), DX_PLAYTYPE_LOOP);
 	}
 
 	FPS();
 
 	auto getOldPos = p[0]->GetCarPos();
 
-
 	if (_startFlag)
 	{
-		
 		if (_ghostTime < _getGhost[_ghostLap].size())
 		{
 			p[0]->SetCarPos(_getGhost[_ghostLap][_ghostTime]._pos);
 			p[0]->SetVec(_getGhost[_ghostLap][_ghostTime]._vec);
 			p[0]->SetDeg(_getGhost[_ghostLap][_ghostTime]._deg.x, _getGhost[_ghostLap][_ghostTime]._deg.y, 0.0f, _getGhost[_ghostLap][_ghostTime]._deg.z);
 			p[0]->SetSpeed(_getGhost[_ghostLap][_ghostTime].speed);
+			wheelAngle = _getGhost[_ghostLap][_ghostTime].wheelAngle;
+			driveTireVel = _getGhost[_ghostLap][_ghostTime].driveTireVel;
 		}
 		else
 		{
 			_ghostTime = 0;
 		}
-		
 		_ghostTime++;
 		_raceTime++;
-		AddCountRaceTime(_raceCnt);
 
+		if (_raceCnt[0]++ >= 9)
+		{
+			_raceCnt[0] = 0;
+			if (_raceCnt[1]++ >= 9)
+			{
+				_raceCnt[1] = 0;
+				if (_raceCnt[2]++ >= 9)
+				{
+					_raceCnt[2] = 0;
+					if (_raceCnt[3]++ >= 9)
+					{
+						_raceCnt[3] = 0;
+						if (_raceCnt[4]++ >= 6)
+						{
+							_raceCnt[4] = 0;
+							if(_raceCnt[5]++ >= 6)
+							{
+								_raceCnt[5] = 0;
+							}
+						}
+					}
+				}
+			}
+		}
 		Control();
 	}
 	else
 	{
 		gearNum = -1;
-
 	}
 
 	if (clutch > 1.0f)
@@ -352,7 +493,8 @@ void GameTask::GameUpdate()
 	{
 		if (!t.empty())
 		{
-			(*i).Update();
+			i->Update();
+
 			i->Render();
 		}
 
@@ -370,6 +512,9 @@ void GameTask::GameUpdate()
 				_ghost._deg.z = i->GetDeg().roll;
 
 				_ghost.speed = i->GetSpeed();
+
+				_ghost.wheelAngle = t[0]->GetWheelAngle();
+				_ghost.driveTireVel = driveTireVel;
 
 				_setGhost[_ghostLap].emplace_back(_ghost);
 
@@ -391,7 +536,7 @@ void GameTask::GameUpdate()
 						{
 							i->SetDeg(deg.yaw + (wallCheck.x * 0.1f), deg.pitch, deg.oldPitch, deg.roll);
 						}
-						if(_checkPos.x < 0.0f)
+						if (_checkPos.x < 0.0f)
 						{
 							i->SetDeg(deg.yaw - (wallCheck.x * 0.1f), deg.pitch, deg.oldPitch, deg.roll);
 						}
@@ -407,15 +552,15 @@ void GameTask::GameUpdate()
 				auto goalCheck = f[0]->GetGoal();
 				if (i->HitGoalCollision(goalCheck._goalStart, goalCheck._goalEnd))
 				{
-					if (!_rapRagFlag)
+					if (!_lapLagFlag)
 					{
-						_playerRanking[_rap] = _raceCnt;
+						_playerRanking[_lap] = _raceCnt;
 
-						auto raceCntMax = (_playerRanking[_rap][0] * 0.01f) + (_playerRanking[_rap][1] * 0.1f) + (_playerRanking[_rap][2])
-							+ (_playerRanking[_rap][3] * 10) + (_playerRanking[_rap][4] * 100);
+						auto raceCntMax = (_playerRanking[_lap][0] * 0.01f) + (_playerRanking[_lap][1] * 0.1f) + (_playerRanking[_lap][2])
+							+ (_playerRanking[_lap][3] * 10) + (_playerRanking[_lap][4] * 100);
 
-						auto rankingMax = (_raceRanking[_rap][0] * 0.01f) + (_raceRanking[_rap][1] * 0.1f) + (_raceRanking[_rap][2])
-							+ (_raceRanking[_rap][3] * 10) + (_raceRanking[_rap][4] * 100);
+						auto rankingMax = (_raceRanking[_lap][0] * 0.01f) + (_raceRanking[_lap][1] * 0.1f) + (_raceRanking[_lap][2])
+							+ (_raceRanking[_lap][3] * 10) + (_raceRanking[_lap][4] * 100);
 						if (rankingMax == 0)
 						{
 							rankingMax = 9999;
@@ -423,20 +568,26 @@ void GameTask::GameUpdate()
 						if (raceCntMax < rankingMax)
 						{
 							_ghostSetFlag = true;
-							UploadGhostData(_rap);
-							UploadRaceTime(_rap);
+							UploadGhostData(_lap);
+							UploadRaceTime(_lap);
 							OpenRaceTime();
+							TopTimeValue();
 						}
 						_raceCnt = { 0,0,0,0,0,0 };
-						_rap++;
+						_lap++;
+						if (!CheckSoundMem(SOUND_ID("sounds/lapCntUp.wav")))
+						{
+							PlaySoundMem(SOUND_ID("sounds/lapCntUp.wav"), DX_PLAYTYPE_BACK);
+						}
+					
 						if (_ghostLap < 2)
 						{
 							_ghostLap++;
 						}
-						_rapRagFlag = true;
+						_lapLagFlag = true;
 					}
-					
-					if (_rap >= 3)
+
+					if (_lap >= _numberOfLaps)
 					{
 						_resultFlag = true;
 					}
@@ -447,9 +598,8 @@ void GameTask::GameUpdate()
 			auto viewPosPoint = i->GetViewPoint(1);
 			if (carPos.x < viewPosPoint.x && carPos.z < viewPosPoint.z)
 			{
-				_rapRagFlag = false;
+				_lapLagFlag = false;
 			}
-
 		}
 	}
 
@@ -490,24 +640,22 @@ void GameTask::GameUpdate()
 		i->Draw();
 	}
 
-
-
 	if (!_startFlag)
 	{
 		if (_bright[1] >= 255)
 		{
 			_bright[1] = 0;
 			_startCnt--;
+
+			if (!CheckSoundMem(SOUND_ID("sounds/CountdownLow.wav")))
+			{
+				PlaySoundMem(SOUND_ID("sounds/CountdownLow.wav"), DX_PLAYTYPE_BACK);
+			}
 		}
 		else
 		{
-			if (_bright[1] == 10)
-			{
-				PlaySoundMem(SOUND_ID("sounds/start_count.mp3"), DX_PLAYTYPE_BACK);
-			}
 			_bright[1] += 2;
 		}
-		SetFontSize(100);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[1]);
 		if (_startCnt > 0)
 		{
@@ -518,11 +666,13 @@ void GameTask::GameUpdate()
 		{
 			_startFlag = true;
 			gearNum = 0;
+
+			if (!CheckSoundMem(SOUND_ID("sounds/CountdownHigh.wav")))
+			{
+				PlaySoundMem(SOUND_ID("sounds/CountdownHigh.wav"), DX_PLAYTYPE_BACK);
+			}
 		}
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-
-		SetFontSize(16);
-
 	}
 	if (_resultFlag)
 	{
@@ -538,32 +688,60 @@ void GameTask::GameUpdate()
 			{
 				i->StopIdoling();
 			}
-			if (CheckSoundMem(SOUND_ID("sounds/bgm_maoudamashii_neorock81.mp3")))
-			{
-				StopSoundMem(SOUND_ID("sounds/bgm_maoudamashii_neorock81.mp3"));
-			}
+			_fadeFlag = true;
+			_ghostLap = 0;
 			gLoopPtr = &GameTask::GameResult;
 		}
 	}
 
-	SetFontSize(30);
-	DrawFormatString(1, 1, 0x000000, "%d%d:%d%d:%d%d", _raceCnt[5], _raceCnt[4], _raceCnt[3], _raceCnt[2], _raceCnt[1], _raceCnt[0]);
-	DrawFormatString(0, 0, 0xffffff, "%d%d:%d%d:%d%d", _raceCnt[5], _raceCnt[4], _raceCnt[3], _raceCnt[2], _raceCnt[1], _raceCnt[0]);
+	DrawRotaGraph(SCREEN_SIZE_X / 2, 90, 0.45f, 0.0f, IMAGE_ID("image/raceTimeBox.png"), true);
 
-	SetFontSize(25);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 70, 95, 0.5f, 0.0f, _number[0], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 50, 95, 0.5f, 0.0f, _number[_raceCnt[4]], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 30, 95, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 - 10, 95, 0.5f, 0.0f, _number[_raceCnt[3]], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 10, 95, 0.5f, 0.0f, _number[_raceCnt[2]], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 30, 95, 0.3f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 50, 95, 0.5f, 0.0f, _number[_raceCnt[1]], true);
+	DrawRotaGraph(SCREEN_SIZE_X / 2 + 70, 95, 0.5f, 0.0f, _number[_raceCnt[0]], true);
 
-	for (int i = 0; i < _playerRanking.size(); i++)
+	DrawRotaGraph(SCREEN_SIZE_X - 100, 120, 0.20f, 0.0f, IMAGE_ID("image/record.png"), true);
+
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (70 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[5]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (50 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[4]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (30 * 0.8f), 130 + 25 , 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (10 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[3]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (10 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[2]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (30 * 0.8f), 130 + 25 , 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (50 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[1]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (70 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[0]], true);
+
+
+	DrawRotaGraph(SCREEN_SIZE_X - 100, 200, 0.20f, 0.0f, IMAGE_ID("image/lapTime.png"), true);
+
+	for (int i = 0; i < _lap; i++)
 	{
-		DrawFormatString(1, 51 + (20 * i), 0x000000, "%d%d:%d%d:%d%d", _playerRanking[i][5], _playerRanking[i][4], _playerRanking[i][3], _playerRanking[i][2], _playerRanking[i][1], _playerRanking[i][0]);
-		DrawFormatString(0, 50 + (20 * i), 0xffffff, "%d%d:%d%d:%d%d", _playerRanking[i][5], _playerRanking[i][4], _playerRanking[i][3], _playerRanking[i][2], _playerRanking[i][1], _playerRanking[i][0]);
+		DrawRotaGraph(SCREEN_SIZE_X - 185, 235 + (i * 35), 0.35f, 0.0f, _number[i + 1], true);
+
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (70 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[0], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (50 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[_playerRanking[i][4]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (30 * 0.8f), 235 + (i * 35), 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (10 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[_playerRanking[i][3]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (10 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[_playerRanking[i][2]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (30 * 0.8f), 235 + (i * 35), 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (50 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[_playerRanking[i][1]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (70 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[_playerRanking[i][0]], true);
 	}
 
-	for (int i = 0; i < _raceRanking.size(); i++)
-	{
-		DrawFormatString(121, 51 + (20 * i), 0x000000, "%d%d:%d%d:%d%d", _raceRanking[i][5], _raceRanking[i][4], _raceRanking[i][3], _raceRanking[i][2], _raceRanking[i][1], _raceRanking[i][0]);
-		DrawFormatString(120, 50 + (20 * i), 0xffffff, "%d%d:%d%d:%d%d", _raceRanking[i][5], _raceRanking[i][4], _raceRanking[i][3], _raceRanking[i][2], _raceRanking[i][1], _raceRanking[i][0]);
-	}
-	SetFontSize(16);
+	DrawRotaGraph(40, 20, 0.2f, 0.0f, IMAGE_ID("image/lap.png"), true);
+	DrawRotaGraph(20, 50, 0.35f, 0.0f, _number[_lap + 1], true);
+	DrawRotaGraph(40, 50, 0.25f, 0.0f, IMAGE_ID("image/slash.png"), true);
+	DrawRotaGraph(60, 50, 0.35f, 0.0f, _number[_numberOfLaps], true);
+
+
+	DrawRotaGraph(20, 50, 0.35f, 0.0f, _number[_lap + 1], true);
+	DrawRotaGraph(40, 50, 0.25f, 0.0f, IMAGE_ID("image/slash.png"), true);
+	DrawRotaGraph(60, 50, 0.35f, 0.0f, _number[_numberOfLaps], true);
 
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[2]);
 	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
@@ -578,11 +756,9 @@ void GameTask::GameUpdate()
 	auto WallcheckPos = VGet(_collisionPos.x - carPos.x, _collisionPos.y - carPos.y, _collisionPos.y - carPos.y);
 	WallcheckPos = VNorm(WallcheckPos);
 
-	DrawFormatString(300, 10, 0xffffff, "RAP:(%d)", _rap);
-
 	//DrawFormatString(0, 220, 0xffffff, "check:x(%.2f),y(%.2f),z(%.2f)", carPos.x, carPos.y, carPos.z);
 	//DrawFormatString(0, 140, 0xffffff, "vectorSpeed:x(%.2f),y(%.2f),z(%.2f)", checkDeg.yaw, checkDeg.pitch, checkDeg.roll);
-	DrawFormatString(0, 180, 0xffffff, "_rapRagFlag:(%d)", _rapRagFlag);
+	//DrawFormatString(0, 180, 0xffffff, "setSteering:(%.2f)", setSteering);
 	//DrawFormatString(0, 260, 0xffffff, "WallcheckPos:x(%.2f),y(%.2f),z(%.2f)", WallcheckPos.x, WallcheckPos.y, WallcheckPos.z);
 
 	if (_fadeFlag)
@@ -592,35 +768,6 @@ void GameTask::GameUpdate()
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 	}
 
-}
-
-void GameTask::AddCountRaceTime(std::array<int, 6> & time)
-{
-	if (time[0]++ >= 9)
-	{
-
-		time[0] = 0;
-		if (time[1]++ >= 9)
-		{
-			time[1] = 0;
-			if (time[2]++ >= 9)
-			{
-				time[2] = 0;
-				if (time[3]++ >= 9)
-				{
-					time[3] = 0;
-					if (time[4]++ >= 6)
-					{
-						time[4] = 0;
-						if (time[5]++ >= 6)
-						{
-							time[5] = 0;
-						}
-					}
-				}
-			}
-		}
-	}
 }
 
 void GameTask::Control()
@@ -767,17 +914,6 @@ void GameTask::GameResult()
 			_fadeFlag = false;
 		}
 	}
-	if (!CheckSoundMem(SOUND_ID("sounds/bgm_maoudamashii_cyber36.mp3")))
-	{
-		PlaySoundMem(SOUND_ID("sounds/bgm_maoudamashii_cyber36.mp3"), DX_PLAYTYPE_LOOP);
-	}
-
-	_titleCamera = VGet(-15000, 1500, 48000);//VGet(1000, 1000, 1500);
-
-	SetFontSize(16);
-
-	bodyPos = _result->GetPos();
-	SetCameraPositionAndTarget_UpVecY(_titleCamera, bodyPos);
 
 	for (auto field : f)
 	{
@@ -790,13 +926,11 @@ void GameTask::GameResult()
 
 	auto raceCntMax = 0.0f;
 	auto rankingMax = 0.0f;
+	raceCntMax = (_raceCnt[0] * 0.01f) + (_raceCnt[1] * 0.1f) + (_raceCnt[2]) + (_raceCnt[3] * 10) + (_raceCnt[4] * 100);
+	rankingMax = (_raceRanking[0][0] * 0.01f) + (_raceRanking[0][1] * 0.1f) + (_raceRanking[0][2]) + (_raceRanking[0][3] * 10) + (_raceRanking[0][4] * 100);
 
-	if (Fade(bodyPos, -10000.0f, 255, 50))
+	if (lpKeyMng.trgKey[P1_B])
 	{
-		if (!CheckSoundMem(SOUND_ID("sounds/decision27.mp3")))
-		{
-			PlaySoundMem(SOUND_ID("sounds/decision27.mp3"), DX_PLAYTYPE_BACK);
-		}
 		_resultFadeFlag = true;
 	}
 
@@ -806,39 +940,21 @@ void GameTask::GameResult()
 		{
 			_resultFadeFlag = false;
 			bool rankingChangeFlag = false;
-			/*for (int i = 0; i < _raceRanking.size(); i++)
-			{
-				raceCntMax = (_playerRanking[i][0] * 0.01f) + (_playerRanking[i][1] * 0.1f) + (_playerRanking[i][2])
-					       + (_playerRanking[i][3] * 10) + (_playerRanking[i][4] * 100);
-
-				rankingMax = (_raceRanking[i][0] * 0.01f) + (_raceRanking[i][1] * 0.1f) + (_raceRanking[i][2])
-						   + (_raceRanking[i][3] * 10) + (_raceRanking[i][4] * 100);
-				if (rankingMax == 0)
-				{
-					rankingMax = 9999;
-				}
-				if (raceCntMax < rankingMax)
-				{
-					_ghostSetFlag = true;
-					UploadGhostData(i);
-				}
-			}*/
 			
+			speed = 0.0f;
 			_resultFlag = false;
 			_startFlag = false;
 			_result->SetFlag(false);
 			_fadeFlag = true;
 			_abs.flag = true;
 			_abs.power = 1;
-			transmission = false;
-			speed = 0.0f;
 			gLoopPtr = &GameTask::GameTitle;
 			_title->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
 			_result->SetPos(VGet(-18000.0f, 100.0f, 43000.0f));
 			_bright[0] = 0;
-			if (CheckSoundMem(SOUND_ID("sounds/bgm_maoudamashii_cyber36.mp3")))
+			if (CheckSoundMem(SOUND_ID("sounds/REVIVE_LUVS.wav")))
 			{
-				StopSoundMem(SOUND_ID("sounds/bgm_maoudamashii_cyber36.mp3"));
+				StopSoundMem(SOUND_ID("sounds/REVIVE_LUVS.wav"));
 			}
 		}
 	}
@@ -931,8 +1047,8 @@ void GameTask::UploadGhostData(int i)
 		fwrite(&nondata, sizeof(float), 1, file);
 
 		fwrite(&ghost.speed, sizeof(float), 1, file);
-		fwrite(&nondata, sizeof(float), 1, file);
-		fwrite(&nondata, sizeof(float), 1, file);
+		fwrite(&ghost.wheelAngle, sizeof(float), 1, file);
+		fwrite(&ghost.driveTireVel, sizeof(float), 1, file);
 		fwrite(&nondata, sizeof(float), 1, file);
 
 
@@ -1009,12 +1125,13 @@ void GameTask::OpenGhostData()
 		fread(&nondata, sizeof(float), 1, file);
 
 		fread(&_getGhost[0][i].speed, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
+		fread(&_getGhost[0][i].wheelAngle, sizeof(float), 1, file);
+		fread(&_getGhost[0][i].driveTireVel, sizeof(float), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 
 	}
 
+	fclose(file);
 	fopen_s(&file, "Data/GhostData2.map", "rb");
 
 	if (!file)
@@ -1040,13 +1157,13 @@ void GameTask::OpenGhostData()
 		fread(&nondata, sizeof(float), 1, file);
 
 		fread(&_getGhost[1][i].speed, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
+		fread(&_getGhost[1][i].wheelAngle, sizeof(float), 1, file);
+		fread(&_getGhost[1][i].driveTireVel, sizeof(float), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 
 	}
 
-
+	fclose(file);
 	fopen_s(&file, "Data/GhostData3.map", "rb");
 
 	if (!file)
@@ -1072,12 +1189,10 @@ void GameTask::OpenGhostData()
 		fread(&nondata, sizeof(float), 1, file);
 
 		fread(&_getGhost[2][i].speed, sizeof(float), 1, file);
+		fread(&_getGhost[2][i].wheelAngle, sizeof(float), 1, file);
+		fread(&_getGhost[2][i].driveTireVel, sizeof(float), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
-		fread(&nondata, sizeof(float), 1, file);
-
 	}
-
 	fclose(file);
 }
 
@@ -1107,7 +1222,7 @@ void GameTask::OpenRaceTime()
 		{
 			fopen_s(&file, "Data/timeRanking2.map", "rb");
 		}
-		else if(i == 2)
+		else if (i == 2)
 		{
 			fopen_s(&file, "Data/timeRanking3.map", "rb");
 		}
@@ -1125,11 +1240,10 @@ void GameTask::OpenRaceTime()
 		fread(&dummy, sizeof(int), 1, file);
 		fread(&dummy, sizeof(int), 1, file);
 		fread(&dummy, sizeof(int), 1, file);
-
+		fclose(file);
 	}
-
-	fclose(file);
 }
+
 //フェードインアウト
 bool GameTask::Fade(VECTOR pos, float target, int fadeInMax, int fadeOutMax)
 {

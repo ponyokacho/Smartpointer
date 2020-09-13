@@ -89,10 +89,10 @@ public:
 	void GameInit();
 	void Update();
 	void GameTitle();
+	void GameExplanation();
 	void GameOption();
 	void TopTimeValue();
 	void GameUpdate();
-	void AddCountRaceTime(std::array<int, 6>& time);
 	void Control();
 	void GameResult();
 	void FPS();
@@ -100,6 +100,8 @@ public:
 	void UploadGhostData(int i);
 
 	void UploadRaceTime(int i);
+
+	void Upload(int i);
 
 	void OpenGhostData();
 
@@ -404,6 +406,40 @@ public:
 		_collisionPos = p;
 	}
 
+	// add
+	void SetCursorMove(bool cur)
+	{
+		cursorMove = cur;
+	}
+	void SetDecision(bool dec)
+	{
+		decision = dec;
+	}
+
+	bool GetOptionFlag()
+	{
+		return _isOption;
+	}
+
+	bool GetTitleFlag()
+	{
+		return _titleFlag;
+	}
+
+	void SetTitleCnt(int t)
+	{
+		titleCnt = t;
+	}
+	int GetTitleCnt()
+	{
+		return titleCnt;
+	}
+
+	void SetReplayFlag(bool re)
+	{
+		replayFlag = re;
+	}
+
 private:
 	static GameTask *s_Instance;
 
@@ -480,6 +516,9 @@ private:
 	bool tireLock = 0.0f;
 	bool view = false;
 
+	bool cursorMove = false;
+	bool decision = false;
+
 	LONGLONG NowTime;
 	LONGLONG Time;
 	int fps = 0;
@@ -495,23 +534,22 @@ private:
 	int _raceTime = 0;
 	std::array<int, 6> _raceCnt;
 	std::array<int, 6> _playerRapCnt;
-	std::array<int, 6> topTime;
 
 	using _topRaceCnt = std::array<int, 6>;
 
 	std::vector<_topRaceCnt> _playerRanking;
 	std::vector<_topRaceCnt> _raceRanking;
-	float _ghostTopTime = 0.0f;
+	std::array<int, 6> topTime = { 0 };
 
 
 	//Title変数
 	std::unique_ptr<TitleScene> _title;
-	VECTOR _titleCamera;
-	VECTOR bodyPos;
 	std::array<int, 3> _bright{ 0,0,0 };
 	bool _brightFlag = false;
 	bool _titleFlag = false;
 	bool _fadeinFlag = false;
+	int titleCnt = 0;
+	bool replayFlag = false;
 
 	//GameOption
 	//
@@ -524,6 +562,7 @@ private:
 	bool transmission = false; // false:mt, true:at
 	std::unique_ptr<OptionScene> _option;
 	bool _optionFlag = false;
+	bool _isOption = false;
 
 	//GameMain変数
 	struct Ghost
@@ -532,6 +571,8 @@ private:
 		VECTOR _vec;
 		VECTOR _deg;
 		float speed;
+		float wheelAngle;
+		float driveTireVel;
 	};
 	Ghost _ghost;
 	bool _ghostSetFlag = false;
@@ -541,6 +582,7 @@ private:
 	int _ghostTime = 0;
 	int _ghostLap = 0;
 
+	int _number[10] = { 0 };
 
 	//レースのスタート関係
 	bool _startFlag = false;
@@ -549,14 +591,13 @@ private:
 	bool _collisionFlag = false;
 	CollisionStatus _status;
 
-	int _rap = 0;
-	int _rapRagTime = 0;
-	bool _rapRagFlag = false;
+	int _lap = 0;
+	int _numberOfLaps = 3;
+	bool _lapLagFlag = false;
 
 	float setSteering = 0.0f;
 	VECTOR _collisionPos;
 	VECTOR _checkPos;
-
 
 	//Result変数
 	std::unique_ptr<ResultScene> _result;
