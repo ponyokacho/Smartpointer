@@ -118,6 +118,7 @@ void GameTask::GameTitle()
 		if (FadeOut())
 		{
 			_fadeFlag = false;
+			_replayFadeFlag = false;
 		}
 	}
 
@@ -185,7 +186,22 @@ void GameTask::GameTitle()
 		{
 			_ghostLap = 0;
 		}
+		if (_ghostTime >= _getGhost[_ghostLap].size() - 51)
+		{
+			_replayFadeFlag = true;
+		}
 		_ghostTime++;
+	}
+
+	if (_replayFadeFlag)
+	{
+		if (!_fadeFlag)
+		{
+			if (FadeIn())
+			{
+				_fadeFlag = true;
+			}
+		}
 	}
 
 	for (auto i : t)
@@ -207,6 +223,7 @@ void GameTask::GameTitle()
 				i->StopIdoling();
 			}
 
+			_replayFadeFlag = false;
 			_fadeinFlag = false;
 			_fadeFlag = true;
 			_titleFlag = false;

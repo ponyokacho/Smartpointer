@@ -529,6 +529,7 @@ private:
 
 	//フェードインorアウト
 	bool _fadeFlag = false;
+	bool _replayFadeFlag = false;
 
 	//time計測
 	int _raceTime = 0;
