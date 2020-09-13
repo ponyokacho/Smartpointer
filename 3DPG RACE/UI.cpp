@@ -4,7 +4,6 @@
 
 UI::UI()
 {
-	s.maxSpeed = lpGameTask.GetMaxSpeed();
 	DIV_IMAGE_ID("image/gear_num_red.png", 11, 11, 1, 0, 0, 60, 60,g.gear);
 	DIV_IMAGE_ID("image/gear_num.png", 10, 10, 1, 0, 0, 60, 60, s.speedNum);
 	DIV_IMAGE_ID("image/mt.png", 2, 2, 1, 0, 0, 60, 60, g.mt);
@@ -26,6 +25,7 @@ void UI::Update()
 	s.brakeBox = lpGameTask.GetLT();
 	g.transmission = lpGameTask.GetTransmission();
 	s.absFlag = lpGameTask.GetABSFlag();
+	s.maxSpeed = lpGameTask.GetMaxSpeed();
 
 	r.Normalize = r.rpm / ACTUAL_MAX_RPM;
 	s.Normalize = s.speed / s.maxSpeed;

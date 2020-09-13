@@ -63,6 +63,8 @@ void Player::Init()
 //---Œﬁ√ﬁ®Ç…Œ≤∞ŸÇí«è]Ç≥ÇπÇÈ
 void Player::Update()
 {
+	GetJoypadXInputState(DX_INPUT_PAD1, &input);
+
 	steering = lpGameTask.GetSteering();
 	speed = lpGameTask.GetSpeed();
 	tireForce = VGet(lpGameTask.GetTireForce().x * steering, 0.0f, lpGameTask.GetTireForce().y);
@@ -236,6 +238,26 @@ void Player::Update()
 		}
 	}
 
+	if (cam.backView)
+	{
+		cam.view = cam.saveView;
+	}
+
+	if (input.ThumbRY / 32768 < -0.15 && !lpGameTask.GetTitleFlag())
+	{
+		cam.backView = true;
+
+		cam.saveView = cam.view;
+		cam.view = 0;
+
+		cam.offset = { 0.0f, 250.0f, 900.0f - (200.0f * camAccelOffset) };
+		camPosOffset = VTransform(cam.offset, MMult(cam.mat, MGetRotY(deg.yaw)));
+	}
+	else
+	{
+		cam.backView = false;
+	}
+
 	if (cam.view != 3)
 	{
 		cam.pos = VAdd(VGet(carPos.x, carPos.y, carPos.z), camPosOffset);
@@ -258,6 +280,11 @@ void Player::Update()
 	vectorSpeed.x *= -1;
 	vectorSpeed.z *= -1;
 	beforeCarPos = carPos;
+
+	if (vectorSpeed.x == 0.0f && vectorSpeed.y == 0.0f && vectorSpeed.z == 0.0f)
+	{
+		vectorSpeed = VGet(0.0f, 0.0f, 1.0f);
+	}
 
 	acceleration = -(oldSpeed - speed) * DT;
 	oldSpeed = speed;
@@ -287,6 +314,15 @@ void Player::Render()
 		MV1SetOpacityRate(wheel.front.left.model, 0.2f);
 		MV1SetOpacityRate(wheel.rear.right.model, 0.2f);
 		MV1SetOpacityRate(wheel.rear.left.model, 0.2f);
+	}
+	else
+	{
+		MV1SetOpacityRate(carModel, 1.0f);
+
+		MV1SetOpacityRate(wheel.front.right.model, 1.0f);
+		MV1SetOpacityRate(wheel.front.left.model, 1.0f);
+		MV1SetOpacityRate(wheel.rear.right.model, 1.0f);
+		MV1SetOpacityRate(wheel.rear.left.model, 1.0f);
 	}
 
 

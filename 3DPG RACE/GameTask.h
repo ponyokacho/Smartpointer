@@ -91,14 +91,21 @@ public:
 	void GameTitle();
 	void GameExplanation();
 	void GameOption();
+	void TopTimeValue();
 	void GameUpdate();
 	void Control();
 	void GameResult();
 	void FPS();
 
-	void Upload();
+	void UploadGhostData(int i);
 
-	void Open();
+	void UploadRaceTime(int i);
+
+	void Upload(int i);
+
+	void OpenGhostData();
+
+	void OpenRaceTime();
 
 	bool Fade(VECTOR pos, float target, int fadeInMax, int fadeOutMax);
 
@@ -526,8 +533,13 @@ private:
 	//time計測
 	int _raceTime = 0;
 	std::array<int, 6> _raceCnt;
+	std::array<int, 6> _playerRapCnt;
+
 	using _topRaceCnt = std::array<int, 6>;
+
+	std::vector<_topRaceCnt> _playerRanking;
 	std::vector<_topRaceCnt> _raceRanking;
+	std::array<int, 6> topTime = { 0 };
 
 
 	//Title変数
@@ -563,9 +575,11 @@ private:
 	Ghost _ghost;
 	bool _ghostSetFlag = false;
 
-	std::vector<Ghost> _setGhost;
-	std::vector<Ghost> _getGhost;
+	std::vector<std::vector<Ghost>> _setGhost;
+	std::vector<std::vector<Ghost>> _getGhost;
 	int _ghostTime = 0;
+	int _ghostLap = 0;
+
 	int _number[10] = { 0 };
 
 	//レースのスタート関係
@@ -574,6 +588,10 @@ private:
 	int _knockbackTime = 0;
 	bool _collisionFlag = false;
 	CollisionStatus _status;
+
+	int _lap = 0;
+	int _numberOfLaps = 3;
+	bool _lapLagFlag = false;
 
 	float setSteering = 0.0f;
 	VECTOR _collisionPos;

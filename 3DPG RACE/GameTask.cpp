@@ -64,9 +64,31 @@ void GameTask::GameInit()
 
 	_option = std::make_unique<OptionScene>();
 
+	_playerRanking.resize(_numberOfLaps);
+	for (int i = 0; i < _numberOfLaps; i++)
+	{
+		_playerRanking[0][i] = 0;
+		_playerRanking[1][i] = 0;
+		_playerRanking[2][i] = 0;
+
+	}
+	_raceRanking.resize(_numberOfLaps);
+	for (int i = 0; i < _numberOfLaps; i++)
+	{
+		_raceRanking[0][i] = 0;
+		_raceRanking[1][i] = 0;
+		_raceRanking[2][i] = 0;
+
+	}
+
+
 	DIV_IMAGE_ID("image/gear_num.png", 10, 10, 1, 0, 0, 60, 60, _number);
 
-	Open();
+	//ｻｲｽﾞ変更
+	_setGhost.resize(3);
+	_getGhost.resize(3);
+	
+	OpenGhostData();
 
 	ChangeVolumeSoundMem(255 * 80 / 100, SOUND_ID("sounds/shift_change.wav"));
 	ChangeVolumeSoundMem(255 * 60 / 100, SOUND_ID("sounds/REVIVE_LUVS.wav"));
@@ -142,18 +164,26 @@ void GameTask::GameTitle()
 	}
 	//Init();
 
-	if (_ghostTime < _getGhost.size())
+	if (_getGhost.size() > 0)
 	{
-		p[0]->SetCarPos(_getGhost[_ghostTime]._pos);
-		p[0]->SetVec(_getGhost[_ghostTime]._vec);
-		p[0]->SetDeg(_getGhost[_ghostTime]._deg.x, _getGhost[_ghostTime]._deg.y, 0.0f, _getGhost[_ghostTime]._deg.z);
-		p[0]->SetSpeed(_getGhost[_ghostTime].speed);
+		if (_ghostTime < _getGhost[_ghostLap].size())
+		{
+			p[0]->SetCarPos(_getGhost[_ghostLap][_ghostTime]._pos);
+			p[0]->SetVec(_getGhost[_ghostLap][_ghostTime]._vec);
+			p[0]->SetDeg(_getGhost[_ghostLap][_ghostTime]._deg.x, _getGhost[_ghostLap][_ghostTime]._deg.y, 0.0f, _getGhost[_ghostLap][_ghostTime]._deg.z);
+			p[0]->SetSpeed(_getGhost[_ghostLap][_ghostTime].speed);
+		}
+		else
+		{
+			_ghostLap++;
+			_ghostTime = 0;
+		}
+		if (_ghostLap >= 3)
+		{
+			_ghostLap = 0;
+		}
+		_ghostTime++;
 	}
-	else
-	{
-		_ghostTime = 0;
-	}
-	_ghostTime++;
 
 	if (_fadeinFlag)
 	{
@@ -171,6 +201,7 @@ void GameTask::GameTitle()
 			titleCnt = 0;
 			_ghostTime = 0;
 			p[0]->Init();
+			p[1]->SetPlayerNum(1);
 			gLoopPtr = &GameTask::GameExplanation;
 		}
 	}
@@ -287,15 +318,18 @@ void GameTask::GameOption()
 			{
 				_raceCnt[j] = 0;
 			}
+
 			_optionFlag = false;
 			_isOption = false;
 			_fadeFlag = true;
 			_startCnt = 3;
 			_startFlag = false;
-			Open();
 			_ghostTime = 0;
 			gLoopPtr = &GameTask::GameUpdate;
 			_option->SetOption(SelectOption::ABS);
+
+			OpenRaceTime();
+			TopTimeValue();
 
 			if (CheckSoundMem(SOUND_ID("sounds/Lazzuli_luvs_(Hidden_Remix).wav")))
 			{
@@ -308,6 +342,36 @@ void GameTask::GameOption()
 	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 
+}
+
+void GameTask::TopTimeValue()
+{
+	if (topTime[0] == 0 && topTime[1] == 0 && topTime[2] == 0 &&
+		topTime[3] == 0 && topTime[4] == 0 && topTime[5] == 0)
+	{
+		for (int i = 0; i < 6; i++)
+		{
+			topTime[i] = 9;
+		}
+	}
+
+	auto ranking1 = (topTime[0] * 0.01f) + (topTime[1] * 0.1f) + (topTime[2])
+		+ (topTime[3] * 10) + (topTime[4] * 100);
+
+	for (int i = 0; i < 3; i++)
+	{
+		auto a = (_raceRanking[i][0] * 0.01f) + (_raceRanking[i][1] * 0.1f) + (_raceRanking[i][2])
+			+ (_raceRanking[i][3] * 10) + (_raceRanking[i][4] * 100);
+
+		if (ranking1 > a)
+		{
+			if (a != 0.0f)
+			{
+				topTime = _raceRanking[i];
+				ranking1 = a;
+			}
+		}
+	}
 }
 
 void GameTask::GameUpdate()
@@ -330,12 +394,12 @@ void GameTask::GameUpdate()
 
 	if (_startFlag)
 	{
-		if (_ghostTime < _getGhost.size())
+		if (_ghostTime < _getGhost[_ghostLap].size())
 		{
-			p[0]->SetCarPos(_getGhost[_ghostTime]._pos);
-			p[0]->SetVec(_getGhost[_ghostTime]._vec);
-			p[0]->SetDeg(_getGhost[_ghostTime]._deg.x, _getGhost[_ghostTime]._deg.y, 0.0f, _getGhost[_ghostTime]._deg.z);
-			p[0]->SetSpeed(_getGhost[_ghostTime].speed);
+			p[0]->SetCarPos(_getGhost[_ghostLap][_ghostTime]._pos);
+			p[0]->SetVec(_getGhost[_ghostLap][_ghostTime]._vec);
+			p[0]->SetDeg(_getGhost[_ghostLap][_ghostTime]._deg.x, _getGhost[_ghostLap][_ghostTime]._deg.y, 0.0f, _getGhost[_ghostLap][_ghostTime]._deg.z);
+			p[0]->SetSpeed(_getGhost[_ghostLap][_ghostTime].speed);
 		}
 		else
 		{
@@ -343,9 +407,9 @@ void GameTask::GameUpdate()
 		}
 		_ghostTime++;
 		_raceTime++;
+
 		if (_raceCnt[0]++ >= 9)
 		{
-
 			_raceCnt[0] = 0;
 			if (_raceCnt[1]++ >= 9)
 			{
@@ -359,7 +423,10 @@ void GameTask::GameUpdate()
 						if (_raceCnt[4]++ >= 6)
 						{
 							_raceCnt[4] = 0;
-							//_raceCnt[5]++;
+							if(_raceCnt[5]++ >= 6)
+							{
+								_raceCnt[5] = 0;
+							}
 						}
 					}
 				}
@@ -370,7 +437,6 @@ void GameTask::GameUpdate()
 	else
 	{
 		gearNum = -1;
-
 	}
 
 	if (clutch > 1.0f)
@@ -409,7 +475,7 @@ void GameTask::GameUpdate()
 
 				_ghost.speed = i->GetSpeed();
 
-				_setGhost.emplace_back(_ghost);
+				_setGhost[_ghostLap].emplace_back(_ghost);
 
 				auto check = i->GetHitBox();
 
@@ -429,7 +495,7 @@ void GameTask::GameUpdate()
 						{
 							i->SetDeg(deg.yaw + (wallCheck.x * 0.1f), deg.pitch, deg.oldPitch, deg.roll);
 						}
-						if(_checkPos.x < 0.0f)
+						if (_checkPos.x < 0.0f)
 						{
 							i->SetDeg(deg.yaw - (wallCheck.x * 0.1f), deg.pitch, deg.oldPitch, deg.roll);
 						}
@@ -445,11 +511,57 @@ void GameTask::GameUpdate()
 				auto goalCheck = f[0]->GetGoal();
 				if (i->HitGoalCollision(goalCheck._goalStart, goalCheck._goalEnd))
 				{
-					_resultFlag = true;
+					if (!_lapLagFlag)
+					{
+						_playerRanking[_lap] = _raceCnt;
+
+						auto raceCntMax = (_playerRanking[_lap][0] * 0.01f) + (_playerRanking[_lap][1] * 0.1f) + (_playerRanking[_lap][2])
+							+ (_playerRanking[_lap][3] * 10) + (_playerRanking[_lap][4] * 100);
+
+						auto rankingMax = (_raceRanking[_lap][0] * 0.01f) + (_raceRanking[_lap][1] * 0.1f) + (_raceRanking[_lap][2])
+							+ (_raceRanking[_lap][3] * 10) + (_raceRanking[_lap][4] * 100);
+						if (rankingMax == 0)
+						{
+							rankingMax = 9999;
+						}
+						if (raceCntMax < rankingMax)
+						{
+							_ghostSetFlag = true;
+							UploadGhostData(_lap);
+							UploadRaceTime(_lap);
+							OpenRaceTime();
+							TopTimeValue();
+						}
+						_raceCnt = { 0,0,0,0,0,0 };
+						_lap++;
+						if (!CheckSoundMem(SOUND_ID("sounds/lapCntUp.wav")))
+						{
+							PlaySoundMem(SOUND_ID("sounds/lapCntUp.wav"), DX_PLAYTYPE_BACK);
+						}
+					
+						if (_ghostLap < 2)
+						{
+							_ghostLap++;
+						}
+						_lapLagFlag = true;
+					}
+
+					if (_lap >= _numberOfLaps)
+					{
+						_resultFlag = true;
+					}
 				}
+			}
+
+			auto carPos = i->GetCarPos();
+			auto viewPosPoint = i->GetViewPoint(1);
+			if (carPos.x < viewPosPoint.x && carPos.z < viewPosPoint.z)
+			{
+				_lapLagFlag = false;
 			}
 		}
 	}
+
 
 	for (auto i : c)
 	{
@@ -535,6 +647,7 @@ void GameTask::GameUpdate()
 			{
 				i->StopIdoling();
 			}
+			_fadeFlag = true;
 			gLoopPtr = &GameTask::GameResult;
 		}
 	}
@@ -550,21 +663,43 @@ void GameTask::GameUpdate()
 	DrawRotaGraph(SCREEN_SIZE_X / 2 + 50, 95, 0.5f, 0.0f, _number[_raceCnt[1]], true);
 	DrawRotaGraph(SCREEN_SIZE_X / 2 + 70, 95, 0.5f, 0.0f, _number[_raceCnt[0]], true);
 
-	for (int i = 0; i < _raceRanking.size(); i++)
-	{
-		DrawFormatString(1, 51 + (20 * i), 0x000000, "%d:%d%d:%d%d", _raceRanking[i][4], _raceRanking[i][3], _raceRanking[i][2], _raceRanking[i][1], _raceRanking[i][0]);
-		DrawFormatString(0, 50 + (20 * i), 0xffffff, "%d:%d%d:%d%d", _raceRanking[i][4], _raceRanking[i][3], _raceRanking[i][2], _raceRanking[i][1], _raceRanking[i][0]);
+	DrawRotaGraph(SCREEN_SIZE_X - 100, 120, 0.20f, 0.0f, IMAGE_ID("image/record.png"), true);
 
-		DrawRotaGraph(SCREEN_SIZE_X - 100 - (70 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[0], true);
-		DrawRotaGraph(SCREEN_SIZE_X - 100 - (50 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[_raceRanking[i][4]], true);
-		DrawRotaGraph(SCREEN_SIZE_X - 100 - (30 * 0.8f), 120 + (25 * i), 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
-		DrawRotaGraph(SCREEN_SIZE_X - 100 - (10 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[_raceRanking[i][3]], true);
-		DrawRotaGraph(SCREEN_SIZE_X - 100 + (10 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[_raceRanking[i][2]], true);
-		DrawRotaGraph(SCREEN_SIZE_X - 100 + (30 * 0.8f), 120 + (25 * i), 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
-		DrawRotaGraph(SCREEN_SIZE_X - 100 + (50 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[_raceRanking[i][1]], true);
-		DrawRotaGraph(SCREEN_SIZE_X - 100 + (70 * 0.8f), 120 + (25 * i), 0.35f, 0.0f, _number[_raceRanking[i][0]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (70 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[5]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (50 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[4]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (30 * 0.8f), 130 + 25 , 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 - (10 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[3]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (10 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[2]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (30 * 0.8f), 130 + 25 , 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (50 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[1]], true);
+	DrawRotaGraph(SCREEN_SIZE_X - 100 + (70 * 0.8f), 130 + 25 , 0.35f, 0.0f, _number[topTime[0]], true);
+
+
+	DrawRotaGraph(SCREEN_SIZE_X - 100, 200, 0.20f, 0.0f, IMAGE_ID("image/lapTime.png"), true);
+
+	for (int i = 0; i < _lap; i++)
+	{
+		DrawRotaGraph(SCREEN_SIZE_X - 185, 235 + (i * 35), 0.35f, 0.0f, _number[i + 1], true);
+
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (70 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[0], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (50 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[_playerRanking[i][4]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (30 * 0.8f), 235 + (i * 35), 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 - (10 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[_playerRanking[i][3]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (10 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[_playerRanking[i][2]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (30 * 0.8f), 235 + (i * 35), 0.15f, 0.0f, IMAGE_ID("image/colon.png"), true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (50 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[_playerRanking[i][1]], true);
+		DrawRotaGraph(SCREEN_SIZE_X - 100 + (70 * 0.8f), 235 + (i * 35), 0.35f, 0.0f, _number[_playerRanking[i][0]], true);
 	}
-	SetFontSize(16);
+
+	DrawRotaGraph(40, 20, 0.2f, 0.0f, IMAGE_ID("image/lap.png"), true);
+	DrawRotaGraph(20, 50, 0.35f, 0.0f, _number[_lap + 1], true);
+	DrawRotaGraph(40, 50, 0.25f, 0.0f, IMAGE_ID("image/slash.png"), true);
+	DrawRotaGraph(60, 50, 0.35f, 0.0f, _number[_numberOfLaps], true);
+
+
+	DrawRotaGraph(20, 50, 0.35f, 0.0f, _number[_lap + 1], true);
+	DrawRotaGraph(40, 50, 0.25f, 0.0f, IMAGE_ID("image/slash.png"), true);
+	DrawRotaGraph(60, 50, 0.35f, 0.0f, _number[_numberOfLaps], true);
 
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, _bright[2]);
 	DrawBox(0, 0, SCREEN_SIZE_X, SCREEN_SIZE_Y, 0x000000, true);
@@ -752,7 +887,10 @@ void GameTask::GameResult()
 	raceCntMax = (_raceCnt[0] * 0.01f) + (_raceCnt[1] * 0.1f) + (_raceCnt[2]) + (_raceCnt[3] * 10) + (_raceCnt[4] * 100);
 	rankingMax = (_raceRanking[0][0] * 0.01f) + (_raceRanking[0][1] * 0.1f) + (_raceRanking[0][2]) + (_raceRanking[0][3] * 10) + (_raceRanking[0][4] * 100);
 
-	_resultFadeFlag = true;
+	if (lpKeyMng.trgKey[P1_B])
+	{
+		_resultFadeFlag = true;
+	}
 
 	if (_resultFadeFlag)
 	{
@@ -760,30 +898,8 @@ void GameTask::GameResult()
 		{
 			_resultFadeFlag = false;
 			bool rankingChangeFlag = false;
-			for (int i = 0; i < _raceRanking.size(); i++)
-			{
-				rankingMax = (_raceRanking[i][0] * 0.01f) + (_raceRanking[i][1] * 0.1f) + (_raceRanking[i][2]) + (_raceRanking[i][3] * 10) + (_raceRanking[i][4] * 100);
-				if (rankingMax == 0)
-				{
-					rankingMax = 9999;
-				}
-				if (raceCntMax < rankingMax)
-				{
-					if (i == 0)
-					{
-						_ghostSetFlag = true;
-					}
-					for (; i < _raceRanking.size(); i++)
-					{
-						auto rankingDown = _raceRanking[i];
-						_raceRanking[i] = _raceCnt;
-						_raceCnt = rankingDown;
-					}
-					Upload();
-					break;
-				}
-			}
 			
+			speed = 0.0f;
 			_resultFlag = false;
 			_startFlag = false;
 			_result->SetFlag(false);
@@ -836,7 +952,7 @@ void GameTask::FPS()
 	}
 }
 
-void GameTask::Upload()
+void GameTask::UploadGhostData(int i)
 {
 	float size = 0.0f;
 	float nondata = 0.0f;
@@ -847,11 +963,23 @@ void GameTask::Upload()
 
 	if (_ghostSetFlag)
 	{
-		size = _setGhost.size();
+		size = _setGhost[i].size();
 	}
 
 	FILE* file;
-	fopen_s(&file, "Data/data.map", "wb+");
+
+	if (i == 0)
+	{
+		fopen_s(&file, "Data/GhostData1.map", "wb+");
+	}
+	else if (i == 1)
+	{
+		fopen_s(&file, "Data/GhostData2.map", "wb+");
+	}
+	else
+	{
+		fopen_s(&file, "Data/GhostData3.map", "wb+");
+	}
 
 	if (!file)
 	{
@@ -866,11 +994,7 @@ void GameTask::Upload()
 	for (int j = 0; j < size; ++j)
 	{
 		Ghost ghost;
-		ghost = _getGhost[j];
-		if (_ghostSetFlag)
-		{
-			ghost = _setGhost[j];
-		}
+		ghost = _setGhost[i][j];
 		fwrite(&ghost._pos, sizeof(VECTOR), 1, file);
 		fwrite(&nondata, sizeof(float), 1, file);
 
@@ -889,28 +1013,44 @@ void GameTask::Upload()
 	}
 
 	_ghostSetFlag = false;
-	//fwrite(&data, sizeof(Data), sizeof(Data), file);
+	fclose(file);
+}
 
-	fopen_s(&file, "Data/timeRanking.map", "wb+");
+void GameTask::UploadRaceTime(int i)
+{
+	float size = 0.0f;
+	float nondata = 0.0f;
+	VECTOR2 nonVec2 = { 0.5f, 0.5f };
+	FILE* file;
+
+	if (i == 0)
+	{
+		fopen_s(&file, "Data/timeRanking1.map", "wb+");
+	}
+	else if (i == 1)
+	{
+		fopen_s(&file, "Data/timeRanking2.map", "wb+");
+	}
+	else
+	{
+		fopen_s(&file, "Data/timeRanking3.map", "wb+");
+	}
+
 	int dummy = 0;
 
-	for (int i = 0; i < _raceRanking.size(); i++)
-	{
-		fwrite(&_raceRanking[i][0], sizeof(int), 1, file);
-		fwrite(&_raceRanking[i][1], sizeof(int), 1, file);
-		fwrite(&_raceRanking[i][2], sizeof(int), 1, file);
-		fwrite(&_raceRanking[i][3], sizeof(int), 1, file);
-		fwrite(&_raceRanking[i][4], sizeof(int), 1, file);
-		fwrite(&dummy, sizeof(int), 1, file);
-		fwrite(&dummy, sizeof(int), 1, file);
-		fwrite(&dummy, sizeof(int), 1, file);
-
-	}
+	fwrite(&_playerRanking[i][0], sizeof(int), 1, file);
+	fwrite(&_playerRanking[i][1], sizeof(int), 1, file);
+	fwrite(&_playerRanking[i][2], sizeof(int), 1, file);
+	fwrite(&_playerRanking[i][3], sizeof(int), 1, file);
+	fwrite(&_playerRanking[i][4], sizeof(int), 1, file);
+	fwrite(&dummy, sizeof(int), 1, file);
+	fwrite(&dummy, sizeof(int), 1, file);
+	fwrite(&dummy, sizeof(int), 1, file);
 
 	fclose(file);
 }
 
-void GameTask::Open()
+void GameTask::OpenGhostData()
 {
 	FILE* file;
 	float getSize = 0.0f;
@@ -918,22 +1058,10 @@ void GameTask::Open()
 	int Not = 0;
 	VECTOR2 nonVec2 = { 0.0f, 0.0f };
 
-	fopen_s(&file, "Data/data.map", "rb");
+	fopen_s(&file, "Data/GhostData1.map", "rb");
 
 	if (!file)
 	{
-		_raceRanking.resize(5);
-		for (int i = 0; i < 5; i++)
-		{
-			_raceRanking[0][i] = 0;
-			_raceRanking[1][i] = 0;
-			_raceRanking[2][i] = 0;
-			_raceRanking[3][i] = 0;
-			_raceRanking[4][i] = 0;
-
-		}
-		fclose(file);
-
 		return;
 	}
 
@@ -941,51 +1069,106 @@ void GameTask::Open()
 	fread(&Not, sizeof(int), 1, file);
 	fread(&nonVec2, sizeof(VECTOR2), 1, file);
 
-	_getGhost.resize(getSize);
+	_getGhost[0].resize(getSize);
 
-	for (int i = 0; i < _getGhost.size(); ++i)
+	for (int i = 0; i < _getGhost[0].size(); ++i)
 	{
-		fread(&_getGhost[i]._pos, sizeof(VECTOR), 1, file);
+		fread(&_getGhost[0][i]._pos, sizeof(VECTOR), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 
-		fread(&_getGhost[i]._vec, sizeof(VECTOR), 1, file);
+		fread(&_getGhost[0][i]._vec, sizeof(VECTOR), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 
-		fread(&_getGhost[i]._deg, sizeof(VECTOR), 1, file);
+		fread(&_getGhost[0][i]._deg, sizeof(VECTOR), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 
-		fread(&_getGhost[i].speed, sizeof(float), 1, file);
+		fread(&_getGhost[0][i].speed, sizeof(float), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 		fread(&nondata, sizeof(float), 1, file);
 
 	}
 
-	fopen_s(&file, "Data/timeRanking.map", "rb");
+	fclose(file);
+	fopen_s(&file, "Data/GhostData2.map", "rb");
 
 	if (!file)
 	{
-		_raceRanking.resize(5);
-		for (int i = 0; i < 5; i++)
-		{
-			_raceRanking[0][i] = 0;
-			_raceRanking[1][i] = 0;
-			_raceRanking[2][i] = 0;
-			_raceRanking[3][i] = 0;
-			_raceRanking[4][i] = 0;
-
-		}
-		fclose(file);
 		return;
 	}
-	_raceRanking.resize(5);
-	for (int i = 0; i < 5; i++)
+
+	fread(&getSize, sizeof(float), 1, file);
+	fread(&Not, sizeof(int), 1, file);
+	fread(&nonVec2, sizeof(VECTOR2), 1, file);
+
+	_getGhost[1].resize(getSize);
+
+	for (int i = 0; i < _getGhost[1].size(); ++i)
+	{
+		fread(&_getGhost[1][i]._pos, sizeof(VECTOR), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+		fread(&_getGhost[1][i]._vec, sizeof(VECTOR), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+		fread(&_getGhost[1][i]._deg, sizeof(VECTOR), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+		fread(&_getGhost[1][i].speed, sizeof(float), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+	}
+
+	fclose(file);
+	fopen_s(&file, "Data/GhostData3.map", "rb");
+
+	if (!file)
+	{
+		return;
+	}
+
+	fread(&getSize, sizeof(float), 1, file);
+	fread(&Not, sizeof(int), 1, file);
+	fread(&nonVec2, sizeof(VECTOR2), 1, file);
+
+	_getGhost[2].resize(getSize);
+
+	for (int i = 0; i < _getGhost[2].size(); ++i)
+	{
+		fread(&_getGhost[2][i]._pos, sizeof(VECTOR), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+		fread(&_getGhost[2][i]._vec, sizeof(VECTOR), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+		fread(&_getGhost[2][i]._deg, sizeof(VECTOR), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+
+		fread(&_getGhost[2][i].speed, sizeof(float), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+		fread(&nondata, sizeof(float), 1, file);
+	}
+	fclose(file);
+}
+
+void GameTask::OpenRaceTime()
+{
+	FILE* file;
+	fopen_s(&file, "Data/timeRanking1.map", "rb");
+	if (!file)
+	{
+		return;
+	}
+
+	_raceRanking.resize(3);
+	for (int i = 0; i < 3; i++)
 	{
 		_raceRanking[0][i] = 0;
 		_raceRanking[1][i] = 0;
 		_raceRanking[2][i] = 0;
-		_raceRanking[3][i] = 0;
-		_raceRanking[4][i] = 0;
 
 	}
 
@@ -993,6 +1176,20 @@ void GameTask::Open()
 
 	for (int i = 0; i < _raceRanking.size(); i++)
 	{
+		if (i == 1)
+		{
+			fopen_s(&file, "Data/timeRanking2.map", "rb");
+		}
+		else if (i == 2)
+		{
+			fopen_s(&file, "Data/timeRanking3.map", "rb");
+		}
+
+		if (!file)
+		{
+			return;
+		}
+
 		fread(&_raceRanking[i][0], sizeof(int), 1, file);
 		fread(&_raceRanking[i][1], sizeof(int), 1, file);
 		fread(&_raceRanking[i][2], sizeof(int), 1, file);
@@ -1001,11 +1198,10 @@ void GameTask::Open()
 		fread(&dummy, sizeof(int), 1, file);
 		fread(&dummy, sizeof(int), 1, file);
 		fread(&dummy, sizeof(int), 1, file);
-
+		fclose(file);
 	}
-	fclose(file);
-
 }
+
 //フェードインアウト
 bool GameTask::Fade(VECTOR pos, float target, int fadeInMax, int fadeOutMax)
 {

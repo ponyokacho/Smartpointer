@@ -31,6 +31,8 @@ private:
 
 	int _playerNum = 0;
 
+	XINPUT_STATE input;
+
 public:
 	Player(int num);
 	~Player();
@@ -52,6 +54,8 @@ public:
 	// ｶﾒﾗ用box
 	struct Camera {
 		int view = 0;	// 0:三人称,1:一人称 2:タイヤ,3:リプレイ
+		int saveView = 0;
+		bool backView = false;
 		VECTOR pos = VGet(0.0f, 0.0f, 1.0f);
 		MATRIX mat;
 		VECTOR scl;
@@ -173,6 +177,11 @@ public:
 	int minTime = 0;
 	bool changeFlag = false;
 
+	const VECTOR& GetViewPoint(int i)
+	{
+		return viewPoint[i];
+	}
+
 	const Capsule& GetHitBox()
 	{
 		return _hitBox;
@@ -219,6 +228,11 @@ public:
 	void SetSpeed(float s)
 	{
 		speed = s;
+	}
+
+	void SetPlayerNum(int num)
+	{
+		_playerNum = num;
 	}
 
 };
